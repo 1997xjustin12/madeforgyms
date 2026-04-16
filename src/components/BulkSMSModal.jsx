@@ -5,7 +5,7 @@ import { useGym } from '../context/GymContext';
 import toast from 'react-hot-toast';
 
 export default function BulkSMSModal({ onClose }) {
-  const { getExpiringMembers, getMemberStatus, logAction } = useGym();
+  const { getExpiringMembers, getMemberStatus, logAction, settings } = useGym();
   const expiring = getExpiringMembers();
   const [sent, setSent] = useState({});
 
@@ -15,7 +15,7 @@ export default function BulkSMSModal({ onClose }) {
 
   const handleSend = async (member) => {
     const { daysLeft } = getMemberStatus(member);
-    const message = buildSmsMessage(member, daysLeft);
+    const message = buildSmsMessage(member, daysLeft, settings.gymName);
     openSmsApp(member.contactNumber, message);
     markSent(member.id);
     await logAction('SMS_SENT', `Sent SMS notification to: ${member.name}`, member.name, member.id);
@@ -25,7 +25,7 @@ export default function BulkSMSModal({ onClose }) {
     const text = expiring
       .map((m) => {
         const { daysLeft } = getMemberStatus(m);
-        return `To: ${formatPhoneDisplay(m.contactNumber)}\n${buildSmsMessage(m, daysLeft)}`;
+        return `To: ${formatPhoneDisplay(m.contactNumber)}\n${buildSmsMessage(m, daysLeft, settings.gymName)}`;
       })
       .join('\n\n---\n\n');
     navigator.clipboard.writeText(text).then(() => {

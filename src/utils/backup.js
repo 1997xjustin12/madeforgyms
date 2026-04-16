@@ -17,10 +17,10 @@ export const getDaysSinceBackup = () => {
 };
 
 // Export members as a JSON backup file
-export const exportJSON = (members) => {
+export const exportJSON = (members, gymName = 'MadeForGyms') => {
   const backup = {
     exportedAt: new Date().toISOString(),
-    gym: 'Power Fitness Gym',
+    gym: gymName,
     version: '1.0',
     totalMembers: members.length,
     members: members.map((m) => ({
@@ -38,7 +38,8 @@ export const exportJSON = (members) => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `PowerFitnessGym_Backup_${new Date().toISOString().split('T')[0]}.json`;
+  const prefix = gymName.replace(/\s+/g, '') || 'Gym';
+  a.download = `${prefix}_Backup_${new Date().toISOString().split('T')[0]}.json`;
   a.click();
   URL.revokeObjectURL(url);
   setLastBackupDate();

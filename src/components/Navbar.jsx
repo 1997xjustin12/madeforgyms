@@ -36,7 +36,7 @@ export default function Navbar({ title, showBack }) {
             ) : (
               <Link to={isAdminLoggedIn ? '/admin' : '/'} className="flex items-center gap-2 shrink-0">
                 <GymLogo size={40} />
-                <span className="font-bold text-white">{settings.gymName || 'Power Fitness Gym'}</span>
+                <span className="font-bold text-white">{settings.gymName || 'MadeForGyms'}</span>
               </Link>
             )}
             {title && (

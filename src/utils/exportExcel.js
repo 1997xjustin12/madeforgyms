@@ -24,7 +24,8 @@ const getStatus = (member) => {
   return { label: 'Active', days: diff };
 };
 
-export const exportMembersToExcel = (members, filenamePrefix = 'PowerFitnessGym_Members') => {
+export const exportMembersToExcel = (members, gymName = 'MadeForGyms') => {
+  const filenamePrefix = `${(gymName || 'Gym').replace(/\s+/g, '')}_Members`;
   const rows = members.map((m, i) => {
     const { label, days } = getStatus(m);
     return {
@@ -65,7 +66,7 @@ export const exportMembersToExcel = (members, filenamePrefix = 'PowerFitnessGym_
   const expired = members.filter((m) => getStatus(m).label === 'Expired').length;
 
   const summary = XLSX.utils.aoa_to_sheet([
-    ['Power Fitness Gym — Membership Report'],
+    [`${gymName} — Membership Report`],
     ['Generated on', format(new Date(), 'MMM dd, yyyy hh:mm a')],
     [],
     ['Summary'],

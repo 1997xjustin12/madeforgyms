@@ -6,7 +6,7 @@ import GymLogo from '../components/GymLogo';
 
 export default function Home() {
   const navigate = useNavigate();
-  const { isAdminLoggedIn } = useGym();
+  const { isAdminLoggedIn, settings } = useGym();
 
   useEffect(() => { sessionStorage.removeItem('memberPortal_id'); }, []);
 
@@ -120,7 +120,7 @@ export default function Home() {
       {/* Footer */}
       <div className="text-center pb-6 px-4 space-y-1 animate-fade-in-up animation-delay-2000 border-t border-slate-800/60 pt-4">
         <p className="text-slate-600 text-xs">
-          © {new Date().getFullYear()} Power Fitness Gym · All rights reserved
+          © {new Date().getFullYear()} {settings.gymName || 'MadeForGyms'} · All rights reserved
         </p>
         <p className="text-slate-700 text-xs">
           2nd Floor Fernandez Bldg, Saavedra St, Toril, Davao City

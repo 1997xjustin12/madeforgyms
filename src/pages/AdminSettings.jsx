@@ -42,7 +42,7 @@ export default function AdminSettings() {
   useEffect(() => {
     setForm((f) => ({
       ...f,
-      gymName:        settings.gymName        || 'Power Fitness Gym',
+      gymName:        settings.gymName        || '',
       gcashNumber:    settings.gcashNumber,
       gcashName:      settings.gcashName,
       coachingPlans:  settings.coachingPlans  || [],

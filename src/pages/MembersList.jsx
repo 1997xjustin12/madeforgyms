@@ -78,7 +78,7 @@ export default function MembersList() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
-                exportMembersToExcel(members);
+                exportMembersToExcel(members, settings.gymName);
                 toast.success('Excel file downloaded!');
               }}
               className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2.5 rounded-xl font-semibold text-sm transition-colors"

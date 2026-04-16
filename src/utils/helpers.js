@@ -15,8 +15,7 @@ export const formatPhoneDisplay = (num) => {
   return num;
 };
 
-export const buildSmsMessage = (member, daysLeft) => {
-  const gymName = 'Power Fitness Gym';
+export const buildSmsMessage = (member, daysLeft, gymName = 'MadeForGyms') => {
   if (daysLeft === 0) {
     return `Hi ${member.name}! Your ${gymName} membership expires TODAY. Renew now to continue enjoying our facilities. Call us or visit the gym. Thank you!`;
   }

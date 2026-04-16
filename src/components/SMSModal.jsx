@@ -4,8 +4,8 @@ import { useGym } from '../context/GymContext';
 import toast from 'react-hot-toast';
 
 export default function SMSModal({ member, daysLeft, onClose }) {
-  const { logAction } = useGym();
-  const message = buildSmsMessage(member, daysLeft);
+  const { logAction, settings } = useGym();
+  const message = buildSmsMessage(member, daysLeft, settings.gymName);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message).then(() => {

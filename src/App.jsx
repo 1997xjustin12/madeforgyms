@@ -65,7 +65,9 @@ export default function App() {
         <LoadingScreen />
       ) : (
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<MadeForGyms />} />
+          <Route path="/portal" element={<Home />} />
+          <Route path="/mfg" element={<Navigate to="/" replace />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
           <Route path="/admin/members" element={<PrivateRoute><MembersList /></PrivateRoute>} />
@@ -78,7 +80,6 @@ export default function App() {
           <Route path="/admin/attendance" element={<PrivateRoute><AdminAttendance /></PrivateRoute>} />
           <Route path="/admin/instructors" element={<PrivateRoute><AdminInstructors /></PrivateRoute>} />
           <Route path="/landing" element={<Landing />} />
-          <Route path="/mfg" element={<MadeForGyms />} />
           <Route path="/member" element={<MemberPortal />} />
           <Route path="/coach" element={<CoachLogin />} />
           <Route path="/admin/coach" element={<Navigate to="/coach" replace />} />

@@ -136,21 +136,27 @@ export default function MemberPortal() {
   // ── Home View ──────────────────────────────────────────────────
   if (view === 'home') {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col overflow-hidden">
-        {/* Blobs */}
+      <div className="min-h-screen bg-[#030712] flex flex-col overflow-hidden">
+        {/* Background grid */}
+        <div className="fixed inset-0 -z-10 pointer-events-none"
+          style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+        {/* Orbs */}
         <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] bg-sky-500/10 rounded-full blur-3xl animate-blob" />
-          <div className="absolute bottom-[-10%] right-[-5%] w-[350px] h-[350px] bg-orange-500/8 rounded-full blur-3xl animate-blob animation-delay-3000" />
+          <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] rounded-full blur-3xl"
+            style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.08) 0%, transparent 70%)' }} />
+          <div className="absolute bottom-[-10%] right-[-5%] w-[350px] h-[350px] rounded-full blur-3xl"
+            style={{ background: 'radial-gradient(circle, rgba(56,189,248,0.05) 0%, transparent 70%)' }} />
         </div>
 
         {/* Header */}
-        <div className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800">
+        <div className="sticky top-0 z-40 backdrop-blur-xl border-b border-white/5" style={{ background: 'rgba(0,0,0,0.7)' }}>
           <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
             <Link to="/" className="text-slate-400 hover:text-white p-1 transition-colors">
               <ArrowLeft size={20} />
             </Link>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)' }}>
                 <Dumbbell size={16} className="text-white" />
               </div>
               <span className="font-bold text-white">Member Portal</span>
@@ -160,8 +166,9 @@ export default function MemberPortal() {
 
         {/* Hero */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-          <div className="w-20 h-20 bg-sky-500/20 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-sky-500/10">
-            <User size={40} className="text-sky-400" />
+          <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6"
+            style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.2)', boxShadow: '0 0 30px rgba(34,197,94,0.1)' }}>
+            <User size={40} className="text-green-400" />
           </div>
           <h1 className="text-3xl font-black text-white mb-2">Check Your Membership</h1>
           <p className="text-slate-400 text-sm mb-10 max-w-xs">
@@ -170,7 +177,8 @@ export default function MemberPortal() {
 
           <button
             onClick={() => setView('lookup')}
-            className="w-full max-w-xs bg-sky-500 hover:bg-sky-600 text-white font-bold py-4 rounded-2xl text-base transition-all hover:shadow-lg hover:shadow-sky-500/20 hover:-translate-y-0.5"
+            className="w-full max-w-xs text-white font-bold py-4 rounded-2xl text-base transition-all hover:-translate-y-0.5"
+            style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 24px rgba(34,197,94,0.3)' }}
           >
             Check My Membership
           </button>
@@ -196,15 +204,15 @@ export default function MemberPortal() {
   // ── Lookup View ────────────────────────────────────────────────
   if (view === 'lookup') {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col">
+      <div className="min-h-screen bg-[#030712] flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800">
+        <div className="sticky top-0 z-40 backdrop-blur-xl border-b border-white/5" style={{ background: 'rgba(0,0,0,0.7)' }}>
           <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
             <button onClick={goHome} className="text-slate-400 hover:text-white p-1 transition-colors">
               <ArrowLeft size={20} />
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)' }}>
                 <Dumbbell size={16} className="text-white" />
               </div>
               <span className="font-bold text-white">Member Portal</span>
@@ -215,8 +223,8 @@ export default function MemberPortal() {
         <div className="flex-1 flex flex-col items-center justify-center px-6">
           <div className="w-full max-w-sm space-y-6">
             <div className="text-center">
-              <div className="w-14 h-14 bg-sky-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Phone size={26} className="text-sky-400" />
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.2)' }}>
+                <Phone size={26} className="text-green-400" />
               </div>
               <h2 className="text-2xl font-bold text-white mb-1">Enter Your Number</h2>
               <p className="text-slate-400 text-sm">Enter the phone number registered to your gym account</p>
@@ -228,7 +236,10 @@ export default function MemberPortal() {
                 value={phone}
                 onChange={(e) => { setPhone(e.target.value); setNotFound(false); }}
                 placeholder="e.g. 09123456789"
-                className="w-full bg-slate-800 border border-slate-700 focus:border-sky-500/70 text-white rounded-2xl px-5 py-4 outline-none transition-colors placeholder:text-slate-600 text-xl text-center font-mono tracking-widest"
+                className="w-full text-white rounded-2xl px-5 py-4 outline-none transition-colors placeholder:text-slate-600 text-xl text-center font-mono tracking-widest border"
+                style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }}
+                onFocus={(e) => e.target.style.borderColor = 'rgba(74,222,128,0.5)'}
+                onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
               />
 
               {notFound && (
@@ -241,7 +252,8 @@ export default function MemberPortal() {
               <button
                 type="submit"
                 disabled={!phone.trim()}
-                className="w-full bg-sky-500 hover:bg-sky-600 disabled:opacity-40 text-white font-bold py-4 rounded-2xl text-base transition-colors"
+                className="w-full disabled:opacity-40 text-white font-bold py-4 rounded-2xl text-base transition-all hover:-translate-y-0.5"
+                style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 20px rgba(34,197,94,0.25)' }}
               >
                 View My Membership
               </button>
@@ -262,15 +274,15 @@ export default function MemberPortal() {
   // ── Pick View (multiple members, same number) ──────────────────
   if (view === 'pick') {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col">
+      <div className="min-h-screen bg-[#030712] flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800">
+        <div className="sticky top-0 z-40 backdrop-blur-xl border-b border-white/5" style={{ background: 'rgba(0,0,0,0.7)' }}>
           <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
             <button onClick={() => setView('lookup')} className="text-slate-400 hover:text-white p-1 transition-colors">
               <ArrowLeft size={20} />
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)' }}>
                 <Dumbbell size={16} className="text-white" />
               </div>
               <span className="font-bold text-white">Member Portal</span>
@@ -280,8 +292,8 @@ export default function MemberPortal() {
 
         <div className="max-w-lg mx-auto w-full px-4 py-8 space-y-6">
           <div className="text-center">
-            <div className="w-14 h-14 bg-sky-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <User size={28} className="text-sky-400" />
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.2)' }}>
+              <User size={28} className="text-green-400" />
             </div>
             <h2 className="text-xl font-bold text-white mb-1">Who are you?</h2>
             <p className="text-slate-400 text-sm">Multiple members are registered under this number.<br />Please select your name.</p>
@@ -294,13 +306,16 @@ export default function MemberPortal() {
                 <button
                   key={m.id}
                   onClick={() => { setMember(m); sessionStorage.setItem('memberPortal_id', m.id); setView('result'); }}
-                  className="w-full flex items-center gap-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-sky-500/50 rounded-2xl p-4 text-left transition-all"
+                  className="w-full flex items-center gap-4 rounded-2xl p-4 text-left transition-all border hover:border-green-500/40"
+                  style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
                 >
                   <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-700 shrink-0">
                     {m.photo ? (
                       <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-sky-400 font-black text-xl">
+                      <div className="w-full h-full flex items-center justify-center text-green-400 font-black text-xl">
                         {m.name.charAt(0).toUpperCase()}
                       </div>
                     )}
@@ -339,9 +354,9 @@ export default function MemberPortal() {
     const tabEntries = coachEntries.filter((e) => e.type === coachTab);
 
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col">
+      <div className="min-h-screen bg-[#030712] flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800">
+        <div className="sticky top-0 z-40 backdrop-blur-xl border-b border-white/5" style={{ background: 'rgba(0,0,0,0.7)' }}>
           <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
             <button onClick={() => setView('result')} className="text-slate-400 hover:text-white p-1 transition-colors">
               <ArrowLeft size={20} />
@@ -371,7 +386,7 @@ export default function MemberPortal() {
                   key={key}
                   onClick={() => { setCoachTab(key); setExpandedEntryId(null); }}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-colors border ${
-                    isActive ? `${bg} ${color} ${border}` : 'bg-slate-800 text-slate-500 border-slate-700/50'
+                    isActive ? `${bg} ${color} ${border}` : 'text-slate-500 border-white/8'
                   }`}
                 >
                   <Icon size={13} />
@@ -409,7 +424,7 @@ export default function MemberPortal() {
                     className={`w-full text-left rounded-2xl border transition-all overflow-hidden ${
                       isExpanded
                         ? `${tab.bg} ${tab.border}`
-                        : 'bg-slate-800 border-slate-700/50 hover:border-slate-600'
+                        : 'border-white/8 hover:border-white/20'
                     }`}
                   >
                     {/* Row header */}
@@ -505,9 +520,9 @@ export default function MemberPortal() {
     });
 
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col">
+      <div className="min-h-screen bg-[#030712] flex flex-col">
         {/* Sticky header */}
-        <div className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800">
+        <div className="sticky top-0 z-40 backdrop-blur-xl border-b border-white/5" style={{ background: 'rgba(0,0,0,0.7)' }}>
           <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
             <button onClick={goHome} className="text-slate-400 hover:text-white p-1 transition-colors">
               <ArrowLeft size={20} />
@@ -525,7 +540,7 @@ export default function MemberPortal() {
         <div className="max-w-lg mx-auto w-full px-4 py-5 space-y-3 pb-8">
 
           {/* ── Hero card ── */}
-          <div className="bg-slate-800 rounded-2xl border border-slate-700/50 overflow-hidden">
+          <div className="rounded-2xl border border-white/8 overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)' }}>
             {/* Gradient banner */}
             <div className={`h-20 bg-gradient-to-b ${theme.gradient} to-transparent`} />
             {/* Avatar row */}
@@ -534,7 +549,7 @@ export default function MemberPortal() {
                 {member.photo ? (
                   <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-sky-400 font-black text-3xl">
+                  <div className="w-full h-full flex items-center justify-center text-green-400 font-black text-3xl">
                     {member.name.charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -558,7 +573,7 @@ export default function MemberPortal() {
           </div>
 
           {/* ── Membership timeline card ── */}
-          <div className="bg-slate-800 rounded-2xl border border-slate-700/50 p-5">
+          <div className="rounded-2xl border border-white/8 p-5" style={{ background: 'rgba(255,255,255,0.03)' }}>
             <p className="text-slate-500 text-[11px] font-bold uppercase tracking-widest mb-3">Membership</p>
             <div className="flex items-baseline gap-2 mb-1">
               <span className={`text-4xl font-black tabular-nums leading-none ${
@@ -594,11 +609,11 @@ export default function MemberPortal() {
           {/* ── Coaching card (unified: status + coach profile + program tabs) ── */}
           {coachInfo && (() => {
             const coachExpired = coachDays !== null && coachDays < 0;
-            const borderColor  = coachExpired ? 'border-slate-700/40' : 'border-yellow-500/20';
+            const borderColor  = coachExpired ? 'border-white/5' : 'border-yellow-500/20';
             const labelColor   = coachExpired ? 'text-slate-500/80'   : 'text-yellow-500/80';
             const nameColor    = coachExpired ? 'text-slate-400'      : 'text-white';
             return (
-              <div className={`bg-slate-800 rounded-2xl border overflow-hidden ${borderColor}`}>
+              <div className={`rounded-2xl border overflow-hidden ${borderColor}`} style={{ background: 'rgba(255,255,255,0.03)' }}>
                 {/* Coach profile row */}
                 <div className="flex items-center gap-3 p-4">
                   <div className={`w-12 h-12 rounded-xl overflow-hidden bg-slate-700 shrink-0 ${coachExpired ? 'opacity-50' : ''}`}>
@@ -633,7 +648,7 @@ export default function MemberPortal() {
                 </div>
 
                 {/* Program quick-access tabs */}
-                <div className={`border-t border-slate-700/50 px-4 py-3 grid grid-cols-3 gap-2 ${coachExpired ? 'opacity-60' : ''}`}>
+                <div className={`border-t border-white/8 px-4 py-3 grid grid-cols-3 gap-2 ${coachExpired ? 'opacity-60' : ''}`}>
                   {COACH_TABS.map(({ key, label, Icon, color, bg, border }) => {
                     const count = coachEntries.filter((e) => e.type === key).length;
                     return (
@@ -643,7 +658,7 @@ export default function MemberPortal() {
                         className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border transition-all active:scale-95 ${
                           count > 0
                             ? `${bg} ${color} ${border}`
-                            : 'bg-slate-700/30 text-slate-600 border-slate-700/30'
+                            : 'bg-white/5 text-slate-600 border-white/8'
                         }`}
                       >
                         <Icon size={16} />
@@ -661,7 +676,7 @@ export default function MemberPortal() {
 
           {/* ── Coaching history (collapsible) ── */}
           {pastCoaching.length > 0 && (
-            <div className="bg-slate-800/60 rounded-2xl border border-slate-700/40 overflow-hidden">
+            <div className="rounded-2xl border border-white/8 overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)' }}>
               <button
                 onClick={() => setHistoryOpen((o) => !o)}
                 className="w-full flex items-center justify-between px-4 py-3.5 text-left"
@@ -675,7 +690,7 @@ export default function MemberPortal() {
               </button>
 
               {historyOpen && (
-                <div className="border-t border-slate-700/40 divide-y divide-slate-700/30">
+                <div className="border-t border-white/8 divide-y divide-white/5">
                   {pastCoaching.map((sub) => (
                     <div key={sub.id} className="px-4 py-3 flex items-center gap-3">
                       <div className="w-8 h-8 rounded-xl bg-slate-700 flex items-center justify-center shrink-0">
@@ -699,7 +714,8 @@ export default function MemberPortal() {
           {/* ── Back button ── */}
           <button
             onClick={goHome}
-            className="w-full bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 text-slate-400 hover:text-slate-200 font-medium py-3.5 rounded-2xl transition-colors flex items-center justify-center gap-2 mt-2"
+            className="w-full border border-white/10 text-slate-400 hover:text-slate-200 font-medium py-3.5 rounded-2xl transition-all flex items-center justify-center gap-2 mt-2 hover:border-white/20"
+            style={{ background: 'rgba(255,255,255,0.04)' }}
           >
             <ArrowLeft size={15} /> Back to Home
           </button>
@@ -804,10 +820,10 @@ function RenewalModal({ member, settings, MEMBERSHIP_OPTIONS, submitRenewalReque
 
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl border border-slate-700 flex flex-col max-h-[85vh]">
+      <div className="rounded-2xl w-full max-w-md shadow-2xl border border-white/10 flex flex-col max-h-[85vh]" style={{ background: '#0f172a' }}>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700 shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/8 shrink-0">
           <div className="flex items-center gap-2">
             <CreditCard size={18} className="text-green-400" />
             <h3 className="text-white font-semibold">Pay via GCash</h3>

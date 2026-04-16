@@ -85,15 +85,20 @@ export default function CheckIn() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col">
+    <div className="min-h-screen bg-[#030712] flex flex-col">
+      {/* Background grid */}
+      <div className="fixed inset-0 -z-10 pointer-events-none"
+        style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800">
+      <div className="sticky top-0 z-40 backdrop-blur-xl border-b border-white/5" style={{ background: 'rgba(0,0,0,0.7)' }}>
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
           <Link to="/" className="text-slate-400 hover:text-white p-1">
             <ArrowLeft size={20} />
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)' }}>
               <Dumbbell size={16} className="text-white" />
             </div>
             <span className="font-bold text-white">Gym Check-In</span>
@@ -108,8 +113,9 @@ export default function CheckIn() {
         {/* Hero */}
         {!searched && (
           <div className="text-center pt-4">
-            <div className="w-16 h-16 bg-orange-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <CheckCircle size={32} className="text-orange-400" />
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+              style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.2)' }}>
+              <CheckCircle size={32} className="text-green-400" />
             </div>
             <h1 className="text-2xl font-bold text-white mb-2">Welcome!</h1>
             <p className="text-slate-400 text-sm">Search your name or contact number to check in</p>
@@ -125,12 +131,16 @@ export default function CheckIn() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Name or phone number..."
-              className="w-full bg-slate-800 border border-slate-700 focus:border-orange-500/60 text-white rounded-2xl pl-12 pr-4 py-4 outline-none transition-colors placeholder:text-slate-600 text-base"
+              className="w-full text-white rounded-2xl pl-12 pr-4 py-4 outline-none transition-colors placeholder:text-slate-600 text-base border"
+              style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }}
+              onFocus={(e) => e.target.style.borderColor = 'rgba(74,222,128,0.5)'}
+              onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-2xl transition-colors text-base"
+            className="w-full text-white font-bold py-4 rounded-2xl transition-all text-base hover:-translate-y-0.5"
+            style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 20px rgba(34,197,94,0.25)' }}
           >
             Search
           </button>
@@ -154,10 +164,11 @@ export default function CheckIn() {
                 return (
                   <div
                     key={member.id}
-                    className={`bg-slate-800 rounded-2xl border p-4 space-y-3 ${
-                      record && !record.duplicate ? 'border-green-500/40' :
-                      isExpired ? 'border-red-500/30' : 'border-slate-700/50'
-                    }`}
+                    className={`rounded-2xl border p-4 space-y-3`}
+                    style={{
+                      background: 'rgba(255,255,255,0.03)',
+                      borderColor: record && !record.duplicate ? 'rgba(74,222,128,0.4)' : isExpired ? 'rgba(248,113,113,0.3)' : 'rgba(255,255,255,0.08)',
+                    }}
                   >
                     {/* Member info */}
                     <div className="flex items-center gap-3">
@@ -217,7 +228,8 @@ export default function CheckIn() {
                       <button
                         onClick={() => handleCheckIn(member)}
                         disabled={!!checking || isExpired}
-                        className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white font-bold py-3 rounded-xl transition-colors"
+                        className="w-full flex items-center justify-center gap-2 disabled:opacity-40 text-white font-bold py-3 rounded-xl transition-all hover:-translate-y-0.5"
+                        style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 16px rgba(34,197,94,0.2)' }}
                       >
                         {checking === member.id
                           ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

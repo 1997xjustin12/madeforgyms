@@ -91,7 +91,7 @@ export default function AdminDashboard() {
             <p className="text-slate-300 text-sm font-medium">
               {new Date().toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' })}
             </p>
-            <p className="text-slate-500 text-xs mt-0.5">Power Fitness Gym</p>
+            <p className="text-slate-500 text-xs mt-0.5">{settings.gymName || 'MadeForGyms'}</p>
           </div>
         </div>
 
@@ -110,7 +110,7 @@ export default function AdminDashboard() {
               </p>
             </div>
             <button
-              onClick={() => { exportJSON(members); recordBackup(); toast.success('Backup downloaded!'); }}
+              onClick={() => { exportJSON(members, settings.gymName); recordBackup(); toast.success('Backup downloaded!'); }}
               className="shrink-0 flex items-center gap-1.5 bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold text-xs px-3 py-2 rounded-xl transition-colors"
             >
               <Download size={13} /> Backup Now
@@ -233,13 +233,13 @@ export default function AdminDashboard() {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => { exportMembersToExcel(members); toast.success('Excel downloaded!'); }}
+                  onClick={() => { exportMembersToExcel(members, settings.gymName); toast.success('Excel downloaded!'); }}
                   className="flex-1 flex items-center justify-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-2 rounded-xl transition-colors"
                 >
                   <Download size={13} /> Excel
                 </button>
                 <button
-                  onClick={() => { exportJSON(members); recordBackup(); toast.success('Backup downloaded!'); }}
+                  onClick={() => { exportJSON(members, settings.gymName); recordBackup(); toast.success('Backup downloaded!'); }}
                   className="flex-1 flex items-center justify-center gap-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold py-2 rounded-xl transition-colors"
                 >
                   <Download size={13} /> JSON

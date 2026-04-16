@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import { Navigate } from 'react-router-dom';
+import { useGym } from '../context/GymContext';
 import {
   Dumbbell, Users, CreditCard, Bell, ClipboardList,
   Smartphone, ChevronRight, Check, Star, Menu, X,
@@ -190,8 +192,11 @@ const PLANS = [
 
 /* ── Main Component ─────────────────────────────────────────── */
 export default function MadeForGyms() {
+  const { isAdminLoggedIn } = useGym();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  if (isAdminLoggedIn) return <Navigate to="/admin" replace />;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -221,10 +226,16 @@ export default function MadeForGyms() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <a href="/admin/login" className="text-sm text-slate-400 hover:text-white transition-colors font-medium px-4 py-2">
-              Log in
+            <a href="/member" className="text-sm text-slate-400 hover:text-white transition-colors font-medium px-3 py-2">
+              Member Portal
             </a>
-            <a href="/admin/login"
+            <a href="/checkin" className="text-sm text-slate-400 hover:text-white transition-colors font-medium px-3 py-2">
+              Check-In
+            </a>
+            <a href="/admin/login" className="text-sm text-slate-400 hover:text-white transition-colors font-medium px-3 py-2">
+              Login
+            </a>
+            <a href="/portal"
               className="text-sm font-bold px-5 py-2.5 rounded-xl transition-all hover:-translate-y-0.5"
               style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 20px rgba(34,197,94,0.3)' }}>
               Get Started
@@ -245,11 +256,21 @@ export default function MadeForGyms() {
                 {l}
               </a>
             ))}
-            <a href="/admin/login"
-              className="block text-center font-bold py-3.5 rounded-xl mt-2"
-              style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)' }}>
-              Get Started
-            </a>
+            <div className="border-t border-white/8 pt-4 space-y-2">
+              <a href="/member" onClick={() => setMenuOpen(false)}
+                className="block text-center font-semibold py-3 rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all">
+                Member Portal
+              </a>
+              <a href="/checkin" onClick={() => setMenuOpen(false)}
+                className="block text-center font-semibold py-3 rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all">
+                Check-In
+              </a>
+              <a href="/admin/login" onClick={() => setMenuOpen(false)}
+                className="block text-center font-bold py-3.5 rounded-xl"
+                style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)' }}>
+                Admin Login
+              </a>
+            </div>
           </div>
         )}
       </nav>
@@ -281,7 +302,7 @@ export default function MadeForGyms() {
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-3 animate-fade-in-up" style={{ animationDelay: '220ms' }}>
-              <a href="/admin/login"
+              <a href="/portal"
                 className="group flex items-center justify-center gap-2 font-bold px-7 py-3.5 rounded-xl text-sm transition-all hover:-translate-y-1 hover:shadow-2xl"
                 style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 28px rgba(34,197,94,0.35)' }}>
                 Get Started
@@ -721,7 +742,7 @@ export default function MadeForGyms() {
                       ))}
                     </ul>
 
-                    <a href="/admin/login"
+                    <a href="/portal"
                       className="block text-center font-bold py-3.5 rounded-xl text-sm transition-all hover:-translate-y-0.5"
                       style={highlight
                         ? { background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 20px rgba(34,197,94,0.3)' }
@@ -771,7 +792,7 @@ export default function MadeForGyms() {
                   Modern management starts today.
                 </p>
 
-                <a href="/admin/login"
+                <a href="/portal"
                   className="group inline-flex items-center gap-2 font-bold px-10 py-5 rounded-2xl text-lg transition-all hover:-translate-y-1 hover:shadow-2xl"
                   style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 40px rgba(34,197,94,0.35)' }}>
                   Start Managing Your Gym
@@ -796,7 +817,7 @@ export default function MadeForGyms() {
               <a href="#features" className="hover:text-white transition-colors">Features</a>
               <a href="#how-it-works" className="hover:text-white transition-colors">How it Works</a>
               <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-              <a href="/admin/login" className="hover:text-white transition-colors">Admin Login</a>
+              <a href="/portal" className="hover:text-white transition-colors">Log in</a>
               <a href="/member" className="hover:text-white transition-colors">Member Portal</a>
               <a href="/coach" className="hover:text-white transition-colors">Coach Portal</a>
             </div>

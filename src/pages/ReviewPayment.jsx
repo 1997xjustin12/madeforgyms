@@ -4,7 +4,7 @@ import { CheckCircle, XCircle, ImageIcon, Clock, AlertTriangle } from 'lucide-re
 import { supabase } from '../lib/supabase';
 import { addDays, addMonths } from 'date-fns';
 import toast, { Toaster } from 'react-hot-toast';
-import GymLogo from '../components/GymLogo';
+import { useGym } from '../context/GymContext';
 
 const PLAN_LABELS = {
   monthly:       '1 Month',
@@ -32,6 +32,7 @@ function fmtDate(str) {
 
 export default function ReviewPayment() {
   const { token } = useParams();
+  const { settings } = useGym();
   const [request, setRequest]     = useState(null);
   const [loading, setLoading]     = useState(true);
   const [notFound, setNotFound]   = useState(false);
@@ -156,8 +157,7 @@ export default function ReviewPayment() {
       {/* Header */}
       <div className="bg-slate-900/95 border-b border-slate-800">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
-          <GymLogo size={36} />
-          <span className="font-bold text-white">Power Fitness Gym</span>
+          <span className="font-bold text-white">{settings.gymName || 'MadeForGyms'}</span>
         </div>
       </div>
 
