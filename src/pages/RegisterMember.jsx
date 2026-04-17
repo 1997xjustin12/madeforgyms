@@ -32,7 +32,7 @@ export default function RegisterMember() {
   const { id } = useParams();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
-  const { addMember, updateMember, deleteMember, getMemberById, settings, instructors } = useGym();
+  const { addMember, updateMember, deleteMember, getMemberById, settings, instructors, gymSlug } = useGym();
   const activeInstructors = instructors.filter((i) => i.is_active);
   const activePromos = settings.promos?.filter((p) => p.active) || [];
 
@@ -60,7 +60,7 @@ export default function RegisterMember() {
         });
       } else {
         toast.error('Member not found');
-        navigate('/admin/members');
+        navigate(`/${gymSlug}/admin/members`);
       }
     }
   }, [id, isEdit]); // eslint-disable-line
@@ -81,7 +81,7 @@ export default function RegisterMember() {
         await addMember(form);
         toast.success('Member registered!');
       }
-      navigate('/admin/members');
+      navigate(`/${gymSlug}/admin/members`);
     } catch (err) {
       console.error(err);
       toast.error(err.message || 'Something went wrong. Please try again.');
@@ -95,7 +95,7 @@ export default function RegisterMember() {
     try {
       await deleteMember(id);
       toast.success('Member deleted.');
-      navigate('/admin/members');
+      navigate(`/${gymSlug}/admin/members`);
     } catch (err) {
       toast.error(err.message || 'Failed to delete member.');
       setDeleting(false);
@@ -363,7 +363,7 @@ export default function RegisterMember() {
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => navigate(`/admin/members/${id}/history`)}
+                onClick={() => navigate(`/${gymSlug}/admin/members/${id}/history`)}
                 className="flex-1 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-semibold py-3.5 rounded-2xl transition-colors text-sm"
               >
                 <History size={16} /> View History

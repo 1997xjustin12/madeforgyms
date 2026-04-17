@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useGym } from '../context/GymContext';
 import { supabase } from '../lib/supabase';
 import { differenceInDays } from 'date-fns';
 import {
@@ -30,6 +31,7 @@ function fmtDate(str) {
 export default function CoachMemberDetail() {
   const { code, memberId } = useParams();
   const navigate = useNavigate();
+  const { gymId } = useGym();
 
   const [instructor, setInstructor] = useState(null);
   const [member, setMember]         = useState(null);
@@ -56,15 +58,17 @@ export default function CoachMemberDetail() {
       const { data: inst, error: instErr } = await supabase
         .from('instructors')
         .select('id, name, photo_url, specialty')
+        .eq('gym_id', gymId)
         .eq('access_code', code.toUpperCase())
         .single();
       if (instErr || !inst) { setNotFound(true); setLoading(false); return; }
       setInstructor(inst);
 
-      // Load member (must belong to this coach)
+      // Load member (must belong to this coach and this gym)
       const { data: mem, error: memErr } = await supabase
         .from('members')
         .select('*')
+        .eq('gym_id', gymId)
         .eq('id', memberId)
         .eq('instructor_id', inst.id)
         .single();
@@ -75,6 +79,7 @@ export default function CoachMemberDetail() {
       const { data: ents } = await supabase
         .from('coach_entries')
         .select('*')
+        .eq('gym_id', gymId)
         .eq('instructor_id', inst.id)
         .eq('member_id', memberId)
         .order('created_at', { ascending: false });
@@ -82,7 +87,7 @@ export default function CoachMemberDetail() {
       setLoading(false);
     };
     load();
-  }, [code, memberId]);
+  }, [code, memberId, gymId]);
 
   const openAdd = () => {
     setEditEntry(null);
@@ -120,6 +125,7 @@ export default function CoachMemberDetail() {
         const { data, error } = await supabase
           .from('coach_entries')
           .insert([{
+            gym_id:        gymId,
             instructor_id: instructor.id,
             member_id:     member.id,
             type:          activeTab,

@@ -83,6 +83,7 @@ export default function ReviewPayment() {
       if (reqErr) throw reqErr;
 
       await supabase.from('activity_logs').insert([{
+        gym_id:        request.gym_id,
         action:        'PAYMENT_APPROVED',
         description:   `Approved GCash payment ₱${request.amount} — renewed ${request.membership_type} for: ${request.member_name}`,
         member_name:   request.member_name,
@@ -109,6 +110,7 @@ export default function ReviewPayment() {
       if (error) throw error;
 
       await supabase.from('activity_logs').insert([{
+        gym_id:       request.gym_id,
         action:       'PAYMENT_REJECTED',
         description:  `Rejected GCash payment for: ${request.member_name}`,
         member_name:  request.member_name,

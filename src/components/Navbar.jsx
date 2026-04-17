@@ -6,17 +6,19 @@ import GymLogo from './GymLogo';
 import { useState, useEffect } from 'react';
 
 export default function Navbar({ title, showBack }) {
-  const { isAdminLoggedIn, adminLogout, getExpiringMembers, pendingRenewals, settings } = useGym();
+  const { isAdminLoggedIn, adminLogout, getExpiringMembers, pendingRenewals, settings, gymSlug } = useGym();
   const navigate = useNavigate();
   const location = useLocation();
   const expiring = getExpiringMembers();
   const [moreOpen, setMoreOpen] = useState(false);
   useEffect(() => { setMoreOpen(false); }, [location.pathname]);
 
+  const p = (path) => `/${gymSlug}/${path}`;
+
   const handleLogout = async () => {
     await adminLogout();
     toast.success('Logged out');
-    navigate('/');
+    navigate(`/${gymSlug}`);
   };
 
   return (
@@ -34,7 +36,7 @@ export default function Navbar({ title, showBack }) {
                 <ArrowLeft size={20} />
               </button>
             ) : (
-              <Link to={isAdminLoggedIn ? '/admin' : '/'} className="flex items-center gap-2 shrink-0">
+              <Link to={isAdminLoggedIn ? p('admin') : '/'} className="flex items-center gap-2 shrink-0">
                 <GymLogo size={40} />
                 <span className="font-bold text-white">{settings.gymName || 'MadeForGyms'}</span>
               </Link>
@@ -49,14 +51,14 @@ export default function Navbar({ title, showBack }) {
             <div className="flex items-center gap-1">
               {/* Desktop: show all links */}
               <div className="hidden sm:flex items-center gap-1">
-                <NavLink to="/admin" icon={<LayoutDashboard size={16} />} label="Dashboard" active={location.pathname === '/admin'} />
-                <NavLink to="/admin/members" icon={<Users size={16} />} label="Members" active={location.pathname.startsWith('/admin/members')} badge={expiring.length} />
-                <NavLink to="/admin/register" icon={<UserPlus size={16} />} label="Add" active={location.pathname === '/admin/register'} />
-                <NavLink to="/admin/attendance" icon={<CalendarCheck size={16} />} label="Attendance" active={location.pathname === '/admin/attendance'} />
-                <NavLink to="/admin/logs" icon={<ClipboardList size={16} />} label="Logs" active={location.pathname === '/admin/logs'} />
-                <NavLink to="/admin/renewals" icon={<CreditCard size={16} />} label="Payments" active={location.pathname === '/admin/renewals'} badge={pendingRenewals?.length} />
-                <NavLink to="/admin/instructors" icon={<Dumbbell size={16} />} label="Coaches" active={location.pathname === '/admin/instructors'} />
-                <NavLink to="/admin/settings" icon={<Settings size={16} />} label="Settings" active={location.pathname === '/admin/settings'} />
+                <NavLink to={p('admin')} icon={<LayoutDashboard size={16} />} label="Dashboard" active={location.pathname === `/${gymSlug}/admin`} />
+                <NavLink to={p('admin/members')} icon={<Users size={16} />} label="Members" active={location.pathname.startsWith(`/${gymSlug}/admin/members`)} badge={expiring.length} />
+                <NavLink to={p('admin/register')} icon={<UserPlus size={16} />} label="Add" active={location.pathname === `/${gymSlug}/admin/register`} />
+                <NavLink to={p('admin/attendance')} icon={<CalendarCheck size={16} />} label="Attendance" active={location.pathname === `/${gymSlug}/admin/attendance`} />
+                <NavLink to={p('admin/logs')} icon={<ClipboardList size={16} />} label="Logs" active={location.pathname === `/${gymSlug}/admin/logs`} />
+                <NavLink to={p('admin/renewals')} icon={<CreditCard size={16} />} label="Payments" active={location.pathname === `/${gymSlug}/admin/renewals`} badge={pendingRenewals?.length} />
+                <NavLink to={p('admin/instructors')} icon={<Dumbbell size={16} />} label="Coaches" active={location.pathname === `/${gymSlug}/admin/instructors`} />
+                <NavLink to={p('admin/settings')} icon={<Settings size={16} />} label="Settings" active={location.pathname === `/${gymSlug}/admin/settings`} />
               </div>
               <button
                 onClick={handleLogout}
@@ -78,25 +80,25 @@ export default function Navbar({ title, showBack }) {
               {/* Left group */}
               <div className="flex-1 flex items-center justify-around">
                 <MobileNavLink
-                  to="/admin"
+                  to={p('admin')}
                   icon={<LayoutDashboard size={21} />}
                   label="Dashboard"
-                  active={location.pathname === '/admin'}
+                  active={location.pathname === `/${gymSlug}/admin`}
                 />
                 <MobileNavLink
-                  to="/admin/members"
+                  to={p('admin/members')}
                   icon={<Users size={21} />}
                   label="Members"
-                  active={location.pathname.startsWith('/admin/members')}
+                  active={location.pathname.startsWith(`/${gymSlug}/admin/members`)}
                   badge={expiring.length}
                 />
               </div>
 
               {/* Center FAB — Add Member */}
               <Link
-                to="/admin/register"
+                to={p('admin/register')}
                 className={`flex-shrink-0 flex flex-col items-center justify-center w-14 h-14 -mt-5 rounded-2xl shadow-lg transition-all ${
-                  location.pathname === '/admin/register'
+                  location.pathname === `/${gymSlug}/admin/register`
                     ? 'bg-orange-600 shadow-orange-500/40'
                     : 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/30'
                 }`}
@@ -107,29 +109,29 @@ export default function Navbar({ title, showBack }) {
               {/* Right group */}
               <div className="flex-1 flex items-center justify-around">
                 <MobileNavLink
-                  to="/admin/renewals"
+                  to={p('admin/renewals')}
                   icon={<CreditCard size={21} />}
                   label="Payments"
-                  active={location.pathname === '/admin/renewals'}
+                  active={location.pathname === `/${gymSlug}/admin/renewals`}
                   badge={pendingRenewals?.length}
                 />
                 <MobileNavLink
-                  to="/admin/instructors"
+                  to={p('admin/instructors')}
                   icon={<Dumbbell size={21} />}
                   label="Coaches"
-                  active={location.pathname === '/admin/instructors'}
+                  active={location.pathname === `/${gymSlug}/admin/instructors`}
                 />
                 {/* More button — opens sheet */}
                 <button
                   onClick={() => setMoreOpen(true)}
                   className={`relative flex flex-col items-center gap-0.5 flex-1 py-1.5 rounded-xl transition-colors ${
-                    ['/admin/settings', '/admin/logs', '/admin/attendance'].includes(location.pathname)
+                    [`/${gymSlug}/admin/settings`, `/${gymSlug}/admin/logs`, `/${gymSlug}/admin/attendance`].includes(location.pathname)
                       ? 'text-orange-400'
                       : 'text-slate-500'
                   }`}
                 >
                   <div className={`p-1 rounded-lg transition-all ${
-                    ['/admin/settings', '/admin/logs', '/admin/attendance'].includes(location.pathname)
+                    [`/${gymSlug}/admin/settings`, `/${gymSlug}/admin/logs`, `/${gymSlug}/admin/attendance`].includes(location.pathname)
                       ? 'bg-orange-500/15'
                       : ''
                   }`}>
@@ -167,9 +169,9 @@ export default function Navbar({ title, showBack }) {
               {/* Nav items */}
               <div className="px-4 pb-3 space-y-1">
                 {[
-                  { to: '/admin/attendance', icon: <CalendarCheck size={20} />, label: 'Attendance' },
-                  { to: '/admin/logs',       icon: <ClipboardList size={20} />,  label: 'Activity Logs' },
-                  { to: '/admin/settings',   icon: <Settings size={20} />,       label: 'Settings' },
+                  { to: p('admin/attendance'), icon: <CalendarCheck size={20} />, label: 'Attendance' },
+                  { to: p('admin/logs'),       icon: <ClipboardList size={20} />,  label: 'Activity Logs' },
+                  { to: p('admin/settings'),   icon: <Settings size={20} />,       label: 'Settings' },
                 ].map(({ to, icon, label }) => (
                   <Link
                     key={to}

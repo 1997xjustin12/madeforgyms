@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { Navigate } from 'react-router-dom';
 import { useGym } from '../context/GymContext';
 import {
   Dumbbell, Users, CreditCard, Bell, ClipboardList,
@@ -196,7 +195,7 @@ export default function MadeForGyms() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  if (isAdminLoggedIn) return <Navigate to="/admin" replace />;
+  // No redirect — admin belongs to a specific gym, not the platform home
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -226,16 +225,11 @@ export default function MadeForGyms() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <a href="/member" className="text-sm text-slate-400 hover:text-white transition-colors font-medium px-3 py-2">
-              Member Portal
-            </a>
-            <a href="/checkin" className="text-sm text-slate-400 hover:text-white transition-colors font-medium px-3 py-2">
-              Check-In
-            </a>
-            <a href="/admin/login" className="text-sm text-slate-400 hover:text-white transition-colors font-medium px-3 py-2">
-              Login
-            </a>
             <a href="/portal"
+              className="text-sm font-medium px-5 py-2.5 rounded-xl text-slate-300 hover:text-white border border-white/10 hover:bg-white/5 transition-all">
+              Find your gym
+            </a>
+            <a href="/register"
               className="text-sm font-bold px-5 py-2.5 rounded-xl transition-all hover:-translate-y-0.5"
               style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 20px rgba(34,197,94,0.3)' }}>
               Get Started
@@ -257,18 +251,14 @@ export default function MadeForGyms() {
               </a>
             ))}
             <div className="border-t border-white/8 pt-4 space-y-2">
-              <a href="/member" onClick={() => setMenuOpen(false)}
-                className="block text-center font-semibold py-3 rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all">
-                Member Portal
+              <a href="/portal" onClick={() => setMenuOpen(false)}
+                className="block text-center font-bold py-3.5 rounded-xl border border-white/10 text-slate-300 hover:text-white hover:bg-white/5 transition-colors">
+                Find your gym
               </a>
-              <a href="/checkin" onClick={() => setMenuOpen(false)}
-                className="block text-center font-semibold py-3 rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all">
-                Check-In
-              </a>
-              <a href="/admin/login" onClick={() => setMenuOpen(false)}
+              <a href="/register" onClick={() => setMenuOpen(false)}
                 className="block text-center font-bold py-3.5 rounded-xl"
                 style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)' }}>
-                Admin Login
+                Get Started
               </a>
             </div>
           </div>
@@ -302,15 +292,15 @@ export default function MadeForGyms() {
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-3 animate-fade-in-up" style={{ animationDelay: '220ms' }}>
-              <a href="/portal"
+              <a href="/register"
                 className="group flex items-center justify-center gap-2 font-bold px-7 py-3.5 rounded-xl text-sm transition-all hover:-translate-y-1 hover:shadow-2xl"
                 style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 28px rgba(34,197,94,0.35)' }}>
                 Get Started
                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </a>
-              <a href="#features"
+              <a href="/portal"
                 className="flex items-center justify-center gap-2 font-bold px-7 py-3.5 rounded-xl text-sm border border-white/10 bg-white/5 hover:bg-white/10 transition-all">
-                See Features
+                Find your gym
               </a>
             </div>
 
@@ -742,7 +732,7 @@ export default function MadeForGyms() {
                       ))}
                     </ul>
 
-                    <a href="/portal"
+                    <a href="/register"
                       className="block text-center font-bold py-3.5 rounded-xl text-sm transition-all hover:-translate-y-0.5"
                       style={highlight
                         ? { background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 20px rgba(34,197,94,0.3)' }
@@ -792,7 +782,7 @@ export default function MadeForGyms() {
                   Modern management starts today.
                 </p>
 
-                <a href="/portal"
+                <a href="/register"
                   className="group inline-flex items-center gap-2 font-bold px-10 py-5 rounded-2xl text-lg transition-all hover:-translate-y-1 hover:shadow-2xl"
                   style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 40px rgba(34,197,94,0.35)' }}>
                   Start Managing Your Gym
@@ -817,9 +807,7 @@ export default function MadeForGyms() {
               <a href="#features" className="hover:text-white transition-colors">Features</a>
               <a href="#how-it-works" className="hover:text-white transition-colors">How it Works</a>
               <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-              <a href="/portal" className="hover:text-white transition-colors">Log in</a>
-              <a href="/member" className="hover:text-white transition-colors">Member Portal</a>
-              <a href="/coach" className="hover:text-white transition-colors">Coach Portal</a>
+              <a href="/portal" className="hover:text-white transition-colors">Find your gym</a>
             </div>
           </div>
 

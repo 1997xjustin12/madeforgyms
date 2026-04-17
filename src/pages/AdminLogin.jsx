@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Eye, EyeOff, ArrowLeft, Mail, ShieldAlert } from 'lucide-react';
+import { Lock, Eye, EyeOff, ArrowLeft, Mail, ShieldAlert, MapPin, Phone, PauseCircle } from 'lucide-react';
 import { useGym } from '../context/GymContext';
 import toast from 'react-hot-toast';
 
@@ -27,12 +27,12 @@ export default function AdminLogin() {
   const [loading, setLoading]   = useState(false);
   const [attemptsLeft, setAttemptsLeft]   = useState(MAX_ATTEMPTS);
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
-  const { adminLogin, isAdminLoggedIn, settings } = useGym();
+  const { adminLogin, isAdminLoggedIn, settings, gymSlug, gymSuspended } = useGym();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAdminLoggedIn) navigate('/admin', { replace: true });
-  }, [isAdminLoggedIn, navigate]);
+    if (isAdminLoggedIn) navigate(`/${gymSlug}/admin`, { replace: true });
+  }, [isAdminLoggedIn, navigate, gymSlug]);
 
   useEffect(() => {
     const tick = () => {
@@ -73,7 +73,7 @@ export default function AdminLogin() {
       await adminLogin(email, password);
       clearLoginMeta();
       toast.success('Welcome, Admin!');
-      navigate('/admin');
+      navigate(`/${gymSlug}/admin`);
     } catch {
       const meta = getLoginMeta();
       const newAttempts = (meta.attempts || 0) + 1;
@@ -94,6 +94,27 @@ export default function AdminLogin() {
     }
   };
 
+  if (gymSuspended) {
+    return (
+      <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center px-4">
+        <div className="w-full max-w-sm text-center">
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+            style={{ background: 'rgba(251,146,60,0.1)', border: '2px solid rgba(251,146,60,0.3)' }}>
+            <PauseCircle size={36} className="text-orange-400" />
+          </div>
+          <h1 className="text-white font-black text-2xl mb-2">Access Suspended</h1>
+          <p className="text-slate-400 text-sm mb-6">
+            <strong className="text-white">{settings.gymName || 'This gym'}</strong>'s portal has been temporarily suspended. Please contact MadeForGyms to resolve this.
+          </p>
+          <a href="/"
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-white text-sm transition-colors">
+            <ArrowLeft size={14} /> Back to MadeForGyms
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center p-4 sm:px-6 relative overflow-hidden">
 
@@ -113,20 +134,39 @@ export default function AdminLogin() {
           style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(20px)', boxShadow: '0 0 60px rgba(34,197,94,0.06)' }}>
 
           {/* Back */}
-          <Link to="/" className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white text-sm mb-8 transition-colors">
+          <Link to={`/${gymSlug}`} className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white text-sm mb-8 transition-colors">
             <ArrowLeft size={16} /> Back to Home
           </Link>
 
           {/* Branding */}
           <div className="mb-8">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4"
-              style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 20px rgba(34,197,94,0.3)' }}>
-              <Lock size={22} className="text-white" />
-            </div>
+            {settings.gymLogoUrl ? (
+              <img
+                src={settings.gymLogoUrl}
+                alt={settings.gymName}
+                className="w-12 h-12 object-contain rounded-2xl mb-4"
+                style={{ background: 'rgba(255,255,255,0.06)', padding: '4px' }}
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4"
+                style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 20px rgba(34,197,94,0.3)' }}>
+                <Lock size={22} className="text-white" />
+              </div>
+            )}
             <h1 className="text-white font-black text-xl tracking-tight">
               {settings.gymName || 'MadeForGyms'}
             </h1>
             <p className="text-slate-400 text-xs mt-0.5">Admin Portal</p>
+            {settings.gymAddress && (
+              <p className="inline-flex items-center gap-1 text-slate-600 text-xs mt-1">
+                <MapPin size={11} /> {settings.gymAddress}
+              </p>
+            )}
+            {settings.gymContactNumber && (
+              <p className="inline-flex items-center gap-1 text-slate-600 text-xs mt-0.5 ml-3">
+                <Phone size={11} /> {settings.gymContactNumber}
+              </p>
+            )}
           </div>
 
           <h2 className="text-2xl font-bold text-white mb-1">Welcome back</h2>

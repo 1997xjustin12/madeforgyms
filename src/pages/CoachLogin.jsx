@@ -6,7 +6,7 @@ import { useGym } from '../context/GymContext';
 
 export default function CoachLogin() {
   const navigate = useNavigate();
-  const { settings } = useGym();
+  const { settings, gymSlug, gymId } = useGym();
   const [code, setCode]       = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
@@ -23,6 +23,7 @@ export default function CoachLogin() {
       const { data, error: dbErr } = await supabase
         .from('instructors')
         .select('id, is_active')
+        .eq('gym_id', gymId)
         .eq('access_code', trimmed)
         .single();
 
@@ -35,7 +36,7 @@ export default function CoachLogin() {
         return;
       }
 
-      navigate(`/coach/${trimmed}`);
+      navigate(`/${gymSlug}/coach/${trimmed}`);
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {
@@ -59,16 +60,25 @@ export default function CoachLogin() {
       <div className="relative w-full max-w-sm">
 
         {/* Back */}
-        <Link to="/" className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white text-sm mb-8 transition-colors">
-          <ArrowLeft size={16} /> Back to Home
+        <Link to={`/${gymSlug}`} className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white text-sm mb-8 transition-colors">
+          <ArrowLeft size={16} /> Back
         </Link>
 
         {/* Branding */}
         <div className="flex flex-col items-center gap-3 mb-8 text-center">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
-            style={{ background: 'rgba(250,204,21,0.15)', border: '1px solid rgba(250,204,21,0.25)' }}>
-            <Dumbbell size={28} className="text-yellow-400" />
-          </div>
+          {settings.gymLogoUrl ? (
+            <img
+              src={settings.gymLogoUrl}
+              alt={settings.gymName}
+              className="w-14 h-14 object-contain rounded-2xl"
+              style={{ background: 'rgba(255,255,255,0.06)', padding: '5px' }}
+            />
+          ) : (
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
+              style={{ background: 'rgba(250,204,21,0.15)', border: '1px solid rgba(250,204,21,0.25)' }}>
+              <Dumbbell size={28} className="text-yellow-400" />
+            </div>
+          )}
           <div>
             <p className="text-white font-bold text-xl">Coach Portal</p>
             <p className="text-slate-400 text-sm">{settings.gymName || 'MadeForGyms'}</p>

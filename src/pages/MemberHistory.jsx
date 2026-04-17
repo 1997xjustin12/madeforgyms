@@ -31,7 +31,7 @@ function fmtDateTime(str) {
 export default function MemberHistory() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getMemberById, getMemberStatus, MEMBERSHIP_OPTIONS, settings } = useGym();
+  const { getMemberById, getMemberStatus, MEMBERSHIP_OPTIONS, settings, gymSlug, gymId } = useGym();
 
   const [logs, setLogs]       = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,6 +44,7 @@ export default function MemberHistory() {
       const { data, error } = await supabase
         .from('activity_logs')
         .select('*')
+        .eq('gym_id', gymId)
         .eq('member_id', id)
         .order('created_at', { ascending: false });
       if (!error) setLogs(data || []);
@@ -92,7 +93,7 @@ export default function MemberHistory() {
             <p className="text-slate-400 text-sm">{member.name}</p>
           </div>
           <button
-            onClick={() => navigate(`/admin/members/${id}/edit`)}
+            onClick={() => navigate(`/${gymSlug}/admin/members/${id}/edit`)}
             className="ml-auto flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition-colors"
           >
             <Pencil size={14} /> Edit

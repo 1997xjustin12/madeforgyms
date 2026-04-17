@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Save, Upload, X, Settings, Send, Plus, Trash2, Tag, ToggleLeft, ToggleRight, Dumbbell, ChevronRight } from 'lucide-react';
+import { Save, Upload, X, Settings, Send, Plus, Trash2, Tag, ToggleLeft, ToggleRight, Dumbbell, ChevronRight, ImageIcon, Phone, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useGym } from '../context/GymContext';
 import Navbar from '../components/Navbar';
@@ -13,9 +13,14 @@ const PRICE_FIELDS = [
 ];
 
 export default function AdminSettings() {
-  const { settings, saveSettings, instructors } = useGym();
+  const { settings, saveSettings, instructors, gymSlug } = useGym();
   const [form, setForm] = useState({
     gymName: '',
+    gymLogoUrl: null,
+    gymLogoFile: null,
+    gymLogoPreview: null,
+    gymAddress: '',
+    gymContactNumber: '',
     gcashNumber: '',
     gcashName: '',
     coachingPlans: [],
@@ -38,25 +43,29 @@ export default function AdminSettings() {
   const [newCoachPlan, setNewCoachPlan] = useState({ name: '', price: '', duration_days: '' });
   const [addingCoachPlan, setAddingCoachPlan] = useState(false);
   const fileRef = useRef();
+  const logoRef = useRef();
 
   useEffect(() => {
     setForm((f) => ({
       ...f,
-      gymName:        settings.gymName        || '',
-      gcashNumber:    settings.gcashNumber,
-      gcashName:      settings.gcashName,
-      coachingPlans:  settings.coachingPlans  || [],
-      gcashQrUrl:     settings.gcashQrUrl,
-      priceMonthly:       settings.priceMonthly       || '',
-      priceQuarterly:     settings.priceQuarterly     || '',
-      priceSemiAnnual:    settings.priceSemiAnnual    || '',
-      priceAnnual:        settings.priceAnnual        || '',
-      priceStudent:       settings.priceStudent       || '',
-      priceCoaching:      settings.priceCoaching      || '',
-      telegramChatId:   settings.telegramChatId   || '',
-      telegramBotToken: settings.telegramBotToken || '',
-      siteUrl:          settings.siteUrl          || '',
-      promos:           settings.promos           || [],
+      gymName:          settings.gymName          || '',
+      gymLogoUrl:       settings.gymLogoUrl        || null,
+      gymAddress:       settings.gymAddress        || '',
+      gymContactNumber: settings.gymContactNumber  || '',
+      gcashNumber:      settings.gcashNumber,
+      gcashName:        settings.gcashName,
+      coachingPlans:    settings.coachingPlans     || [],
+      gcashQrUrl:       settings.gcashQrUrl,
+      priceMonthly:     settings.priceMonthly      || '',
+      priceQuarterly:   settings.priceQuarterly    || '',
+      priceSemiAnnual:  settings.priceSemiAnnual   || '',
+      priceAnnual:      settings.priceAnnual       || '',
+      priceStudent:     settings.priceStudent      || '',
+      priceCoaching:    settings.priceCoaching     || '',
+      telegramChatId:   settings.telegramChatId    || '',
+      telegramBotToken: settings.telegramBotToken  || '',
+      siteUrl:          settings.siteUrl           || '',
+      promos:           settings.promos            || [],
     }));
   }, [settings]);
 
@@ -96,6 +105,18 @@ export default function AdminSettings() {
     set('gcashQrUrl', null);
   };
 
+  const handleLogoFile = (file) => {
+    if (!file) return;
+    set('gymLogoFile', file);
+    set('gymLogoPreview', URL.createObjectURL(file));
+  };
+
+  const removeLogo = () => {
+    set('gymLogoFile', null);
+    set('gymLogoPreview', null);
+    set('gymLogoUrl', null);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -109,7 +130,8 @@ export default function AdminSettings() {
     }
   };
 
-  const qrDisplay = form.gcashQrPreview || form.gcashQrUrl;
+  const qrDisplay   = form.gcashQrPreview   || form.gcashQrUrl;
+  const logoDisplay = form.gymLogoPreview   || form.gymLogoUrl;
 
   return (
     <div className="min-h-screen bg-slate-900">
@@ -132,6 +154,48 @@ export default function AdminSettings() {
           {/* Gym Identity */}
           <div className="bg-slate-800 rounded-2xl border border-slate-700/50 p-5 space-y-4">
             <h2 className="text-white font-semibold text-base">Gym Identity</h2>
+
+            {/* Logo */}
+            <div>
+              <label className="block text-slate-300 text-sm font-medium mb-1.5">Gym Logo</label>
+              <div className="flex items-start gap-4">
+                {logoDisplay ? (
+                  <div className="relative shrink-0">
+                    <img
+                      src={logoDisplay}
+                      alt="Gym Logo"
+                      className="w-20 h-20 object-contain bg-slate-700 rounded-xl p-1.5"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeLogo}
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center transition-colors"
+                    >
+                      <X size={12} className="text-white" />
+                    </button>
+                  </div>
+                ) : null}
+                <div
+                  onClick={() => logoRef.current?.click()}
+                  className="flex-1 border-2 border-dashed border-slate-600 hover:border-orange-500 rounded-xl p-4 text-center cursor-pointer transition-colors group"
+                >
+                  <ImageIcon size={20} className="mx-auto text-slate-500 group-hover:text-orange-400 mb-1.5 transition-colors" />
+                  <p className="text-slate-400 text-sm">
+                    {logoDisplay ? 'Click to replace logo' : 'Upload gym logo'}
+                  </p>
+                  <p className="text-slate-600 text-xs mt-0.5">PNG, JPG — shown on all portal pages</p>
+                  <input
+                    ref={logoRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleLogoFile(e.target.files[0])}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Name */}
             <div>
               <label className="block text-slate-300 text-sm font-medium mb-1.5">Gym Name</label>
               <input
@@ -142,6 +206,34 @@ export default function AdminSettings() {
                 className="w-full bg-slate-700 border border-slate-600 focus:border-orange-500 text-white rounded-xl px-4 py-3 outline-none transition-colors placeholder:text-slate-500 text-sm"
               />
               <p className="text-slate-500 text-xs mt-1.5">Shown in the navbar and throughout the app.</p>
+            </div>
+
+            {/* Address */}
+            <div>
+              <label className="block text-slate-300 text-sm font-medium mb-1.5">
+                <span className="inline-flex items-center gap-1.5"><MapPin size={13} className="text-slate-400" />Address</span>
+              </label>
+              <input
+                type="text"
+                value={form.gymAddress}
+                onChange={(e) => set('gymAddress', e.target.value)}
+                placeholder="e.g. 123 Fitness St., Makati City"
+                className="w-full bg-slate-700 border border-slate-600 focus:border-orange-500 text-white rounded-xl px-4 py-3 outline-none transition-colors placeholder:text-slate-500 text-sm"
+              />
+            </div>
+
+            {/* Contact Number */}
+            <div>
+              <label className="block text-slate-300 text-sm font-medium mb-1.5">
+                <span className="inline-flex items-center gap-1.5"><Phone size={13} className="text-slate-400" />Contact Number</span>
+              </label>
+              <input
+                type="text"
+                value={form.gymContactNumber}
+                onChange={(e) => set('gymContactNumber', e.target.value)}
+                placeholder="e.g. 09XX XXX XXXX"
+                className="w-full bg-slate-700 border border-slate-600 focus:border-orange-500 text-white rounded-xl px-4 py-3 outline-none transition-colors placeholder:text-slate-500 text-sm"
+              />
             </div>
           </div>
 
@@ -509,7 +601,7 @@ export default function AdminSettings() {
 
           {/* Instructors — link to dedicated page */}
           <Link
-            to="/admin/instructors"
+            to={`/${gymSlug}/admin/instructors`}
             className="flex items-center gap-4 bg-slate-800 hover:bg-slate-750 rounded-2xl border border-yellow-500/20 p-4 transition-colors group"
           >
             <div className="w-10 h-10 bg-yellow-500/20 rounded-xl flex items-center justify-center shrink-0">

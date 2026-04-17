@@ -14,7 +14,7 @@ function toLocalDate(date) {
 }
 
 export default function AdminAttendance() {
-  const { members } = useGym();
+  const { members, gymId } = useGym();
   const [selectedDate, setSelectedDate] = useState(toLocalDate(new Date()));
   const [records, setRecords]           = useState([]);
   const [loading, setLoading]           = useState(true);
@@ -28,6 +28,7 @@ export default function AdminAttendance() {
       const { data, error } = await supabase
         .from('attendance')
         .select('*')
+        .eq('gym_id', gymId)
         .gte('checked_in_at', `${selectedDate}T00:00:00`)
         .lte('checked_in_at', `${selectedDate}T23:59:59`)
         .order('checked_in_at', { ascending: true });
@@ -35,7 +36,7 @@ export default function AdminAttendance() {
       setLoading(false);
     };
     load();
-  }, [selectedDate]);
+  }, [selectedDate, gymId]);
 
   const prevDay = () => {
     const d = new Date(selectedDate);

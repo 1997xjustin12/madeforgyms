@@ -16,7 +16,7 @@ const PAGE_SIZE = 15;
 // 'active' filter includes expiring members since they are still active
 
 export default function MembersList() {
-  const { members, getMemberStatus, deleteMember, renewMember, settings, instructors } = useGym();
+  const { members, getMemberStatus, deleteMember, renewMember, settings, instructors, gymSlug } = useGym();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -88,7 +88,7 @@ export default function MembersList() {
               <span className="hidden sm:block">Export</span>
             </button>
             <button
-              onClick={() => navigate('/admin/register')}
+              onClick={() => navigate(`/${gymSlug}/admin/register`)}
               className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-colors"
             >
               <UserPlus size={16} /> Add
@@ -239,13 +239,13 @@ export default function MembersList() {
                       {/* Action buttons grid */}
                       <div className="grid grid-cols-2 gap-2">
                         <button
-                          onClick={() => navigate(`/admin/members/${member.id}/edit`)}
+                          onClick={() => navigate(`/${gymSlug}/admin/members/${member.id}/edit`)}
                           className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 py-2.5 rounded-xl text-sm font-medium transition-colors"
                         >
                           <Pencil size={14} /> Edit
                         </button>
                         <button
-                          onClick={() => navigate(`/admin/members/${member.id}/history`)}
+                          onClick={() => navigate(`/${gymSlug}/admin/members/${member.id}/history`)}
                           className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 py-2.5 rounded-xl text-sm font-medium transition-colors"
                         >
                           <History size={14} /> History

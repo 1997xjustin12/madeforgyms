@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Dumbbell } from 'lucide-react';
 import { useEffect } from 'react';
@@ -22,32 +22,76 @@ import CoachPortal from './pages/CoachPortal';
 import CoachMemberDetail from './pages/CoachMemberDetail';
 import Landing from './pages/Landing';
 import MadeForGyms from './pages/MadeForGyms';
+import GymPortal from './pages/GymPortal';
+import GymNotFound from './pages/GymNotFound';
+import GymRegister from './pages/GymRegister';
+import PlatformAdmin from './pages/PlatformAdmin';
 
 function PrivateRoute({ children }) {
-  const { isAdminLoggedIn } = useGym();
-  return isAdminLoggedIn ? children : <Navigate to="/admin/login" replace />;
+  const { isAdminLoggedIn, gymSlug } = useGym();
+  return isAdminLoggedIn ? children : <Navigate to={`/${gymSlug}/admin/login`} replace />;
 }
 
 function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center gap-4">
-      <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/30">
+    <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center gap-4">
+      <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
+        style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 30px rgba(34,197,94,0.3)' }}>
         <Dumbbell size={32} className="text-white" />
       </div>
       <div className="flex flex-col items-center gap-2">
-        <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
         <p className="text-slate-400 text-sm">Loading...</p>
       </div>
     </div>
   );
 }
 
-export default function App() {
-  const { loading, authLoading, settings } = useGym();
+
+function GymRoutes() {
+  const { slug } = useParams();
+  const { loadGymBySlug, gymLoading, gymNotFound, settings } = useGym();
 
   useEffect(() => {
-    document.title = settings.gymName || 'MadeForGyms';
+    loadGymBySlug(slug);
+  }, [slug, loadGymBySlug]);
+
+  useEffect(() => {
+    if (settings.gymName && settings.gymName !== 'MadeForGyms') {
+      document.title = settings.gymName;
+    }
   }, [settings.gymName]);
+
+  if (gymLoading) return <LoadingScreen />;
+  if (gymNotFound) return <GymNotFound slug={slug} />;
+
+  return (
+    <Routes>
+      <Route index element={<GymPortal />} />
+      <Route path="admin/login" element={<AdminLogin />} />
+      <Route path="admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
+      <Route path="admin/members" element={<PrivateRoute><MembersList /></PrivateRoute>} />
+      <Route path="admin/register" element={<PrivateRoute><RegisterMember /></PrivateRoute>} />
+      <Route path="admin/members/:id/edit" element={<PrivateRoute><RegisterMember /></PrivateRoute>} />
+      <Route path="admin/members/:id/history" element={<PrivateRoute><MemberHistory /></PrivateRoute>} />
+      <Route path="admin/logs" element={<PrivateRoute><AdminLogs /></PrivateRoute>} />
+      <Route path="admin/settings" element={<PrivateRoute><AdminSettings /></PrivateRoute>} />
+      <Route path="admin/renewals" element={<PrivateRoute><RenewalRequests /></PrivateRoute>} />
+      <Route path="admin/attendance" element={<PrivateRoute><AdminAttendance /></PrivateRoute>} />
+      <Route path="admin/instructors" element={<PrivateRoute><AdminInstructors /></PrivateRoute>} />
+      <Route path="member" element={<MemberPortal />} />
+      <Route path="coach" element={<CoachLogin />} />
+      <Route path="coach/:code" element={<CoachPortal />} />
+      <Route path="coach/:code/member/:memberId" element={<CoachMemberDetail />} />
+      <Route path="checkin" element={<CheckIn />} />
+      <Route path="review/:token" element={<ReviewPayment />} />
+      <Route path="*" element={<Navigate to={`/${slug}`} replace />} />
+    </Routes>
+  );
+}
+
+export default function App() {
+  const { authLoading } = useGym();
 
   return (
     <>
@@ -70,28 +114,18 @@ export default function App() {
         <LoadingScreen />
       ) : (
         <Routes>
+          {/* Platform-level routes */}
           <Route path="/" element={<MadeForGyms />} />
           <Route path="/portal" element={<Home />} />
+          <Route path="/register" element={<GymRegister />} />
           <Route path="/mfg" element={<Navigate to="/" replace />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
-          <Route path="/admin/members" element={<PrivateRoute><MembersList /></PrivateRoute>} />
-          <Route path="/admin/register" element={<PrivateRoute><RegisterMember /></PrivateRoute>} />
-          <Route path="/admin/members/:id/edit" element={<PrivateRoute><RegisterMember /></PrivateRoute>} />
-          <Route path="/admin/members/:id/history" element={<PrivateRoute><MemberHistory /></PrivateRoute>} />
-          <Route path="/admin/logs" element={<PrivateRoute><AdminLogs /></PrivateRoute>} />
-          <Route path="/admin/settings" element={<PrivateRoute><AdminSettings /></PrivateRoute>} />
-          <Route path="/admin/renewals" element={<PrivateRoute><RenewalRequests /></PrivateRoute>} />
-          <Route path="/admin/attendance" element={<PrivateRoute><AdminAttendance /></PrivateRoute>} />
-          <Route path="/admin/instructors" element={<PrivateRoute><AdminInstructors /></PrivateRoute>} />
+          <Route path="/mfg/admin" element={<PlatformAdmin />} />
           <Route path="/landing" element={<Landing />} />
-          <Route path="/member" element={<MemberPortal />} />
-          <Route path="/coach" element={<CoachLogin />} />
-          <Route path="/admin/coach" element={<Navigate to="/coach" replace />} />
-          <Route path="/coach/:code" element={<CoachPortal />} />
-          <Route path="/coach/:code/member/:memberId" element={<CoachMemberDetail />} />
-          <Route path="/checkin" element={<CheckIn />} />
-          <Route path="/review/:token" element={<ReviewPayment />} />
+
+          {/* Gym-scoped routes — /:slug/* */}
+          <Route path="/:slug/*" element={<GymRoutes />} />
+
+          {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       )}

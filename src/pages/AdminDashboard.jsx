@@ -17,7 +17,7 @@ const greeting   = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : '
 const greetEmoji = hour < 12 ? '☀️' : hour < 17 ? '🌤️' : '🌙';
 
 export default function AdminDashboard() {
-  const { members, getMemberStatus, getExpiringMembers, refreshMembers, settings, recordBackup } = useGym();
+  const { members, getMemberStatus, getExpiringMembers, refreshMembers, settings, recordBackup, gymSlug } = useGym();
   const navigate = useNavigate();
   const [smsTarget, setSmsTarget] = useState(null);
   const [showBulkSMS, setShowBulkSMS] = useState(false);
@@ -208,7 +208,7 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
 
             <button
-              onClick={() => navigate('/admin/register')}
+              onClick={() => navigate(`/${gymSlug}/admin/register`)}
               className="group flex items-center gap-4 bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-orange-500/60 rounded-2xl p-4 text-left transition-all hover:shadow-lg hover:shadow-orange-500/5"
             >
               <div className="w-11 h-11 bg-orange-500/20 group-hover:bg-orange-500/30 rounded-xl flex items-center justify-center transition-colors">
@@ -262,7 +262,7 @@ export default function AdminDashboard() {
             </button>
 
             <button
-              onClick={() => navigate('/admin/members')}
+              onClick={() => navigate(`/${gymSlug}/admin/members`)}
               className="group flex items-center gap-4 bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-sky-500/60 rounded-2xl p-4 text-left transition-all"
             >
               <div className="w-11 h-11 bg-sky-500/20 group-hover:bg-sky-500/30 rounded-xl flex items-center justify-center transition-colors">
@@ -282,7 +282,7 @@ export default function AdminDashboard() {
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-white font-bold">Recent Members</h2>
-              <button onClick={() => navigate('/admin/members')} className="text-orange-400 hover:text-orange-300 text-sm font-medium flex items-center gap-1">
+              <button onClick={() => navigate(`/${gymSlug}/admin/members`)} className="text-orange-400 hover:text-orange-300 text-sm font-medium flex items-center gap-1">
                 See all <ChevronRight size={14} />
               </button>
             </div>
@@ -292,7 +292,7 @@ export default function AdminDashboard() {
                 return (
                   <button
                     key={member.id}
-                    onClick={() => navigate(`/admin/members/${member.id}/edit`)}
+                    onClick={() => navigate(`/${gymSlug}/admin/members/${member.id}/edit`)}
                     className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-slate-700/40 transition-colors text-left"
                   >
                     <div className="w-9 h-9 rounded-xl overflow-hidden bg-slate-700 shrink-0">
@@ -324,6 +324,7 @@ export default function AdminDashboard() {
       {showBulkSMS && <BulkSMSModal onClose={() => setShowBulkSMS(false)} />}
       {showRestore && (
         <RestoreModal
+          gymId={gymId}
           onClose={() => setShowRestore(false)}
           onRestored={() => { refreshMembers(); setShowRestore(false); }}
         />

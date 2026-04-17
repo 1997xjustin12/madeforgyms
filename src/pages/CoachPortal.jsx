@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { differenceInDays } from 'date-fns';
 import { Search, X, Dumbbell, ChevronRight, Users } from 'lucide-react';
 import GymLogo from '../components/GymLogo';
+import { useGym } from '../context/GymContext';
 
 function getMemberStatus(endDate) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -17,6 +18,7 @@ function getMemberStatus(endDate) {
 export default function CoachPortal() {
   const { code }   = useParams();
   const navigate   = useNavigate();
+  const { gymSlug, gymId } = useGym();
 
   const [instructor, setInstructor] = useState(null);
   const [members, setMembers]       = useState([]);
@@ -30,6 +32,7 @@ export default function CoachPortal() {
       const { data: inst, error } = await supabase
         .from('instructors')
         .select('*')
+        .eq('gym_id', gymId)
         .eq('access_code', code.toUpperCase())
         .single();
 
@@ -39,6 +42,7 @@ export default function CoachPortal() {
       const { data: mems } = await supabase
         .from('members')
         .select('*')
+        .eq('gym_id', gymId)
         .eq('instructor_id', inst.id)
         .order('name', { ascending: true });
 
@@ -46,7 +50,7 @@ export default function CoachPortal() {
       setLoading(false);
     };
     load();
-  }, [code]);
+  }, [code, gymId]);
 
   const todayMs = new Date().setHours(0, 0, 0, 0);
   const filtered = members.filter((m) =>
@@ -152,7 +156,7 @@ export default function CoachPortal() {
                 return (
                   <button
                     key={member.id}
-                    onClick={() => navigate(`/coach/${code}/member/${member.id}`)}
+                    onClick={() => navigate(`/${gymSlug}/coach/${code}/member/${member.id}`)}
                     className="w-full bg-slate-800 hover:bg-slate-750 active:bg-slate-700 rounded-2xl border border-slate-700/50 p-3.5 flex items-center gap-3 text-left transition-colors"
                   >
                     <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-700 shrink-0">

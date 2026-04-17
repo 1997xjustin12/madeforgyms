@@ -24,7 +24,7 @@ const PLAN_PRICE_KEY = {
 };
 
 export default function MemberPortal() {
-  const { members, getMemberStatus, MEMBERSHIP_OPTIONS, settings, submitRenewalRequest, renewalRequests } = useGym();
+  const { members, getMemberStatus, MEMBERSHIP_OPTIONS, settings, submitRenewalRequest, renewalRequests, gymSlug, gymId } = useGym();
 
   // view: 'home' | 'lookup' | 'pick' | 'result' | 'coach'
   const [view, setView]         = useState('home');
@@ -65,11 +65,13 @@ export default function MemberPortal() {
         supabase
           .from('coach_entries')
           .select('*')
+          .eq('gym_id', gymId)
           .eq('member_id', member.id)
           .order('created_at', { ascending: false }),
         supabase
           .from('instructors')
           .select('id, name, specialty, photo_url')
+          .eq('gym_id', gymId)
           .eq('id', member.instructorId)
           .single(),
       ]);
@@ -85,6 +87,7 @@ export default function MemberPortal() {
     supabase
       .from('coaching_subscriptions')
       .select('*')
+      .eq('gym_id', gymId)
       .eq('member_id', member.id)
       .order('start_date', { ascending: false })
       .then(({ data }) => setCoachingHistory(data || []));
@@ -151,7 +154,7 @@ export default function MemberPortal() {
         {/* Header */}
         <div className="sticky top-0 z-40 backdrop-blur-xl border-b border-white/5" style={{ background: 'rgba(0,0,0,0.7)' }}>
           <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
-            <Link to="/" className="text-slate-400 hover:text-white p-1 transition-colors">
+            <Link to={`/${gymSlug}`} className="text-slate-400 hover:text-white p-1 transition-colors">
               <ArrowLeft size={20} />
             </Link>
             <div className="flex items-center gap-2">

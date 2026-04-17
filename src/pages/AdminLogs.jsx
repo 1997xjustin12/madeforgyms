@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { UserPlus, Pencil, Trash2, MessageSquare, RefreshCw, ClipboardList, Search, X, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { supabase } from '../lib/supabase';
+import { useGym } from '../context/GymContext';
 import Navbar from '../components/Navbar';
 import Pagination from '../components/Pagination';
 import toast from 'react-hot-toast';
@@ -26,6 +27,7 @@ const FILTERS = [
 const PAGE_SIZE = 20;
 
 export default function AdminLogs() {
+  const { gymId } = useGym();
   const [logs, setLogs]             = useState([]);
   const [loading, setLoading]       = useState(true);
   const [filter, setFilter]         = useState('all');
@@ -43,6 +45,7 @@ export default function AdminLogs() {
       let q = supabase
         .from('activity_logs')
         .select('*', { count: 'exact' })
+        .eq('gym_id', gymId)
         .order('performed_at', { ascending: false })
         .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
@@ -59,7 +62,7 @@ export default function AdminLogs() {
     } finally {
       setLoading(false);
     }
-  }, [filter, query, page]);
+  }, [filter, query, page, gymId]);
 
   // Reset to page 1 on filter/search change
   useEffect(() => { setPage(1); }, [filter, query]);
@@ -69,7 +72,7 @@ export default function AdminLogs() {
   const handleClearAll = async () => {
     setClearing(true);
     try {
-      const { error } = await supabase.from('activity_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      const { error } = await supabase.from('activity_logs').delete().eq('gym_id', gymId);
       if (error) throw error;
       setLogs([]);
       setTotal(0);

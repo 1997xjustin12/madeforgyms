@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 
 const BATCH_SIZE = 20;
 
-export default function RestoreModal({ onClose, onRestored }) {
+export default function RestoreModal({ onClose, onRestored, gymId }) {
   const [step, setStep] = useState('upload'); // upload | preview | restoring | done
   const [backup, setBackup] = useState(null);
   const [error, setError] = useState(null);
@@ -43,7 +43,7 @@ export default function RestoreModal({ onClose, onRestored }) {
         const { error: delErr } = await supabase
           .from('members')
           .delete()
-          .neq('id', '00000000-0000-0000-0000-000000000000');
+          .eq('gym_id', gymId);
         if (delErr) throw delErr;
       }
 
@@ -53,6 +53,7 @@ export default function RestoreModal({ onClose, onRestored }) {
       // Insert in batches
       for (let i = 0; i < members.length; i += BATCH_SIZE) {
         const batch = members.slice(i, i + BATCH_SIZE).map((m) => ({
+          gym_id: gymId,
           name: m.name,
           contact_number: m.contactNumber,
           photo_url: m.photo || null,
