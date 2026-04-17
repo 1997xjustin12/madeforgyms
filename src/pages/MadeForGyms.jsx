@@ -7,29 +7,29 @@ import {
   TrendingUp, Clock, Globe, UserCheck, Layers,
 } from 'lucide-react';
 
-/* ── MadeForGyms logo (cropped from canvas) ─────────────────── */
-// Logo content sits at x=284-1210, y=207-515 in the 1536×1024 source PNG
-function MFGLogo({ height = 36 }) {
-  const scale = height / 308;
-  const bgW = Math.round(1536 * scale);
-  const bgH = Math.round(1024 * scale);
-  const bgX = -Math.round(284 * scale);
-  const bgY = -Math.round(207 * scale);
-  const w = Math.round(926 * scale);
+/* ── MadeForGyms logo ───────────────────────────────────────── */
+// Desktop: wide horizontal (2160×480). Mobile: stacked square (1200×960).
+function MFGLogo({ height = 36, mobileHeight }) {
+  const mh = mobileHeight ?? Math.round(height * 1.1);
+  const desktopW = Math.round(height * (2160 / 480));
+  const mobileW  = Math.round(mh   * (1200 / 960));
   return (
-    <div
-      role="img"
-      aria-label="MadeForGyms"
-      style={{
-        width: w,
-        height,
-        backgroundImage: 'url(/madeforgyms.png)',
-        backgroundSize: `${bgW}px ${bgH}px`,
-        backgroundPosition: `${bgX}px ${bgY}px`,
-        backgroundRepeat: 'no-repeat',
-        flexShrink: 0,
-      }}
-    />
+    <>
+      {/* Desktop logo — hidden on mobile */}
+      <img
+        src="/madeforgyms_desktop.png"
+        alt="MadeForGyms"
+        className="hidden sm:block"
+        style={{ height, width: desktopW, objectFit: 'contain', flexShrink: 0 }}
+      />
+      {/* Mobile logo — hidden on sm+ */}
+      <img
+        src="/madeforgyms_mobile.png"
+        alt="MadeForGyms"
+        className="block sm:hidden"
+        style={{ height: mh, width: mobileW, objectFit: 'contain', flexShrink: 0 }}
+      />
+    </>
   );
 }
 
@@ -770,7 +770,7 @@ export default function MadeForGyms() {
 
               <div className="relative">
                 <div className="flex items-center justify-center mx-auto mb-8">
-                  <MFGLogo height={72} />
+                  <MFGLogo height={72} mobileHeight={110} />
                 </div>
 
                 <h2 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight mb-6 leading-tight">
