@@ -154,12 +154,11 @@ const TESTIMONIALS = [
   },
 ];
 
-const FEATURES = [
+const PLAN_FEATURES = [
   'Unlimited members',
   'Member portal & check-in',
   'GCash payment requests',
   'Attendance tracking',
-  'Telegram notifications',
   'Coach & trainer portal',
   'Workout & meal plan builder',
   'Custom promos & pricing',
@@ -709,7 +708,7 @@ export default function MadeForGyms() {
 
                 {/* Features */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-10">
-                  {FEATURES.map((f) => (
+                  {PLAN_FEATURES.map((f) => (
                     <div key={f} className="flex items-center gap-2.5 text-sm text-slate-300">
                       <Check size={15} className="text-green-400 shrink-0" />
                       {f}
@@ -770,7 +769,6 @@ export default function MadeForGyms() {
                     ['No per-member charges',        true,  true,  false],
                     ['Works on mobile',              true,  true,  true ],
                     ['Setup in minutes',             true,  true,  false],
-                    ['Telegram notifications',       true,  false, false],
                     ['Local support',                true,  false, false],
                   ].map(([label, mfg, manual, intl], i) => (
                     <tr key={label}
