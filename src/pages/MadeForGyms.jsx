@@ -10,7 +10,7 @@ import {
 /* ── MadeForGyms logo ───────────────────────────────────────── */
 // Desktop: wide horizontal (2160×480). Mobile: stacked square (1200×960).
 function MFGLogo({ height = 36, mobileHeight }) {
-  const mh = mobileHeight ?? Math.round(height * 1.1);
+  const mh = mobileHeight ?? Math.max(64, Math.round(height * 1.6));
   const desktopW = Math.round(height * (2160 / 480));
   const mobileW  = Math.round(mh   * (1200 / 960));
   return (
@@ -189,7 +189,7 @@ export default function MadeForGyms() {
       }`}>
         <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center">
-            <MFGLogo height={38} />
+            <MFGLogo height={38} mobileHeight={72} />
           </div>
 
           <div className="hidden md:flex items-center gap-8">
@@ -601,13 +601,12 @@ export default function MadeForGyms() {
             </h2>
           </Reveal>
 
-          <div className="relative space-y-4">
-            {/* Vertical line */}
-            <div className="absolute left-8 top-8 bottom-8 w-px hidden md:block" style={{ background: 'linear-gradient(180deg, rgba(34,197,94,0.5), rgba(192,132,252,0.1))' }} />
-
+          <div className="relative">
             {STEPS.map(({ num, color, title, desc }, i) => (
               <Reveal key={num} delay={i * 100}>
-                <div className="flex items-start gap-6 p-6 rounded-2xl border border-white/5 bg-white/2 hover:bg-white/4 hover:border-white/10 transition-all group">
+                {/* Step card */}
+                <div className="flex items-start gap-6 p-6 rounded-2xl border border-white/5 hover:border-white/10 transition-all group"
+                  style={{ background: 'rgba(255,255,255,0.02)' }}>
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-black shrink-0 transition-transform group-hover:scale-110"
                     style={{ background: `${color}15`, color, border: `1px solid ${color}30` }}>
                     {num}
@@ -617,6 +616,15 @@ export default function MadeForGyms() {
                     <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
                   </div>
                 </div>
+
+                {/* Connector — shown between steps, not after the last */}
+                {i < STEPS.length - 1 && (
+                  <div className="flex flex-col items-center my-1" style={{ marginLeft: '35px' }}>
+                    <div className="w-px h-4" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))' }} />
+                    <ChevronRight size={14} className="text-slate-700 rotate-90 -my-0.5" />
+                    <div className="w-px h-4" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.12))' }} />
+                  </div>
+                )}
               </Reveal>
             ))}
           </div>
@@ -829,7 +837,7 @@ export default function MadeForGyms() {
 
               <div className="relative">
                 <div className="flex items-center justify-center mx-auto mb-8">
-                  <MFGLogo height={72} mobileHeight={110} />
+                  <MFGLogo height={72} mobileHeight={140} />
                 </div>
 
                 <h2 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight mb-6 leading-tight">
@@ -858,7 +866,7 @@ export default function MadeForGyms() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-8 mb-8">
             <div className="flex items-center gap-2">
-              <MFGLogo height={34} />
+              <MFGLogo height={34} mobileHeight={64} />
               <p className="text-slate-600 text-xs">madeforgyms.com</p>
             </div>
 
