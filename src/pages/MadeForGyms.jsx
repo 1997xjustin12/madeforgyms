@@ -130,7 +130,7 @@ const STEPS = [
 const TESTIMONIALS = [
   {
     name: 'Coach Renz',
-    role: 'Owner, Iron Peak Gym — Davao City',
+    role: 'Owner, Iron Peak Gym',
     avatar: 'R',
     color: '#4ade80',
     text: '"Before this, I was tracking renewals in a notebook. Now I just check Telegram. Game changer for our 120 members."',
@@ -138,7 +138,7 @@ const TESTIMONIALS = [
   },
   {
     name: 'Ma\'am Liza',
-    role: 'Owner, FitZone Fitness — Cebu',
+    role: 'Owner, FitZone Fitness',
     avatar: 'L',
     color: '#38bdf8',
     text: '"Our coaches love the portal. They add workout plans, members see it instantly. No more group chats for everything."',
@@ -146,7 +146,7 @@ const TESTIMONIALS = [
   },
   {
     name: 'Sir Mark',
-    role: 'Manager, PowerHouse Gym — Manila',
+    role: 'Manager, PowerHouse Gym',
     avatar: 'M',
     color: '#4ade80',
     text: '"GCash collection used to be a nightmare. Now members submit their own receipts and I approve in one click."',
@@ -154,39 +154,17 @@ const TESTIMONIALS = [
   },
 ];
 
-const PLANS = [
-  {
-    name: 'Starter',
-    price: '₱499',
-    period: '/month',
-    desc: 'For gyms just getting started.',
-    highlight: false,
-    color: '#38bdf8',
-    features: [
-      'Up to 100 members',
-      'Member portal & check-in',
-      'GCash payment requests',
-      'Attendance tracking',
-      'Activity logs',
-    ],
-  },
-  {
-    name: 'Pro',
-    price: '₱999',
-    period: '/month',
-    desc: 'The full system for serious gyms.',
-    highlight: true,
-    color: '#4ade80',
-    features: [
-      'Unlimited members',
-      'Telegram notifications',
-      'Coach & trainer portal',
-      'Workout & meal plan builder',
-      'Coaching subscription pricing',
-      'Custom promos & pricing',
-      'Priority support',
-    ],
-  },
+const FEATURES = [
+  'Unlimited members',
+  'Member portal & check-in',
+  'GCash payment requests',
+  'Attendance tracking',
+  'Telegram notifications',
+  'Coach & trainer portal',
+  'Workout & meal plan builder',
+  'Custom promos & pricing',
+  'Activity logs & reports',
+  'Priority support',
 ];
 
 /* ── Main Component ─────────────────────────────────────────── */
@@ -691,60 +669,62 @@ export default function MadeForGyms() {
             <h2 className="text-4xl sm:text-5xl font-black tracking-tight mb-5">
               Simple pricing,<br />serious results
             </h2>
-            <p className="text-slate-400">One gym, one price. No hidden fees, no per-member charges.</p>
+            <p className="text-slate-400">One plan, all features. Pay once to set up, then a low monthly fee to keep it running.</p>
           </Reveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {PLANS.map(({ name, price, period, desc, highlight, color, features }, i) => (
-              <Reveal key={name} delay={i * 100} className="h-full">
-                <div className="relative h-full rounded-2xl p-7 flex flex-col overflow-hidden"
-                  style={{
-                    background: highlight ? `linear-gradient(135deg, rgba(34,197,94,0.08), rgba(34,197,94,0.04))` : 'rgba(255,255,255,0.02)',
-                    border: highlight ? '1px solid rgba(34,197,94,0.35)' : '1px solid rgba(255,255,255,0.08)',
-                    boxShadow: highlight ? '0 0 60px rgba(34,197,94,0.1)' : 'none',
-                  }}>
+          <Reveal>
+            <div className="relative rounded-3xl overflow-hidden"
+              style={{
+                background: 'linear-gradient(135deg, rgba(34,197,94,0.08), rgba(34,197,94,0.03))',
+                border: '1px solid rgba(34,197,94,0.3)',
+                boxShadow: '0 0 80px rgba(34,197,94,0.08)',
+              }}>
 
-                  {highlight && (
-                    <div className="absolute top-4 right-4 text-[11px] font-bold px-3 py-1 rounded-full"
-                      style={{ background: 'rgba(34,197,94,0.2)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.3)' }}>
-                      Most Popular
+              {/* Glow */}
+              <div className="absolute top-0 right-0 w-72 h-72 rounded-full pointer-events-none"
+                style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.07) 0%, transparent 70%)' }} />
+
+              <div className="relative p-8 sm:p-10">
+
+                {/* Pricing blocks */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
+                  {/* One-time */}
+                  <div className="rounded-2xl p-6 text-center"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-3">One-Time Setup</p>
+                    <p className="text-5xl font-black text-white mb-1">₱1,999</p>
+                    <p className="text-slate-500 text-sm">Paid once to get started</p>
+                  </div>
+                  {/* Monthly */}
+                  <div className="rounded-2xl p-6 text-center"
+                    style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)' }}>
+                    <p className="text-green-400 text-xs font-semibold uppercase tracking-widest mb-3">Monthly Maintenance</p>
+                    <div className="flex items-end justify-center gap-1 mb-1">
+                      <p className="text-5xl font-black text-green-400">₱499</p>
+                      <p className="text-slate-500 text-sm mb-2">/month</p>
                     </div>
-                  )}
-
-                  {/* BG glow for Pro */}
-                  {highlight && <div className="absolute top-0 right-0 w-48 h-48 rounded-full pointer-events-none"
-                    style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.06) 0%, transparent 70%)' }} />}
-
-                  <div className="relative">
-                    <p className="text-slate-400 text-sm font-medium mb-2">{name}</p>
-                    <div className="flex items-end gap-1 mb-1">
-                      <span className="text-5xl font-black" style={{ color: highlight ? '#4ade80' : 'white' }}>{price}</span>
-                      <span className="text-slate-500 text-sm mb-2">{period}</span>
-                    </div>
-                    <p className="text-slate-500 text-xs mb-6">{desc}</p>
-
-                    <ul className="space-y-3 mb-8 flex-1">
-                      {features.map((f) => (
-                        <li key={f} className="flex items-start gap-2.5 text-sm text-slate-300">
-                          <Check size={15} className="mt-0.5 shrink-0" style={{ color }} />
-                          {f}
-                        </li>
-                      ))}
-                    </ul>
-
-                    <a href="/register"
-                      className="block text-center font-bold py-3.5 rounded-xl text-sm transition-all hover:-translate-y-0.5"
-                      style={highlight
-                        ? { background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 20px rgba(34,197,94,0.3)' }
-                        : { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }
-                      }>
-                      Get Started
-                    </a>
+                    <p className="text-slate-500 text-sm">Keep everything running</p>
                   </div>
                 </div>
-              </Reveal>
-            ))}
-          </div>
+
+                {/* Features */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-10">
+                  {FEATURES.map((f) => (
+                    <div key={f} className="flex items-center gap-2.5 text-sm text-slate-300">
+                      <Check size={15} className="text-green-400 shrink-0" />
+                      {f}
+                    </div>
+                  ))}
+                </div>
+
+                <a href="/register"
+                  className="block text-center font-bold py-4 rounded-2xl text-sm transition-all hover:-translate-y-0.5"
+                  style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 24px rgba(34,197,94,0.35)' }}>
+                  Get Started — Register Your Gym
+                </a>
+              </div>
+            </div>
+          </Reveal>
 
           <Reveal className="mt-8 text-center">
             <p className="text-slate-600 text-sm">
@@ -754,6 +734,87 @@ export default function MadeForGyms() {
               </a>
             </p>
           </Reveal>
+        </div>
+      </section>
+
+      {/* ── Comparison ──────────────────────────────────────── */}
+      <section className="py-28 px-5 sm:px-8">
+        <div className="max-w-4xl mx-auto">
+          <Reveal className="text-center mb-14">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] mb-4" style={{ color: '#86efac' }}>Why MadeForGyms</p>
+            <h2 className="text-4xl sm:text-5xl font-black tracking-tight mb-5">
+              Built for gyms like yours,<br />
+              <span className="gradient-text">not for Fortune 500s</span>
+            </h2>
+            <p className="text-slate-400">Most gym software is made for big chains. MadeForGyms is made for independent gym owners in the Philippines.</p>
+          </Reveal>
+
+          <Reveal>
+            <div className="overflow-x-auto rounded-2xl" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
+                    <th className="text-left px-5 py-4 text-slate-400 font-semibold w-1/3">Feature</th>
+                    <th className="px-5 py-4 text-center font-black text-green-400">MadeForGyms</th>
+                    <th className="px-5 py-4 text-center text-slate-500 font-semibold">Notebook / GC</th>
+                    <th className="px-5 py-4 text-center text-slate-500 font-semibold">Glofox / Mindbody</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ['GCash payment tracking',       true,  false, false],
+                    ['Built for PH gyms',            true,  false, false],
+                    ['₱499/month pricing',           true,  true,  false],
+                    ['Member self-service portal',   true,  false, true ],
+                    ['Coach & trainer portal',       true,  false, true ],
+                    ['No per-member charges',        true,  true,  false],
+                    ['Works on mobile',              true,  true,  true ],
+                    ['Setup in minutes',             true,  true,  false],
+                    ['Telegram notifications',       true,  false, false],
+                    ['Local support',                true,  false, false],
+                  ].map(([label, mfg, manual, intl], i) => (
+                    <tr key={label}
+                      style={{ background: i % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'transparent', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                      <td className="px-5 py-3.5 text-slate-300">{label}</td>
+                      <td className="px-5 py-3.5 text-center">
+                        {mfg
+                          ? <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-500/15"><Check size={13} className="text-green-400" /></span>
+                          : <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/5 text-slate-600 text-base leading-none">—</span>}
+                      </td>
+                      <td className="px-5 py-3.5 text-center">
+                        {manual
+                          ? <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/5"><Check size={13} className="text-slate-500" /></span>
+                          : <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/5 text-slate-600 text-base leading-none">—</span>}
+                      </td>
+                      <td className="px-5 py-3.5 text-center">
+                        {intl
+                          ? <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/5"><Check size={13} className="text-slate-500" /></span>
+                          : <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/5 text-slate-600 text-base leading-none">—</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Reveal>
+
+          {/* Edge callouts */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+            {[
+              { icon: '🇵🇭', title: 'Made for the PH market', body: 'GCash-first, Filipino-friendly. No USD pricing, no features you\'ll never use.' },
+              { icon: '💸', title: '10× cheaper than global tools', body: 'Glofox starts at ₱6,000+/month. MadeForGyms is ₱499 — same tools, local price.' },
+              { icon: '⚡', title: 'Up in minutes, not weeks', body: 'No onboarding calls, no contracts. Register, get approved, and go live the same day.' },
+            ].map(({ icon, title, body }) => (
+              <Reveal key={title}>
+                <div className="rounded-2xl p-5 h-full"
+                  style={{ background: 'rgba(34,197,94,0.04)', border: '1px solid rgba(34,197,94,0.12)' }}>
+                  <p className="text-2xl mb-3">{icon}</p>
+                  <p className="text-white font-bold text-sm mb-1.5">{title}</p>
+                  <p className="text-slate-500 text-xs leading-relaxed">{body}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
