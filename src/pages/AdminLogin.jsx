@@ -163,20 +163,12 @@ export default function AdminLogin() {
               {settings.gymName || 'MadeForGyms'}
             </h1>
             <p className="text-slate-400 text-xs mt-0.5">Admin Portal</p>
-            {settings.gymAddress && (
-              <p className="inline-flex items-center gap-1 text-slate-600 text-xs mt-1">
-                <MapPin size={11} /> {settings.gymAddress}
-              </p>
-            )}
-            {settings.gymContactNumber && (
-              <p className="inline-flex items-center gap-1 text-slate-600 text-xs mt-0.5 ml-3">
-                <Phone size={11} /> {settings.gymContactNumber}
-              </p>
-            )}
           </div>
 
           <h2 className="text-2xl font-bold text-white mb-1">Welcome back</h2>
-          <p className="text-slate-400 text-sm mb-8">Sign in with your admin credentials</p>
+          <p className="text-slate-400 text-sm mb-1">Sign in with your admin credentials</p>
+
+          <div className="mb-8" />
 
           {/* Lockout banner */}
           {isLocked && (

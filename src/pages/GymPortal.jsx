@@ -52,20 +52,6 @@ export default function GymPortal() {
           </div>
           <h1 className="text-white font-black text-2xl tracking-tight">{gymName}</h1>
           <p className="text-slate-500 text-sm mt-1">Member &amp; Staff Portal</p>
-          {(gymAddress || gymPhone) && (
-            <div className="mt-2 flex flex-col items-center gap-1">
-              {gymAddress && (
-                <span className="inline-flex items-center gap-1 text-slate-600 text-xs">
-                  <MapPin size={11} /> {gymAddress}
-                </span>
-              )}
-              {gymPhone && (
-                <span className="inline-flex items-center gap-1 text-slate-600 text-xs">
-                  <Phone size={11} /> {gymPhone}
-                </span>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Portal cards */}
@@ -131,9 +117,25 @@ export default function GymPortal() {
         </div>
 
         {/* Footer */}
-        <div className="mt-10 flex items-center justify-center gap-1.5 text-slate-700">
-          <Dumbbell size={12} />
-          <a href="/" className="text-xs hover:text-slate-500 transition-colors">Powered by MadeForGyms</a>
+        <div className="mt-10 flex flex-col items-center gap-3">
+          {(gymAddress || gymPhone) && (
+            <div className="flex flex-col items-center gap-1 text-center">
+              {gymAddress && (
+                <span className="inline-flex items-start gap-1.5 text-slate-600 text-xs max-w-[240px] text-left">
+                  <MapPin size={10} className="shrink-0 text-slate-600 mt-0.5" /> {gymAddress}
+                </span>
+              )}
+              {gymPhone && (
+                <span className="inline-flex items-center gap-1.5 text-slate-600 text-xs">
+                  <Phone size={10} className="shrink-0 text-slate-600" /> {gymPhone}
+                </span>
+              )}
+            </div>
+          )}
+          <div className="flex items-center gap-1.5 text-slate-700">
+            <Dumbbell size={12} />
+            <a href="/" className="text-xs hover:text-slate-500 transition-colors">Powered by MadeForGyms</a>
+          </div>
         </div>
       </div>
     </div>

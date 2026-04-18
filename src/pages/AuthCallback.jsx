@@ -1,44 +1,46 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 export default function AuthCallback() {
-  const navigate = useNavigate();
-  const [status, setStatus] = useState('loading'); // loading | success | error
+  const [status, setStatus] = useState('loading');
   const [message, setMessage] = useState('');
+  const [gymSlug, setGymSlug] = useState(null);
 
   useEffect(() => {
     const hash = window.location.hash;
-
-    // Parse hash params
     const params = new URLSearchParams(hash.replace('#', ''));
     const error = params.get('error');
-    const errorDesc = params.get('error_description');
+    const errorCode = params.get('error_code');
 
     if (error) {
-      const msg = errorDesc?.replace(/\+/g, ' ') || error;
-      if (error === 'access_denied' && params.get('error_code') === 'otp_expired') {
+      if (errorCode === 'otp_expired') {
         setMessage('This confirmation link has expired. Please request a new one from your admin settings.');
       } else {
-        setMessage(msg);
+        setMessage(params.get('error_description')?.replace(/\+/g, ' ') || 'Something went wrong.');
       }
       setStatus('error');
       return;
     }
 
-    // Let Supabase process the token from the hash
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
         setStatus('success');
         setMessage('Your email has been confirmed successfully!');
-        setTimeout(() => navigate(-1), 2500);
+        // Try to find the gym slug to redirect back to admin settings
+        supabase.from('gym_admins')
+          .select('gyms(slug)')
+          .eq('user_id', data.session.user.id)
+          .maybeSingle()
+          .then(({ data: row }) => {
+            if (row?.gyms?.slug) setGymSlug(row.gyms.slug);
+          });
       } else {
         setStatus('error');
         setMessage('Could not verify your session. Please try again.');
       }
     });
-  }, [navigate]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#030712] flex items-center justify-center px-4">
@@ -56,8 +58,14 @@ export default function AuthCallback() {
               <CheckCircle size={36} className="text-green-400" />
             </div>
             <h1 className="text-white font-black text-2xl mb-2">Email Confirmed!</h1>
-            <p className="text-slate-400 text-sm">{message}</p>
-            <p className="text-slate-600 text-xs mt-3">Redirecting you back...</p>
+            <p className="text-slate-400 text-sm mb-6">{message}</p>
+            <a
+              href={gymSlug ? `/${gymSlug}/admin/settings` : '/'}
+              className="inline-block px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:-translate-y-0.5"
+              style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)' }}
+            >
+              {gymSlug ? 'Go to Admin Settings' : 'Go to Home'}
+            </a>
           </>
         )}
         {status === 'error' && (
@@ -68,13 +76,13 @@ export default function AuthCallback() {
             </div>
             <h1 className="text-white font-black text-2xl mb-2">Link Expired</h1>
             <p className="text-slate-400 text-sm mb-6">{message}</p>
-            <button
-              onClick={() => navigate(-1)}
-              className="px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all"
+            <a
+              href="/"
+              className="inline-block px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:-translate-y-0.5"
               style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)' }}
             >
-              Go Back
-            </button>
+              Go to Home
+            </a>
           </>
         )}
       </div>

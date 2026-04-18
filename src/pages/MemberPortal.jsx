@@ -158,25 +158,32 @@ export default function MemberPortal() {
               <ArrowLeft size={20} />
             </Link>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)' }}>
-                <Dumbbell size={16} className="text-white" />
-              </div>
-              <span className="font-bold text-white">Member Portal</span>
+              {settings.gymLogoUrl ? (
+                <img src={settings.gymLogoUrl} alt={settings.gymName} className="w-8 h-8 object-contain rounded-lg" style={{ background: 'rgba(255,255,255,0.06)', padding: '3px' }} />
+              ) : (
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)' }}>
+                  <Dumbbell size={16} className="text-white" />
+                </div>
+              )}
+              <span className="font-bold text-white">{settings.gymName || 'Member Portal'}</span>
             </div>
           </div>
         </div>
 
         {/* Hero */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-          <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6"
-            style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.2)', boxShadow: '0 0 30px rgba(34,197,94,0.1)' }}>
-            <User size={40} className="text-green-400" />
-          </div>
-          <h1 className="text-3xl font-black text-white mb-2">Check Your Membership</h1>
-          <p className="text-slate-400 text-sm mb-10 max-w-xs">
-            Tap the button below to check your membership status and renewal options.
-          </p>
+          {settings.gymLogoUrl ? (
+            <img src={settings.gymLogoUrl} alt={settings.gymName}
+              className="w-24 h-24 object-contain rounded-3xl mx-auto mb-5"
+              style={{ background: 'rgba(255,255,255,0.06)', padding: '8px', border: '1px solid rgba(255,255,255,0.1)' }} />
+          ) : (
+            <div className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-5"
+              style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.2)', boxShadow: '0 0 30px rgba(34,197,94,0.1)' }}>
+              <Dumbbell size={44} className="text-green-400" />
+            </div>
+          )}
+          <h1 className="text-2xl font-black text-white mb-1">{settings.gymName || 'Member Portal'}</h1>
+          <p className="text-slate-500 text-sm mb-8">Member Portal</p>
 
           <button
             onClick={() => setView('lookup')}
@@ -185,11 +192,6 @@ export default function MemberPortal() {
           >
             Check My Membership
           </button>
-
-          <div className="mt-10 flex items-center gap-2 text-slate-600">
-            <MapPin size={13} className="shrink-0" />
-            <p className="text-xs">2nd Floor Fernandez Bldg, Saavedra St, Toril, Davao City</p>
-          </div>
         </div>
 
         <style>{`

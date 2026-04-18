@@ -1,27 +1,34 @@
-import { X, MessageSquare, Copy, ExternalLink } from 'lucide-react';
-import { buildSmsMessage, openSmsApp, formatPhoneDisplay } from '../utils/helpers';
+import { useState } from 'react';
+import { X, MessageSquare, Copy, CheckCircle, Send, ArrowLeft } from 'lucide-react';
+import { buildSmsMessage, formatPhoneDisplay } from '../utils/helpers';
 import { useGym } from '../context/GymContext';
-import toast from 'react-hot-toast';
 
 export default function SMSModal({ member, daysLeft, onClose }) {
   const { logAction, settings } = useGym();
   const message = buildSmsMessage(member, daysLeft, settings.gymName);
+  const [sent, setSent] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const num = member.contactNumber.replace(/\D/g, '');
+  const smsHref = `sms:${num}?body=${encodeURIComponent(message)}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message).then(() => {
-      toast.success('Message copied!');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     });
   };
 
-  const handleOpenSms = async () => {
-    openSmsApp(member.contactNumber, message);
-    toast.success(`Opening SMS for ${member.name}`);
+  const handleSmsClick = async () => {
+    if (sent) return;
     await logAction('SMS_SENT', `Sent SMS notification to: ${member.name}`, member.name, member.id);
+    setSent(true);
   };
 
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
       <div className="bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl">
+
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700">
           <div className="flex items-center gap-2">
@@ -49,24 +56,32 @@ export default function SMSModal({ member, daysLeft, onClose }) {
         </div>
 
         {/* Actions */}
-        <div className="px-5 pb-5 flex flex-col sm:flex-row gap-3">
+        <div className="px-5 pb-4 flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleCopy}
             className="flex-1 flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-medium transition-colors"
           >
-            <Copy size={16} /> Copy Message
+            {copied
+              ? <><CheckCircle size={16} className="text-green-400" /> Copied!</>
+              : <><Copy size={16} /> Copy</>}
           </button>
-          <button
-            onClick={handleOpenSms}
-            className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold transition-colors"
+          <a
+            href={smsHref}
+            onClick={handleSmsClick}
+            className="flex-1 flex items-center justify-center gap-2 text-white py-3 rounded-xl font-semibold transition-colors"
+            style={{ background: sent ? 'rgba(249,115,22,0.5)' : 'rgb(249,115,22)' }}
           >
-            <ExternalLink size={16} /> Open SMS App
-          </button>
+            {sent
+              ? <><CheckCircle size={16} /> Sent</>
+              : <><Send size={16} /> Send SMS</>}
+          </a>
         </div>
 
-        <p className="text-center text-slate-500 text-xs pb-4">
-          "Open SMS App" works best on mobile devices
+        {/* Return hint */}
+        <p className="flex items-center justify-center gap-1.5 text-slate-500 text-xs pb-4">
+          <ArrowLeft size={11} /> Tap back in your browser to return here
         </p>
+
       </div>
     </div>
   );
