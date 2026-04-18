@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, User, CalendarCheck, Dumbbell, ChevronRight, MapPin, Phone, ArrowLeft, HelpCircle } from 'lucide-react';
 import { useGym } from '../context/GymContext';
@@ -8,6 +8,11 @@ export default function GymPortal() {
   const navigate = useNavigate();
   const { settings, gymSlug, currentGym } = useGym();
   const [showHowTo, setShowHowTo] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('ref') === 'qr') setShowHowTo(true);
+  }, []);
 
   const gymName    = settings.gymName          || currentGym?.name || 'Gym Portal';
   const gymLogo    = settings.gymLogoUrl        || null;

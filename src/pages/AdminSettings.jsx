@@ -312,6 +312,7 @@ export default function AdminSettings() {
         {/* QR Code card */}
         {gymSlug && (() => {
           const portalUrl = `${window.location.origin}/${gymSlug}`;
+          const qrUrl    = `${portalUrl}?ref=qr`;
           const gymName   = settings.gymName || 'Your Gym';
           const logoUrl   = settings.gymLogoUrl || null;
 
@@ -490,7 +491,7 @@ export default function AdminSettings() {
               <div className="hidden">
                 <QRCodeCanvas
                   id="gym-qr-canvas"
-                  value={portalUrl}
+                  value={qrUrl}
                   size={200}
                   bgColor="#f1f5f9"
                   fgColor="#0f172a"
@@ -502,7 +503,7 @@ export default function AdminSettings() {
               <div className="flex flex-col sm:flex-row items-center gap-6">
                 <div className="bg-white p-3 rounded-2xl shrink-0">
                   <QRCodeCanvas
-                    value={portalUrl}
+                    value={qrUrl}
                     size={160}
                     bgColor="#ffffff"
                     fgColor="#000000"

@@ -1,16 +1,7 @@
 import { useState, useEffect } from 'react';
-import { X, QrCode, User, Phone, ShieldCheck, CalendarCheck, CheckCircle, ChevronRight, ChevronLeft } from 'lucide-react';
+import { X, User, Phone, ShieldCheck, CalendarCheck, CheckCircle, ChevronRight, ChevronLeft } from 'lucide-react';
 
 const STEPS = [
-  {
-    icon: QrCode,
-    color: '#22c55e',
-    bg: 'rgba(34,197,94,0.12)',
-    title: 'Scan or Visit the Link',
-    desc: 'Scan the gym\'s QR code posted at the front desk, or type the gym link in your browser.',
-    animation: 'scan',
-    section: null,
-  },
   {
     icon: User,
     color: '#38bdf8',
@@ -183,7 +174,6 @@ function CheckinDoneAnimation() {
 }
 
 const ANIM_MAP = {
-  scan: ScanAnimation,
   tapMember: TapMemberAnimation,
   type: TypeAnimation,
   check: CheckAnimation,
