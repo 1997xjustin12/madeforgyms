@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, User, CalendarCheck, Dumbbell, ChevronRight, MapPin, Phone, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, User, CalendarCheck, Dumbbell, ChevronRight, MapPin, Phone, ArrowLeft, HelpCircle } from 'lucide-react';
 import { useGym } from '../context/GymContext';
+import HowToModal from '../components/HowToModal';
 
 export default function GymPortal() {
   const navigate = useNavigate();
   const { settings, gymSlug, currentGym } = useGym();
+  const [showHowTo, setShowHowTo] = useState(false);
 
   const gymName    = settings.gymName          || currentGym?.name || 'Gym Portal';
   const gymLogo    = settings.gymLogoUrl        || null;
@@ -54,10 +57,8 @@ export default function GymPortal() {
           <p className="text-slate-500 text-sm mt-1">Member &amp; Staff Portal</p>
         </div>
 
-        {/* Portal cards */}
+        {/* Member cards */}
         <div className="space-y-3">
-
-          {/* Member Portal */}
           <button
             onClick={() => navigate(p('member'))}
             className="w-full group flex items-center gap-4 rounded-2xl p-4 text-left transition-all hover:-translate-y-0.5"
@@ -76,7 +77,6 @@ export default function GymPortal() {
             <ChevronRight size={16} className="text-slate-600 group-hover:text-green-400 transition-colors" />
           </button>
 
-          {/* Check-In */}
           <button
             onClick={() => navigate(p('checkin'))}
             className="w-full group flex items-center gap-4 rounded-2xl p-4 text-left transition-all hover:-translate-y-0.5"
@@ -95,29 +95,43 @@ export default function GymPortal() {
             <ChevronRight size={16} className="text-slate-600 group-hover:text-green-400 transition-colors" />
           </button>
 
-          {/* Admin Login */}
+          {/* How to use — member only */}
           <button
-            onClick={() => navigate(p('admin/login'))}
-            className="w-full group flex items-center gap-4 rounded-2xl p-4 text-left transition-all hover:-translate-y-0.5"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
-            onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'}
-            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}
-          >
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: 'rgba(255,255,255,0.06)' }}>
-              <ShieldCheck size={22} className="text-slate-400" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-white font-semibold text-sm">Admin Portal</p>
-              <p className="text-slate-500 text-xs mt-0.5">Staff &amp; management access</p>
-            </div>
-            <ChevronRight size={16} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
+            onClick={() => setShowHowTo(true)}
+            className="w-full flex items-center justify-center gap-2 py-2 rounded-2xl text-slate-500 hover:text-slate-300 text-xs transition-colors"
+            style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.07)' }}>
+            <HelpCircle size={13} /> How do I use this?
           </button>
-
         </div>
 
+        {/* Divider */}
+        <div className="flex items-center gap-3 my-4">
+          <div className="flex-1 h-px bg-white/5" />
+          <span className="text-slate-700 text-xs">Staff access</span>
+          <div className="flex-1 h-px bg-white/5" />
+        </div>
+
+        {/* Admin */}
+        <button
+          onClick={() => navigate(p('admin/login'))}
+          className="w-full group flex items-center gap-4 rounded-2xl p-4 text-left transition-all hover:-translate-y-0.5"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+          onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'}
+          onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}
+        >
+          <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: 'rgba(255,255,255,0.06)' }}>
+            <ShieldCheck size={22} className="text-slate-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-semibold text-sm">Admin Portal</p>
+            <p className="text-slate-500 text-xs mt-0.5">Staff &amp; management access</p>
+          </div>
+          <ChevronRight size={16} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
+        </button>
+
         {/* Footer */}
-        <div className="mt-10 flex flex-col items-center gap-3">
+        <div className="mt-6 flex flex-col items-center gap-3">
           {(gymAddress || gymPhone) && (
             <div className="flex flex-col items-center gap-1 text-center">
               {gymAddress && (
@@ -138,6 +152,8 @@ export default function GymPortal() {
           </div>
         </div>
       </div>
+
+      {showHowTo && <HowToModal onClose={() => setShowHowTo(false)} />}
     </div>
   );
 }
