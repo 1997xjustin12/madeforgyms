@@ -674,10 +674,27 @@ export function GymProvider({ children }) {
   const getExpiringMembers = () => members.filter((m) => getMemberStatus(m).status === 'expiring');
 
   // ── Admin login — verifies access to this gym ────────────────
-  const adminLogin = async (email, password) => {
+  const adminLogin = async (identifier, password) => {
     if (!gymId) throw new Error('No gym loaded');
+
+    let email = identifier.trim().toLowerCase();
+
+    // If no @, treat as username — look up the email from gym_admins
+    if (!email.includes('@')) {
+      const { data: adminRow, error: uErr } = await supabase
+        .from('gym_admins')
+        .select('email, user_id')
+        .eq('gym_id', gymId)
+        .eq('username', email)
+        .maybeSingle();
+      if (uErr || !adminRow) throw new Error('Username not found for this gym.');
+      // Use the stored email; if missing fall back to a clear error
+      if (!adminRow.email) throw new Error('No email linked to this username. Please contact your admin.');
+      email = adminRow.email.trim().toLowerCase();
+    }
+
     const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    if (error) throw new Error('Incorrect password for this account.');
 
     // Verify this user has access to this specific gym
     const { data: gymAdmin, error: gaErr } = await supabase

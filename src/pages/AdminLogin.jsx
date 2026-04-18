@@ -74,7 +74,13 @@ export default function AdminLogin() {
       clearLoginMeta();
       toast.success('Welcome, Admin!');
       navigate(`/${gymSlug}/admin`);
-    } catch {
+    } catch (err) {
+      const msg = err?.message || '';
+      // Username/access errors — don't count as a login attempt
+      if (msg.includes('Username not found') || msg.includes('do not have access')) {
+        toast.error(msg);
+        return;
+      }
       const meta = getLoginMeta();
       const newAttempts = (meta.attempts || 0) + 1;
       if (newAttempts >= MAX_ATTEMPTS) {
@@ -189,16 +195,16 @@ export default function AdminLogin() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email */}
             <div>
-              <label className="block text-slate-300 text-sm font-medium mb-2">Email Address</label>
+              <label className="block text-slate-300 text-sm font-medium mb-2">Email or Username</label>
               <div className="relative">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
                   <Mail size={16} />
                 </div>
                 <input
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@yourgym.com"
+                  placeholder="admin@yourgym.com or username"
                   required
                   disabled={isLocked}
                   className="w-full border disabled:opacity-40 text-white rounded-xl pl-10 pr-4 py-3.5 outline-none transition-colors placeholder:text-slate-600"

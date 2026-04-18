@@ -36,6 +36,7 @@ export default function GymRegister() {
     ownerContact: '',
     gymName: '',
     slug: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -43,10 +44,12 @@ export default function GymRegister() {
   const [showPw, setShowPw]           = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [slugEdited, setSlugEdited]   = useState(false);
-  const [slugAvail, setSlugAvail]     = useState(null); // null | true | false
+  const [slugAvail, setSlugAvail]     = useState(null);
   const [checking, setChecking]       = useState(false);
-  const [emailAvail, setEmailAvail]   = useState(null); // null | true | false
+  const [emailAvail, setEmailAvail]   = useState(null);
   const [checkingEmail, setCheckingEmail] = useState(false);
+  const [usernameAvail, setUsernameAvail]   = useState(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
   const [submitting, setSubmitting]   = useState(false);
   const [done, setDone]               = useState(false);
 
@@ -109,6 +112,23 @@ export default function GymRegister() {
     return () => clearTimeout(timer);
   }, [form.email]);
 
+  /* Debounce — auto-check username 600ms after user stops typing */
+  useEffect(() => {
+    const username = form.username.trim().toLowerCase();
+    if (username.length < 3) { setUsernameAvail(null); return; }
+    const timer = setTimeout(async () => {
+      setCheckingUsername(true);
+      const { data } = await supabase
+        .from('gym_admins')
+        .select('id')
+        .eq('username', username)
+        .maybeSingle();
+      setUsernameAvail(!data);
+      setCheckingUsername(false);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [form.username]);
+
   const strength = pwStrength(form.password);
   const canSubmit =
     form.ownerName.trim().length >= 2 &&
@@ -116,6 +136,8 @@ export default function GymRegister() {
     form.gymName.trim().length >= 2 &&
     form.slug.length >= 3 &&
     slugAvail === true &&
+    form.username.trim().length >= 3 &&
+    usernameAvail === true &&
     form.email.includes('@') &&
     emailAvail === true &&
     form.password.length >= 8 &&
@@ -169,7 +191,7 @@ export default function GymRegister() {
       /* 4. Link admin user to this gym in gym_admins */
       const { error: gaErr } = await supabase
         .from('gym_admins')
-        .insert([{ gym_id: gymRow.id, user_id: authData.user.id, email: form.email.trim().toLowerCase() }]);
+        .insert([{ gym_id: gymRow.id, user_id: authData.user.id, email: form.email.trim().toLowerCase(), username: form.username.trim().toLowerCase() }]);
       if (gaErr) throw gaErr;
 
       /* 5. Seed a minimal gym_settings row */
@@ -334,6 +356,34 @@ export default function GymRegister() {
           </div>
 
           <hr className="border-slate-700/60" />
+
+          {/* Username */}
+          <div>
+            <label className="block text-slate-300 text-sm font-medium mb-1.5">Username</label>
+            <div className="flex items-center rounded-xl overflow-hidden border border-slate-700 focus-within:border-green-500 transition-colors bg-slate-800">
+              <span className="px-3 text-slate-500 text-sm select-none border-r border-slate-700 py-3">@</span>
+              <input
+                type="text"
+                value={form.username}
+                onChange={(e) => { set('username', e.target.value.replace(/[^a-z0-9_]/g, '').toLowerCase()); setUsernameAvail(null); }}
+                placeholder="yourgymusername"
+                className="flex-1 bg-transparent text-white px-3 py-3 outline-none text-sm placeholder:text-slate-600"
+                required
+                minLength={3}
+              />
+              <div className="px-3">
+                {checkingUsername && <Loader2 size={16} className="text-slate-500 animate-spin" />}
+                {!checkingUsername && usernameAvail === true  && <Check size={16} className="text-green-400" />}
+                {!checkingUsername && usernameAvail === false && <span className="text-red-400 text-xs font-medium">Taken</span>}
+              </div>
+            </div>
+            {form.username.length > 0 && form.username.length < 3 && (
+              <p className="text-slate-500 text-xs mt-1">Minimum 3 characters</p>
+            )}
+            {usernameAvail === false && <p className="text-red-400 text-xs mt-1">This username is already taken.</p>}
+            {usernameAvail === true  && <p className="text-green-400 text-xs mt-1">Available!</p>}
+            <p className="text-slate-600 text-xs mt-1">Used to log in instead of your email. Letters, numbers, underscores only.</p>
+          </div>
 
           {/* Admin Email */}
           <div>

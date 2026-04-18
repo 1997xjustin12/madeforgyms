@@ -1,9 +1,169 @@
 import { useState, useEffect, useRef } from 'react';
-import { Save, Upload, X, Settings, Send, Plus, Trash2, Tag, ToggleLeft, ToggleRight, Dumbbell, ChevronRight, ImageIcon, Phone, MapPin } from 'lucide-react';
+import { Save, Upload, X, Settings, Send, Plus, Trash2, Tag, ToggleLeft, ToggleRight, Dumbbell, ChevronRight, ImageIcon, Phone, MapPin, Download, QrCode } from 'lucide-react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { Link } from 'react-router-dom';
 import { useGym } from '../context/GymContext';
+import { supabase } from '../lib/supabase';
 import Navbar from '../components/Navbar';
 import toast from 'react-hot-toast';
+
+function LoginSecurity({ gymId }) {
+  const [sec, setSec] = useState({ username: '', email: '', newPassword: '', confirmPassword: '' });
+  const [currentEmail, setCurrentEmail] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const setF = (k, v) => setSec((s) => ({ ...s, [k]: v }));
+
+  // Load current username and email, sync gym_admins.email with auth email
+  useEffect(() => {
+    if (!gymId) return;
+    supabase.auth.getUser().then(({ data }) => {
+      const authEmail = data?.user?.email;
+      if (authEmail) {
+        setCurrentEmail(authEmail);
+        setSec((s) => ({ ...s, email: authEmail }));
+        // Keep gym_admins.email in sync with actual auth email
+        supabase.from('gym_admins')
+          .update({ email: authEmail })
+          .eq('gym_id', gymId)
+          .then(() => {});
+      }
+    });
+    supabase.auth.getUser().then(({ data: authData }) => {
+      if (!authData?.user) return;
+      supabase.from('gym_admins').select('username')
+        .eq('gym_id', gymId)
+        .eq('user_id', authData.user.id)
+        .maybeSingle()
+        .then(({ data }) => { if (data?.username) setSec((s) => ({ ...s, username: data.username || '' })); });
+    });
+  }, [gymId]);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (sec.newPassword && sec.newPassword !== sec.confirmPassword) {
+      toast.error('Passwords do not match'); return;
+    }
+    if (sec.newPassword && sec.newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters'); return;
+    }
+    setSaving(true);
+    try {
+      // Update username in gym_admins for the current logged-in user
+      if (gymId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { error } = await supabase.from('gym_admins')
+            .update({ username: sec.username.trim().toLowerCase() || null })
+            .eq('gym_id', gymId)
+            .eq('user_id', user.id);
+          if (error) throw error;
+        }
+      }
+      // Update email — Supabase sends confirmation to new address
+      const newEmail = sec.email.trim().toLowerCase();
+      if (newEmail && newEmail !== currentEmail) {
+        const redirectTo = `${import.meta.env.VITE_SITE_URL || window.location.origin}/auth/callback`;
+        const { error } = await supabase.auth.updateUser({ email: newEmail }, { emailRedirectTo: redirectTo });
+        if (error) throw error;
+        setEmailSent(true);
+      }
+      // Update password
+      if (sec.newPassword) {
+        const { error } = await supabase.auth.updateUser({ password: sec.newPassword });
+        if (error) throw error;
+      }
+      toast.success('Login details updated');
+      setSec((s) => ({ ...s, newPassword: '', confirmPassword: '' }));
+    } catch (err) {
+      toast.error(err.message || 'Failed to update');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="bg-slate-800 rounded-2xl border border-slate-700/50 p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+          <Settings size={16} className="text-blue-400" />
+        </div>
+        <h2 className="text-white font-semibold text-base">Login &amp; Security</h2>
+      </div>
+      <form onSubmit={handleSave} className="space-y-4">
+        <div>
+          <label className="block text-slate-300 text-sm font-medium mb-1.5">Username <span className="text-slate-500 font-normal">(optional — can be used instead of email)</span></label>
+          <input
+            type="text"
+            value={sec.username}
+            onChange={(e) => setF('username', e.target.value.replace(/\s/g, '').toLowerCase())}
+            placeholder="e.g. powerfitness"
+            className="w-full bg-slate-700 border border-slate-600 focus:border-blue-500 text-white rounded-xl px-4 py-2.5 outline-none text-sm transition-colors placeholder:text-slate-500"
+          />
+          <p className="text-slate-500 text-xs mt-1">Lowercase letters and numbers only. No spaces.</p>
+        </div>
+
+        <div className="border-t border-slate-700 pt-4">
+          <label className="block text-slate-300 text-sm font-medium mb-1.5">Email Address</label>
+          <input
+            type="email"
+            value={sec.email}
+            onChange={(e) => { setF('email', e.target.value); setEmailSent(false); }}
+            className="w-full bg-slate-700 border border-slate-600 focus:border-blue-500 text-white rounded-xl px-4 py-2.5 outline-none text-sm transition-colors placeholder:text-slate-500"
+          />
+          {emailSent && (
+            <div className="mt-2 flex items-start gap-2 bg-blue-500/10 border border-blue-500/20 rounded-xl px-3 py-2.5">
+              <Send size={14} className="text-blue-400 shrink-0 mt-0.5" />
+              <p className="text-blue-300 text-xs">Confirmation sent to <strong>{sec.email}</strong>. Click the link in that email to complete the change. Your current email still works until then.</p>
+            </div>
+          )}
+          {!emailSent && sec.email.trim().toLowerCase() !== currentEmail && sec.email.includes('@') && (
+            <p className="text-slate-500 text-xs mt-1">A confirmation link will be sent to the new email.</p>
+          )}
+        </div>
+
+        <div className="border-t border-slate-700 pt-4">
+          <p className="text-slate-400 text-sm font-medium mb-3">Change Password</p>
+          <div className="space-y-3">
+            <input
+              type="password"
+              value={sec.newPassword}
+              onChange={(e) => setF('newPassword', e.target.value)}
+              placeholder="New password (min. 8 characters)"
+              autoComplete="new-password"
+              className="w-full bg-slate-700 border border-slate-600 focus:border-blue-500 text-white rounded-xl px-4 py-2.5 outline-none text-sm transition-colors placeholder:text-slate-500"
+            />
+            <input
+              type="password"
+              value={sec.confirmPassword}
+              onChange={(e) => setF('confirmPassword', e.target.value)}
+              placeholder="Confirm new password"
+              autoComplete="new-password"
+              className={`w-full bg-slate-700 border text-white rounded-xl px-4 py-2.5 outline-none text-sm transition-colors placeholder:text-slate-500 ${
+                sec.confirmPassword && sec.newPassword !== sec.confirmPassword
+                  ? 'border-red-500' : 'border-slate-600 focus:border-blue-500'
+              }`}
+            />
+            {sec.confirmPassword && sec.newPassword !== sec.confirmPassword && (
+              <p className="text-red-400 text-xs">Passwords do not match</p>
+            )}
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          disabled={saving}
+          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-colors text-sm"
+        >
+          {saving
+            ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            : <><Save size={15} /> Save Login Details</>
+          }
+        </button>
+      </form>
+    </div>
+  );
+}
 
 const PRICE_FIELDS = [
   { key: 'priceMonthly',    label: '1 Month' },
@@ -13,7 +173,7 @@ const PRICE_FIELDS = [
 ];
 
 export default function AdminSettings() {
-  const { settings, saveSettings, instructors, gymSlug } = useGym();
+  const { settings, saveSettings, instructors, gymSlug, gymId } = useGym();
   const [form, setForm] = useState({
     gymName: '',
     gymLogoUrl: null,
@@ -148,6 +308,53 @@ export default function AdminSettings() {
             <p className="text-slate-400 text-sm">GCash payment details &amp; membership prices</p>
           </div>
         </div>
+
+        {/* QR Code card */}
+        {gymSlug && (() => {
+          const portalUrl = `${window.location.origin}/${gymSlug}`;
+          const downloadQR = () => {
+            const canvas = document.getElementById('gym-qr-canvas');
+            if (!canvas) return;
+            const link = document.createElement('a');
+            link.download = `${gymSlug}-qr.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+          };
+          return (
+            <div className="bg-slate-800 rounded-2xl border border-slate-700/50 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <QrCode size={18} className="text-orange-400" />
+                <h2 className="text-white font-semibold text-base">Gym Portal QR Code</h2>
+              </div>
+              <div className="flex flex-col sm:flex-row items-center gap-6">
+                <div className="bg-white p-3 rounded-2xl shrink-0">
+                  <QRCodeCanvas
+                    id="gym-qr-canvas"
+                    value={portalUrl}
+                    size={160}
+                    bgColor="#ffffff"
+                    fgColor="#000000"
+                    level="H"
+                    marginSize={0}
+                  />
+                </div>
+                <div className="flex-1 text-center sm:text-left">
+                  <p className="text-white font-semibold mb-1">{settings.gymName || 'Your Gym'}</p>
+                  <p className="text-slate-400 text-sm mb-1">Members can scan this to access your portal.</p>
+                  <p className="text-slate-500 text-xs font-mono mb-4">{portalUrl}</p>
+                  <button
+                    type="button"
+                    onClick={downloadQR}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:-translate-y-0.5"
+                    style={{ background: 'linear-gradient(135deg, #ea580c, #f97316)' }}
+                  >
+                    <Download size={15} /> Download QR Code
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         <form onSubmit={handleSubmit} className="space-y-5">
 
@@ -629,6 +836,10 @@ export default function AdminSettings() {
             }
           </button>
         </form>
+
+        {/* Login & Security */}
+        <LoginSecurity gymId={gymId} />
+
       </div>
     </div>
   );

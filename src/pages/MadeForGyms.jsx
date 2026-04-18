@@ -259,13 +259,12 @@ export default function MadeForGyms() {
           {/* ── Left: copy ── */}
           <div className="flex-1 text-center lg:text-left">
             <h1 className="text-4xl sm:text-5xl xl:text-6xl font-black leading-[1.0] tracking-tighter mb-6 animate-fade-in-up">
-              The System Built<br />for Gyms —<br />
-              <span className="gradient-text">Not Adapted to Them</span>
+              Stop Managing.<br />
+              <span className="gradient-text">Start Growing.</span>
             </h1>
 
             <p className="text-slate-400 text-base sm:text-lg max-w-lg mx-auto lg:mx-0 leading-relaxed mb-8 animate-fade-in-up" style={{ animationDelay: '120ms' }}>
-              Stop managing your gym with group chats and notebooks.
-              GCash payments, member tracking, coach portals — one platform, zero chaos.
+              Ditch the group chats and notebooks. MadeForGyms handles the admin so you can focus on what you do best.
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-3 animate-fade-in-up" style={{ animationDelay: '220ms' }}>

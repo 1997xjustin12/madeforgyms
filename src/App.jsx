@@ -26,6 +26,7 @@ import GymPortal from './pages/GymPortal';
 import GymNotFound from './pages/GymNotFound';
 import GymRegister from './pages/GymRegister';
 import PlatformAdmin from './pages/PlatformAdmin';
+import AuthCallback from './pages/AuthCallback';
 
 function PrivateRoute({ children }) {
   const { isAdminLoggedIn, gymSlug } = useGym();
@@ -118,6 +119,7 @@ export default function App() {
           <Route path="/" element={<MadeForGyms />} />
           <Route path="/portal" element={<Home />} />
           <Route path="/register" element={<GymRegister />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/mfg" element={<Navigate to="/" replace />} />
           <Route path="/mfg/admin" element={<PlatformAdmin />} />
           <Route path="/landing" element={<Landing />} />
