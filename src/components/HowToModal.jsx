@@ -184,9 +184,15 @@ const ANIM_MAP = {
 const SECTION_LABELS = { member: 'Member Portal', checkin: 'Gym Check-In' };
 const SECTION_COLORS = { member: '#38bdf8', checkin: '#fb923c' };
 
-export default function HowToModal({ onClose }) {
+export default function HowToModal({ onClose, onDismiss }) {
   const [step, setStep] = useState(0);
   const [animKey, setAnimKey] = useState(0);
+  const [dontShow, setDontShow] = useState(false);
+
+  const handleClose = () => {
+    if (dontShow && onDismiss) onDismiss();
+    else onClose();
+  };
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -214,7 +220,7 @@ export default function HowToModal({ onClose }) {
       `}</style>
 
       <div className="fixed inset-0 bg-black/75 z-50 flex items-end sm:items-center justify-center p-4"
-        onClick={onClose}>
+        onClick={handleClose}>
         <div className="w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl"
           style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }}
           onClick={e => e.stopPropagation()}>
@@ -225,7 +231,7 @@ export default function HowToModal({ onClose }) {
               <p className="text-white font-bold text-base">How to Use</p>
               <p className="text-slate-500 text-xs">Step {step + 1} of {STEPS.length}</p>
             </div>
-            <button onClick={onClose}
+            <button onClick={handleClose}
               className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-colors"
               style={{ background: 'rgba(255,255,255,0.06)' }}>
               <X size={16} />
@@ -272,6 +278,17 @@ export default function HowToModal({ onClose }) {
             </div>
           </div>
 
+          {/* Don't show again */}
+          <label className="flex items-center gap-2.5 px-5 pb-3 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={dontShow}
+              onChange={e => setDontShow(e.target.checked)}
+              className="w-4 h-4 rounded accent-green-500 cursor-pointer"
+            />
+            <span className="text-slate-500 group-hover:text-slate-400 text-xs transition-colors">Don't show this again</span>
+          </label>
+
           {/* Navigation */}
           <div className="flex items-center gap-3 px-5 pb-5">
             <button
@@ -290,7 +307,7 @@ export default function HowToModal({ onClose }) {
               </button>
             ) : (
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="flex-1 flex items-center justify-center h-10 rounded-xl text-white text-sm font-semibold transition-all hover:-translate-y-0.5"
                 style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)' }}>
                 Got it!

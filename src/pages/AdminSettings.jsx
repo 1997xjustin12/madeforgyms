@@ -321,11 +321,13 @@ export default function AdminSettings() {
             if (!qrCanvas) return;
 
             const SCALE = 3;
-            const W = 420, H = 640;
+            const W = 480, H = 760;
             const c = document.createElement('canvas');
             c.width = W * SCALE; c.height = H * SCALE;
             const ctx = c.getContext('2d');
             ctx.scale(SCALE, SCALE);
+
+            const CX = W / 2;
 
             const rr = (x, y, w, h, r) => {
               ctx.beginPath();
@@ -341,141 +343,128 @@ export default function AdminSettings() {
               ctx.closePath();
             };
 
-            // Outer card clip + shadow bg
-            ctx.fillStyle = '#e8f5e9';
-            ctx.fillRect(0, 0, W, H);
-            rr(10, 10, W - 20, H - 20, 32);
-            ctx.clip();
-
-            // White card
+            // White base
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, W, H);
 
-            // Green header gradient
-            const hGrad = ctx.createLinearGradient(0, 0, W, 230);
-            hGrad.addColorStop(0, '#14532d');
-            hGrad.addColorStop(0.6, '#15803d');
-            hGrad.addColorStop(1, '#22c55e');
-            ctx.fillStyle = hGrad;
-            ctx.fillRect(0, 0, W, 230);
+            // Bold green top section
+            const topH = 300;
+            const topGrad = ctx.createLinearGradient(0, 0, W, topH);
+            topGrad.addColorStop(0, '#14532d');
+            topGrad.addColorStop(1, '#16a34a');
+            ctx.fillStyle = topGrad;
+            ctx.fillRect(0, 0, W, topH);
 
-            // Subtle dot grid on header
+            // Decorative large circle (top right, behind content)
             ctx.fillStyle = 'rgba(255,255,255,0.06)';
-            for (let gx = 0; gx < W; gx += 22) {
-              for (let gy = 0; gy < 230; gy += 22) {
-                ctx.beginPath();
-                ctx.arc(gx, gy, 1.5, 0, Math.PI * 2);
-                ctx.fill();
-              }
-            }
+            ctx.beginPath(); ctx.arc(W - 40, 20, 160, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = 'rgba(255,255,255,0.04)';
+            ctx.beginPath(); ctx.arc(W - 40, 20, 220, 0, Math.PI * 2); ctx.fill();
 
-            // Large decorative circle behind logo
-            const cx = W / 2, logoY = 32, logoSize = 90;
-            ctx.fillStyle = 'rgba(255,255,255,0.12)';
-            ctx.beginPath();
-            ctx.arc(cx, logoY + logoSize / 2, 58, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Logo
+            // Load logo
+            let logoImg = null;
             if (logoUrl) {
               const img = new Image();
               img.crossOrigin = 'anonymous';
               await new Promise((res) => { img.onload = res; img.onerror = res; img.src = logoUrl; });
-              // White border
-              ctx.fillStyle = '#ffffff';
-              rr(cx - logoSize / 2 - 3, logoY - 3, logoSize + 6, logoSize + 6, 22);
-              ctx.fill();
-              ctx.save();
-              rr(cx - logoSize / 2, logoY, logoSize, logoSize, 18);
-              ctx.clip();
-              ctx.drawImage(img, cx - logoSize / 2, logoY, logoSize, logoSize);
-              ctx.restore();
-            } else {
-              ctx.fillStyle = 'rgba(255,255,255,0.22)';
-              rr(cx - logoSize / 2, logoY, logoSize, logoSize, 18);
-              ctx.fill();
+              logoImg = img;
             }
 
-            // Gym name
+            // Logo — top left
+            const logoSize = 52;
+            if (logoImg) {
+              ctx.save();
+              rr(36, 32, logoSize, logoSize, 12);
+              ctx.clip();
+              ctx.drawImage(logoImg, 36, 32, logoSize, logoSize);
+              ctx.restore();
+            }
+
+            // Gym name top left
+            ctx.textAlign = 'left';
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = `bold 14px -apple-system, sans-serif`;
+            ctx.fillText(gymName, logoImg ? 100 : 36, 52);
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.font = `11px -apple-system, sans-serif`;
+            ctx.fillText('Member Portal', logoImg ? 100 : 36, 70);
+
+            // BIG headline
             ctx.textAlign = 'center';
             ctx.fillStyle = '#ffffff';
-            ctx.font = `bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-            ctx.fillText(gymName, cx, logoY + logoSize + 28);
+            ctx.font = `bold 42px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+            ctx.fillText("WE'RE", CX, 150);
+            ctx.fillText('NOW ONLINE', CX, 198);
 
-            // Subtitle pill
-            const subLabel = 'Gym Member Portal';
-            ctx.font = `12px -apple-system, BlinkMacSystemFont, sans-serif`;
-            const subW = ctx.measureText(subLabel).width + 24;
-            ctx.fillStyle = 'rgba(255,255,255,0.15)';
-            rr(cx - subW / 2, logoY + logoSize + 36, subW, 22, 11);
-            ctx.fill();
-            ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.fillText(subLabel, cx, logoY + logoSize + 51);
+            // Subline
+            ctx.fillStyle = 'rgba(255,255,255,0.65)';
+            ctx.font = `14px -apple-system, sans-serif`;
+            ctx.fillText('Check status · Renew · Check-in — all on your phone.', CX, 232);
 
-            // White section
-            ctx.fillStyle = '#f8fafc';
-            ctx.fillRect(0, 230, W, H - 230);
-
-            // "SCAN QR CODE" label
-            ctx.fillStyle = '#64748b';
-            ctx.font = `bold 11px -apple-system, BlinkMacSystemFont, sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.fillText('SCAN QR CODE', cx, 268);
-
-            // Short decorative lines flanking the label
-            ctx.strokeStyle = '#cbd5e1';
-            ctx.lineWidth = 1;
-            const labelW = ctx.measureText('SCAN QR CODE').width;
-            ctx.beginPath(); ctx.moveTo(cx - labelW / 2 - 16, 263); ctx.lineTo(cx - labelW / 2 - 4, 263); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(cx + labelW / 2 + 4, 263); ctx.lineTo(cx + labelW / 2 + 16, 263); ctx.stroke();
-
-            // QR container card
+            // White bottom section — QR hero
+            // Overlapping QR card
             const qrSize = 210, qrPad = 20;
             const qrCardW = qrSize + qrPad * 2;
-            const qrCardX = cx - qrCardW / 2;
-            const qrCardY = 282;
+            const qrCardX = CX - qrCardW / 2;
+            const qrCardY = topH - 30;
+
             ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = 'rgba(0,0,0,0.08)';
-            ctx.shadowBlur = 20;
-            ctx.shadowOffsetY = 4;
+            ctx.shadowColor = 'rgba(0,0,0,0.12)';
+            ctx.shadowBlur = 28;
+            ctx.shadowOffsetY = 6;
             rr(qrCardX, qrCardY, qrCardW, qrCardW, 24);
             ctx.fill();
-            ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+            ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
-            // Corner accent dots on QR card
-            const dotR = 5, cornerOff = 10;
-            [[qrCardX + cornerOff, qrCardY + cornerOff],
-             [qrCardX + qrCardW - cornerOff, qrCardY + cornerOff],
-             [qrCardX + cornerOff, qrCardY + qrCardW - cornerOff],
-             [qrCardX + qrCardW - cornerOff, qrCardY + qrCardW - cornerOff]
-            ].forEach(([dx, dy]) => {
-              ctx.fillStyle = '#22c55e';
-              ctx.beginPath(); ctx.arc(dx, dy, dotR, 0, Math.PI * 2); ctx.fill();
-            });
+            // Green border accent on QR card
+            ctx.strokeStyle = '#16a34a';
+            ctx.lineWidth = 2.5;
+            rr(qrCardX, qrCardY, qrCardW, qrCardW, 24);
+            ctx.stroke();
 
             ctx.drawImage(qrCanvas, qrCardX + qrPad, qrCardY + qrPad, qrSize, qrSize);
 
-            // URL
-            ctx.fillStyle = '#94a3b8';
-            ctx.font = `10px "Courier New", monospace`;
+            // SCAN ME arrow label
+            const scanY = qrCardY + qrCardW + 28;
             ctx.textAlign = 'center';
-            ctx.fillText(portalUrl, cx, qrCardY + qrCardW + 26);
+            ctx.fillStyle = '#16a34a';
+            ctx.font = `bold 16px -apple-system, sans-serif`;
+            ctx.fillText('↑  SCAN ME  ↑', CX, scanY);
 
-            // Divider
-            ctx.strokeStyle = '#e2e8f0';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(40, H - 52); ctx.lineTo(W - 40, H - 52); ctx.stroke();
+            ctx.fillStyle = '#6b7280';
+            ctx.font = `12px -apple-system, sans-serif`;
+            ctx.fillText('Point your phone camera at the QR code', CX, scanY + 22);
 
-            // Green dot + footer text
-            ctx.fillStyle = '#22c55e';
-            ctx.beginPath(); ctx.arc(cx - 62, H - 29, 4, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#94a3b8';
-            ctx.font = `12px -apple-system, BlinkMacSystemFont, sans-serif`;
-            ctx.fillText('Powered by MadeForGyms', cx + 6, H - 24);
+            // URL
+            ctx.fillStyle = '#d1d5db';
+            ctx.font = `9.5px "Courier New", monospace`;
+            ctx.fillText(portalUrl, CX, scanY + 42);
+
+            // Feature pills row
+            const features = ['✓ Check Status', '✓ Renew Online', '✓ Gym Check-In'];
+            const pillRowY = scanY + 68;
+            const colW = (W - 80) / 3;
+            features.forEach((f, i) => {
+              const px = 40 + colW * i;
+              ctx.fillStyle = '#f0fdf4';
+              rr(px, pillRowY, colW - 8, 30, 15);
+              ctx.fill();
+              ctx.fillStyle = '#16a34a';
+              ctx.font = `bold 10px -apple-system, sans-serif`;
+              ctx.textAlign = 'center';
+              ctx.fillText(f, px + (colW - 8) / 2, pillRowY + 19);
+            });
+
+            // Footer
+            ctx.fillStyle = '#16a34a';
+            ctx.fillRect(0, H - 36, W, 36);
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.font = `10px -apple-system, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.fillText('Powered by MadeForGyms', CX, H - 15);
 
             const link = document.createElement('a');
-            link.download = `${gymSlug}-qr.png`;
+            link.download = `${gymSlug}-promo-qr.png`;
             link.href = c.toDataURL('image/png');
             link.click();
           };

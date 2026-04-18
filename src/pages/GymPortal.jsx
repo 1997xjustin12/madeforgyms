@@ -1,18 +1,22 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ShieldCheck, User, CalendarCheck, Dumbbell, ChevronRight, MapPin, Phone, ArrowLeft, HelpCircle } from 'lucide-react';
 import { useGym } from '../context/GymContext';
 import HowToModal from '../components/HowToModal';
 
 export default function GymPortal() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { settings, gymSlug, currentGym } = useGym();
   const [showHowTo, setShowHowTo] = useState(false);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('ref') === 'qr') setShowHowTo(true);
-  }, []);
+    const params = new URLSearchParams(location.search);
+    if (params.get('ref') === 'qr') {
+      const dismissed = localStorage.getItem(`howto_dismissed_${gymSlug}`);
+      if (!dismissed) setShowHowTo(true);
+    }
+  }, [location.search, gymSlug]);
 
   const gymName    = settings.gymName          || currentGym?.name || 'Gym Portal';
   const gymLogo    = settings.gymLogoUrl        || null;
@@ -158,7 +162,15 @@ export default function GymPortal() {
         </div>
       </div>
 
-      {showHowTo && <HowToModal onClose={() => setShowHowTo(false)} />}
+      {showHowTo && (
+        <HowToModal
+          onClose={() => setShowHowTo(false)}
+          onDismiss={() => {
+            localStorage.setItem(`howto_dismissed_${gymSlug}`, '1');
+            setShowHowTo(false);
+          }}
+        />
+      )}
     </div>
   );
 }
