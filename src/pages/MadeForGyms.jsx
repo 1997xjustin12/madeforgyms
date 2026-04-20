@@ -258,13 +258,21 @@ export default function MadeForGyms() {
 
           {/* ── Left: copy ── */}
           <div className="flex-1 text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-5 animate-fade-in-up"
+              style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)', color: '#4ade80' }}>
+              #1 Gym Management Software in the Philippines
+            </div>
+
             <h1 className="text-4xl sm:text-5xl xl:text-6xl font-black leading-[1.0] tracking-tighter mb-6 animate-fade-in-up">
               Stop Managing.<br />
               <span className="gradient-text">Start Growing.</span>
             </h1>
 
-            <p className="text-slate-400 text-base sm:text-lg max-w-lg mx-auto lg:mx-0 leading-relaxed mb-8 animate-fade-in-up" style={{ animationDelay: '120ms' }}>
-              Ditch the group chats and notebooks. MadeForGyms handles the admin so you can focus on what you do best.
+            <p className="text-slate-400 text-base sm:text-lg max-w-lg mx-auto lg:mx-0 leading-relaxed mb-3 animate-fade-in-up" style={{ animationDelay: '120ms' }}>
+              The complete gym management system built for gyms in the Philippines. Manage members, renewals, attendance, and GCash payments — all in one place.
+            </p>
+            <p className="text-slate-600 text-sm max-w-lg mx-auto lg:mx-0 mb-8 animate-fade-in-up" style={{ animationDelay: '150ms' }}>
+              Trusted by gym owners across Davao, Cebu, and Metro Manila.
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-3 animate-fade-in-up" style={{ animationDelay: '220ms' }}>
