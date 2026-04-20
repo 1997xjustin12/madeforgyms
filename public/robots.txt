@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /platform-admin
+Disallow: /auth/callback
+
+Sitemap: https://www.madeforgyms.com/sitemap.xml
