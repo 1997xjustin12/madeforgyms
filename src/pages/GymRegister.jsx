@@ -170,7 +170,7 @@ export default function GymRegister() {
           name:          gymName,
           slug,
           status:        'pending',
-          owner_name:    form.ownerName.trim(),
+          owner_name:    form.ownerName.trim().replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()),
           owner_contact: form.ownerContact.trim(),
           owner_email:   form.email.trim().toLowerCase(),
         }])

@@ -5,6 +5,9 @@ import toast from 'react-hot-toast';
 
 const GymContext = createContext();
 
+const toTitleCase = (str) =>
+  str.trim().replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+
 export const MEMBERSHIP_OPTIONS = [
   { value: 'monthly',     label: '1 Month',  months: 1  },
   { value: 'quarterly',   label: '3 Months', months: 3  },
@@ -518,13 +521,14 @@ export function GymProvider({ children }) {
   // ── CRUD ─────────────────────────────────────────────────────
   const addMember = async (formData) => {
     if (!gymId) throw new Error('No gym loaded');
-    if (isNameTaken(formData.name)) throw new Error(`A member named "${formData.name}" already exists.`);
+    const normalizedName = toTitleCase(formData.name);
+    if (isNameTaken(normalizedName)) throw new Error(`A member named "${normalizedName}" already exists.`);
     const endDate = calculateEndDate(formData.membershipStartDate, formData.membershipType);
     const { data: inserted, error: insertError } = await supabase
       .from('members')
       .insert([{
         gym_id: gymId,
-        name: formData.name,
+        name: normalizedName,
         contact_number: formData.contactNumber,
         photo_url: null,
         membership_type: formData.membershipType,
@@ -567,7 +571,8 @@ export function GymProvider({ children }) {
   };
 
   const updateMember = async (id, formData) => {
-    if (isNameTaken(formData.name, id)) throw new Error(`A member named "${formData.name}" already exists.`);
+    const normalizedName = toTitleCase(formData.name);
+    if (isNameTaken(normalizedName, id)) throw new Error(`A member named "${normalizedName}" already exists.`);
     const existing = members.find((m) => m.id === id);
     const startDate = formData.membershipStartDate ?? existing?.membershipStartDate;
     const membershipType = formData.membershipType ?? existing?.membershipType;
@@ -585,7 +590,7 @@ export function GymProvider({ children }) {
 
     const { data, error } = await supabase
       .from('members')
-      .update({ name: formData.name, contact_number: formData.contactNumber, photo_url: photoUrl, membership_type: membershipType, membership_start_date: startDate, membership_end_date: endDate, notes: formData.notes || '', instructor_id: formData.instructorId || null, coaching_plan: formData.coachingPlan || null, coaching_start_date: formData.coachingStartDate || null, coaching_end_date: formData.coachingEndDate || null, updated_at: new Date().toISOString() })
+      .update({ name: normalizedName, contact_number: formData.contactNumber, photo_url: photoUrl, membership_type: membershipType, membership_start_date: startDate, membership_end_date: endDate, notes: formData.notes || '', instructor_id: formData.instructorId || null, coaching_plan: formData.coachingPlan || null, coaching_start_date: formData.coachingStartDate || null, coaching_end_date: formData.coachingEndDate || null, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
       .single();
