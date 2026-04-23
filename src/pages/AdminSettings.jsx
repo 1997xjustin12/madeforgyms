@@ -17,25 +17,24 @@ function LoginSecurity({ gymId }) {
   // Load current username and email, sync gym_admins.email with auth email
   useEffect(() => {
     if (!gymId) return;
-    supabase.auth.getUser().then(({ data }) => {
-      const authEmail = data?.user?.email;
-      if (authEmail) {
+    supabase.auth.getUser().then(({ data: authData }) => {
+      const authEmail = authData?.user?.email;
+      const userId = authData?.user?.id;
+      if (authEmail && userId) {
         setCurrentEmail(authEmail);
         setSec((s) => ({ ...s, email: authEmail }));
-        // Keep gym_admins.email in sync with actual auth email
+        // Sync only this user's own row
         supabase.from('gym_admins')
           .update({ email: authEmail })
           .eq('gym_id', gymId)
+          .eq('user_id', userId)
           .then(() => {});
+        supabase.from('gym_admins').select('username')
+          .eq('gym_id', gymId)
+          .eq('user_id', userId)
+          .maybeSingle()
+          .then(({ data }) => { if (data?.username) setSec((s) => ({ ...s, username: data.username || '' })); });
       }
-    });
-    supabase.auth.getUser().then(({ data: authData }) => {
-      if (!authData?.user) return;
-      supabase.from('gym_admins').select('username')
-        .eq('gym_id', gymId)
-        .eq('user_id', authData.user.id)
-        .maybeSingle()
-        .then(({ data }) => { if (data?.username) setSec((s) => ({ ...s, username: data.username || '' })); });
     });
   }, [gymId]);
 
