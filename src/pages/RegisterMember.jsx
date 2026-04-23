@@ -32,7 +32,7 @@ export default function RegisterMember() {
   const { id } = useParams();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
-  const { addMember, updateMember, deleteMember, getMemberById, settings, instructors, gymSlug } = useGym();
+  const { addMember, updateMember, deleteMember, getMemberById, settings, instructors, gymSlug, isStaff, isAdmin, submitPendingMembership } = useGym();
   const activeInstructors = instructors.filter((i) => i.is_active);
   const activePromos = settings.promos?.filter((p) => p.active) || [];
 
@@ -43,6 +43,11 @@ export default function RegisterMember() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
+    if (isEdit && isStaff) {
+      toast.error('Staff cannot edit member records.');
+      navigate(`/${gymSlug}/admin/members`);
+      return;
+    }
     if (isEdit && id) {
       const member = getMemberById(id);
       if (member) {
@@ -77,11 +82,16 @@ export default function RegisterMember() {
       if (isEdit) {
         await updateMember(id, form);
         toast.success('Member updated!');
+        navigate(`/${gymSlug}/admin/members`);
+      } else if (isStaff) {
+        await submitPendingMembership('new_member', form, form.name.trim());
+        toast.success('Submitted for admin approval!');
+        navigate(`/${gymSlug}/admin`);
       } else {
         await addMember(form);
         toast.success('Member registered!');
+        navigate(`/${gymSlug}/admin/members`);
       }
-      navigate(`/${gymSlug}/admin/members`);
     } catch (err) {
       console.error(err);
       toast.error(err.message || 'Something went wrong. Please try again.');

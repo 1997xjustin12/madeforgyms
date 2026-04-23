@@ -1,12 +1,12 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, Users, LayoutDashboard, UserPlus, ArrowLeft, ClipboardList, CreditCard, Settings, CalendarCheck, Dumbbell, MoreHorizontal, X } from 'lucide-react';
+import { LogOut, Users, LayoutDashboard, UserPlus, ArrowLeft, ClipboardList, CreditCard, Settings, CalendarCheck, Dumbbell, MoreHorizontal, X, ClipboardCheck } from 'lucide-react';
 import { useGym } from '../context/GymContext';
 import toast from 'react-hot-toast';
 import GymLogo from './GymLogo';
 import { useState, useEffect } from 'react';
 
 export default function Navbar({ title, showBack }) {
-  const { isAdminLoggedIn, adminLogout, getExpiringMembers, pendingRenewals, settings, gymSlug } = useGym();
+  const { isAdminLoggedIn, adminLogout, getExpiringMembers, pendingRenewals, pendingMemberships, settings, gymSlug, isAdmin, isStaff } = useGym();
   const navigate = useNavigate();
   const location = useLocation();
   const expiring = getExpiringMembers();
@@ -54,11 +54,13 @@ export default function Navbar({ title, showBack }) {
                 <NavLink to={p('admin')} icon={<LayoutDashboard size={16} />} label="Dashboard" active={location.pathname === `/${gymSlug}/admin`} />
                 <NavLink to={p('admin/members')} icon={<Users size={16} />} label="Members" active={location.pathname.startsWith(`/${gymSlug}/admin/members`)} badge={expiring.length} />
                 <NavLink to={p('admin/register')} icon={<UserPlus size={16} />} label="Add" active={location.pathname === `/${gymSlug}/admin/register`} />
-                <NavLink to={p('admin/attendance')} icon={<CalendarCheck size={16} />} label="Attendance" active={location.pathname === `/${gymSlug}/admin/attendance`} />
-                <NavLink to={p('admin/logs')} icon={<ClipboardList size={16} />} label="Logs" active={location.pathname === `/${gymSlug}/admin/logs`} />
-                <NavLink to={p('admin/renewals')} icon={<CreditCard size={16} />} label="Payments" active={location.pathname === `/${gymSlug}/admin/renewals`} badge={pendingRenewals?.length} />
-                <NavLink to={p('admin/instructors')} icon={<Dumbbell size={16} />} label="Coaches" active={location.pathname === `/${gymSlug}/admin/instructors`} />
-                <NavLink to={p('admin/settings')} icon={<Settings size={16} />} label="Settings" active={location.pathname === `/${gymSlug}/admin/settings`} />
+                {isAdmin && <NavLink to={p('admin/attendance')} icon={<CalendarCheck size={16} />} label="Attendance" active={location.pathname === `/${gymSlug}/admin/attendance`} />}
+                {isAdmin && <NavLink to={p('admin/logs')} icon={<ClipboardList size={16} />} label="Logs" active={location.pathname === `/${gymSlug}/admin/logs`} />}
+                {isAdmin && <NavLink to={p('admin/renewals')} icon={<CreditCard size={16} />} label="Payments" active={location.pathname === `/${gymSlug}/admin/renewals`} badge={pendingRenewals?.length} />}
+                {isAdmin && <NavLink to={p('admin/instructors')} icon={<Dumbbell size={16} />} label="Coaches" active={location.pathname === `/${gymSlug}/admin/instructors`} />}
+                {isAdmin && <NavLink to={p('admin/approvals')} icon={<ClipboardCheck size={16} />} label="Approvals" active={location.pathname === `/${gymSlug}/admin/approvals`} badge={pendingMemberships?.filter(p => p.status === 'pending').length} badgeColor="bg-blue-500" />}
+                {isAdmin && <NavLink to={p('admin/settings')} icon={<Settings size={16} />} label="Settings" active={location.pathname === `/${gymSlug}/admin/settings`} />}
+                {isStaff && <NavLink to={p('admin/approvals')} icon={<ClipboardCheck size={16} />} label="My Requests" active={location.pathname === `/${gymSlug}/admin/approvals`} badge={pendingMemberships?.filter(p => p.status === 'pending').length} badgeColor="bg-blue-500" />}
               </div>
               <button
                 onClick={handleLogout}
@@ -125,13 +127,13 @@ export default function Navbar({ title, showBack }) {
                 <button
                   onClick={() => setMoreOpen(true)}
                   className={`relative flex flex-col items-center gap-0.5 flex-1 py-1.5 rounded-xl transition-colors ${
-                    [`/${gymSlug}/admin/settings`, `/${gymSlug}/admin/logs`, `/${gymSlug}/admin/attendance`].includes(location.pathname)
+                    [`/${gymSlug}/admin/settings`, `/${gymSlug}/admin/logs`, `/${gymSlug}/admin/attendance`, `/${gymSlug}/admin/approvals`].includes(location.pathname)
                       ? 'text-orange-400'
                       : 'text-slate-500'
                   }`}
                 >
                   <div className={`p-1 rounded-lg transition-all ${
-                    [`/${gymSlug}/admin/settings`, `/${gymSlug}/admin/logs`, `/${gymSlug}/admin/attendance`].includes(location.pathname)
+                    [`/${gymSlug}/admin/settings`, `/${gymSlug}/admin/logs`, `/${gymSlug}/admin/attendance`, `/${gymSlug}/admin/approvals`].includes(location.pathname)
                       ? 'bg-orange-500/15'
                       : ''
                   }`}>
@@ -169,10 +171,16 @@ export default function Navbar({ title, showBack }) {
               {/* Nav items */}
               <div className="px-4 pb-3 space-y-1">
                 {[
-                  { to: p('admin/attendance'), icon: <CalendarCheck size={20} />, label: 'Attendance' },
-                  { to: p('admin/logs'),       icon: <ClipboardList size={20} />,  label: 'Activity Logs' },
-                  { to: p('admin/settings'),   icon: <Settings size={20} />,       label: 'Settings' },
-                ].map(({ to, icon, label }) => (
+                  ...(isAdmin ? [
+                    { to: p('admin/attendance'), icon: <CalendarCheck size={20} />, label: 'Attendance' },
+                    { to: p('admin/logs'),       icon: <ClipboardList size={20} />,  label: 'Activity Logs' },
+                    { to: p('admin/approvals'),  icon: <ClipboardCheck size={20} />, label: 'Approvals', badge: pendingMemberships?.filter(p => p.status === 'pending').length },
+                    { to: p('admin/settings'),   icon: <Settings size={20} />,       label: 'Settings' },
+                  ] : []),
+                  ...(isStaff ? [
+                    { to: p('admin/approvals'),  icon: <ClipboardCheck size={20} />, label: 'My Requests', badge: pendingMemberships?.filter(p => p.status === 'pending').length },
+                  ] : []),
+                ].map(({ to, icon, label, badge }) => (
                   <Link
                     key={to}
                     to={to}
@@ -185,7 +193,10 @@ export default function Navbar({ title, showBack }) {
                   >
                     <span className={location.pathname === to ? 'text-orange-400' : 'text-slate-400'}>{icon}</span>
                     <span className="font-medium">{label}</span>
-                    {location.pathname === to && (
+                    {badge > 0 && (
+                      <span className="ml-auto bg-blue-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5">{badge > 9 ? '9+' : badge}</span>
+                    )}
+                    {location.pathname === to && !badge && (
                       <span className="ml-auto w-1.5 h-1.5 rounded-full bg-orange-400" />
                     )}
                   </Link>
@@ -216,7 +227,7 @@ export default function Navbar({ title, showBack }) {
   );
 }
 
-function NavLink({ to, icon, label, active, badge }) {
+function NavLink({ to, icon, label, active, badge, badgeColor = 'bg-orange-500' }) {
   return (
     <Link
       to={to}
@@ -229,7 +240,7 @@ function NavLink({ to, icon, label, active, badge }) {
       {icon}
       <span className="hidden sm:block">{label}</span>
       {badge > 0 && (
-        <span className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+        <span className={`absolute -top-1 -right-1 w-4 h-4 ${badgeColor} text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse`}>
           {badge > 9 ? '9+' : badge}
         </span>
       )}

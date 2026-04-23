@@ -94,6 +94,77 @@ export async function sendNewApplicationAlert({ ownerName, ownerEmail, ownerCont
   });
 }
 
+function gymHeader(gymName, gymLogoUrl) {
+  if (gymLogoUrl) {
+    return `<div style="margin-bottom:24px;display:flex;align-items:center;gap:12px;">
+      <img src="${gymLogoUrl}" alt="${gymName}" style="width:48px;height:48px;object-fit:contain;border-radius:10px;background:rgba(255,255,255,0.06);padding:4px;" />
+      <span style="font-weight:900;font-size:18px;color:#fff;">${gymName}</span>
+    </div>`;
+  }
+  return `<div style="margin-bottom:24px;">
+    <span style="background:linear-gradient(135deg,#16a34a,#4ade80);padding:8px 16px;border-radius:8px;font-weight:900;font-size:18px;color:#fff;">${gymName}</span>
+  </div>`;
+}
+
+/* ── Sent to admin when staff submits a pending membership ──── */
+export async function sendStaffSubmissionAlert({ adminEmail, gymName, gymLogoUrl, staffName, type, memberName }) {
+  if (!adminEmail) return;
+  const label = type === 'new_member' ? 'New Member Registration' : 'Membership Renewal';
+  await sendEmail({
+    to: adminEmail,
+    type: 'staff_submission',
+    subject: `[${gymName}] Staff submitted: ${label} — ${memberName}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#0a0f1a;color:#f1f5f9;border-radius:16px;">
+        ${gymHeader(gymName, gymLogoUrl)}
+        <h1 style="font-size:20px;font-weight:900;margin-bottom:8px;color:#fff;">Staff Approval Required 📋</h1>
+        <p style="color:#94a3b8;margin-bottom:20px;">
+          <strong style="color:#fff;">${staffName}</strong> submitted a <strong style="color:#fff;">${label}</strong> that needs your approval.
+        </p>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;margin-bottom:24px;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <tr><td style="color:#64748b;padding:4px 0;width:120px;">Type</td><td style="color:#fff;font-weight:700;">${label}</td></tr>
+            <tr><td style="color:#64748b;padding:4px 0;">Member</td><td style="color:#fff;">${memberName}</td></tr>
+            <tr><td style="color:#64748b;padding:4px 0;">Submitted by</td><td style="color:#fff;">${staffName}</td></tr>
+            <tr><td style="color:#64748b;padding:4px 0;">Gym</td><td style="color:#fff;">${gymName}</td></tr>
+          </table>
+        </div>
+        <p style="color:#94a3b8;font-size:13px;">Log in to your admin portal to approve or reject this request.</p>
+        <p style="color:#475569;font-size:11px;margin-top:32px;">${gymName}</p>
+      </div>
+    `,
+  });
+}
+
+/* ── Sent to staff when admin approves or rejects ────────────── */
+export async function sendStaffDecisionEmail({ staffEmail, gymName, gymLogoUrl, decision, memberName, notes }) {
+  if (!staffEmail) return;
+  const approved = decision === 'approved';
+  await sendEmail({
+    to: staffEmail,
+    type: 'staff_decision',
+    subject: `[${gymName}] Your request for ${memberName} was ${approved ? '✅ approved' : '❌ rejected'}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#0a0f1a;color:#f1f5f9;border-radius:16px;">
+        ${gymHeader(gymName, gymLogoUrl)}
+        <h1 style="font-size:20px;font-weight:900;margin-bottom:8px;color:#fff;">
+          ${approved ? '✅ Request Approved' : '❌ Request Rejected'}
+        </h1>
+        <p style="color:#94a3b8;margin-bottom:20px;">
+          Your membership request for <strong style="color:#fff;">${memberName}</strong> has been <strong style="color:${approved ? '#4ade80' : '#f87171'};">${decision}</strong> by the admin.
+        </p>
+        ${notes ? `
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;margin-bottom:24px;">
+          <p style="color:#64748b;font-size:12px;margin:0 0 6px;">Admin notes:</p>
+          <p style="color:#f1f5f9;font-size:13px;margin:0;">${notes}</p>
+        </div>
+        ` : ''}
+        <p style="color:#475569;font-size:11px;margin-top:32px;">${gymName}</p>
+      </div>
+    `,
+  });
+}
+
 /* ── Sent to gym owner on approval (used in PlatformAdmin) ──── */
 export async function sendApprovalEmail({ ownerName, ownerEmail, gymName, slug }) {
   await sendEmail({

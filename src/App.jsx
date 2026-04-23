@@ -17,6 +17,7 @@ import MemberHistory from './pages/MemberHistory';
 import CheckIn from './pages/CheckIn';
 import AdminAttendance from './pages/AdminAttendance';
 import AdminInstructors from './pages/AdminInstructors';
+import StaffApprovals from './pages/StaffApprovals';
 import CoachLogin from './pages/CoachLogin';
 import CoachPortal from './pages/CoachPortal';
 import CoachMemberDetail from './pages/CoachMemberDetail';
@@ -80,6 +81,7 @@ function GymRoutes() {
       <Route path="admin/renewals" element={<PrivateRoute><RenewalRequests /></PrivateRoute>} />
       <Route path="admin/attendance" element={<PrivateRoute><AdminAttendance /></PrivateRoute>} />
       <Route path="admin/instructors" element={<PrivateRoute><AdminInstructors /></PrivateRoute>} />
+      <Route path="admin/approvals" element={<PrivateRoute><StaffApprovals /></PrivateRoute>} />
       <Route path="member" element={<MemberPortal />} />
       <Route path="coach" element={<CoachLogin />} />
       <Route path="coach/:code" element={<CoachPortal />} />

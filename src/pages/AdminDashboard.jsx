@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserCheck, AlertTriangle, UserX, UserPlus, MessageSquare, ChevronRight, Send, Download, RefreshCw, ShieldAlert, TrendingUp } from 'lucide-react';
+import { Users, UserCheck, AlertTriangle, UserX, UserPlus, MessageSquare, ChevronRight, Send, Download, RefreshCw, ShieldAlert, TrendingUp, ClipboardCheck } from 'lucide-react';
 import { useGym } from '../context/GymContext';
 import { exportMembersToExcel } from '../utils/exportExcel';
 import { exportJSON } from '../utils/backup';
@@ -17,7 +17,7 @@ const greeting   = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : '
 const greetEmoji = hour < 12 ? '☀️' : hour < 17 ? '🌤️' : '🌙';
 
 export default function AdminDashboard() {
-  const { members, getMemberStatus, getExpiringMembers, refreshMembers, settings, recordBackup, gymSlug } = useGym();
+  const { members, getMemberStatus, getExpiringMembers, refreshMembers, settings, recordBackup, gymSlug, pendingMemberships, isAdmin, adminRole } = useGym();
   const navigate = useNavigate();
   const [smsTarget, setSmsTarget] = useState(null);
   const [showBulkSMS, setShowBulkSMS] = useState(false);
@@ -73,6 +73,17 @@ export default function AdminDashboard() {
       bg: 'bg-red-500/15',
       accent: 'bg-red-500',
     },
+    ...(isAdmin ? [{
+      label: 'Pending Approvals',
+      value: (pendingMemberships || []).filter(p => p.status === 'pending').length,
+      sub: 'Staff submissions',
+      icon: <ClipboardCheck size={20} />,
+      color: 'text-blue-400',
+      bg: 'bg-blue-500/15',
+      accent: 'bg-blue-500',
+      alert: (pendingMemberships || []).filter(p => p.status === 'pending').length > 0,
+      link: `/${gymSlug}/admin/approvals`,
+    }] : []),
   ];
 
   return (
@@ -123,9 +134,10 @@ export default function AdminDashboard() {
           {stats.map((s) => (
             <div
               key={s.label}
+              onClick={s.link ? () => navigate(s.link) : undefined}
               className={`bg-slate-800 rounded-2xl border overflow-hidden relative ${
-                s.alert ? 'border-orange-500/50 shadow-lg shadow-orange-500/10' : 'border-slate-700/30'
-              }`}
+                s.link ? 'cursor-pointer hover:border-blue-500/50 transition-colors' : ''
+              } ${s.alert ? 'border-orange-500/50 shadow-lg shadow-orange-500/10' : 'border-slate-700/30'}`}
             >
               {/* Colored top accent bar */}
               <div className={`h-1 ${s.accent} ${s.alert ? 'animate-pulse' : ''}`} />
@@ -133,11 +145,11 @@ export default function AdminDashboard() {
                 <div className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center mb-3 ${s.color}`}>
                   {s.icon}
                 </div>
-                <p className={`text-3xl font-black leading-none ${s.alert ? 'text-orange-400' : 'text-white'}`}>
+                <p className={`text-3xl font-black leading-none ${s.alert ? (s.color || 'text-orange-400') : 'text-white'}`}>
                   {s.value}
                 </p>
                 <p className="text-slate-400 text-xs mt-1 font-medium">{s.label}</p>
-                <p className={`text-xs mt-0.5 ${s.alert ? 'text-orange-400/70' : 'text-slate-600'}`}>{s.sub}</p>
+                <p className={`text-xs mt-0.5 ${s.alert ? 'text-slate-500' : 'text-slate-600'}`}>{s.sub}</p>
               </div>
             </div>
           ))}

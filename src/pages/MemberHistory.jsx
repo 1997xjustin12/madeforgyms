@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   UserPlus, RefreshCw, CheckCircle, XCircle, Pencil, Trash2,
-  Clock, History, ArrowLeft, Calendar, Tag,
+  Clock, History, ArrowLeft, Calendar, Tag, ClipboardCheck, ClipboardX, Send,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useGym } from '../context/GymContext';
@@ -10,12 +10,15 @@ import Navbar from '../components/Navbar';
 import { formatDate } from '../utils/helpers';
 
 const ACTION_CONFIG = {
-  MEMBER_ADDED:       { icon: UserPlus,     color: 'text-green-400',  bg: 'bg-green-500/15',  border: 'border-green-500/30',  label: 'Enrolled'          },
-  MEMBERSHIP_RENEWED: { icon: RefreshCw,    color: 'text-orange-400', bg: 'bg-orange-500/15', border: 'border-orange-500/30', label: 'Membership Renewed' },
-  PAYMENT_APPROVED:   { icon: CheckCircle,  color: 'text-green-400',  bg: 'bg-green-500/15',  border: 'border-green-500/30',  label: 'Payment Approved'   },
-  PAYMENT_REJECTED:   { icon: XCircle,      color: 'text-red-400',    bg: 'bg-red-500/15',    border: 'border-red-500/30',    label: 'Payment Rejected'   },
-  MEMBER_UPDATED:     { icon: Pencil,       color: 'text-sky-400',    bg: 'bg-sky-500/15',    border: 'border-sky-500/30',    label: 'Info Updated'       },
-  MEMBER_DELETED:     { icon: Trash2,       color: 'text-red-400',    bg: 'bg-red-500/15',    border: 'border-red-500/30',    label: 'Deleted'            },
+  MEMBER_ADDED:       { icon: UserPlus,       color: 'text-green-400',  bg: 'bg-green-500/15',  border: 'border-green-500/30',  label: 'Enrolled'             },
+  MEMBERSHIP_RENEWED: { icon: RefreshCw,      color: 'text-orange-400', bg: 'bg-orange-500/15', border: 'border-orange-500/30', label: 'Membership Renewed'    },
+  PAYMENT_APPROVED:   { icon: CheckCircle,    color: 'text-green-400',  bg: 'bg-green-500/15',  border: 'border-green-500/30',  label: 'Payment Approved'      },
+  PAYMENT_REJECTED:   { icon: XCircle,        color: 'text-red-400',    bg: 'bg-red-500/15',    border: 'border-red-500/30',    label: 'Payment Rejected'      },
+  MEMBER_UPDATED:     { icon: Pencil,         color: 'text-sky-400',    bg: 'bg-sky-500/15',    border: 'border-sky-500/30',    label: 'Info Updated'          },
+  MEMBER_DELETED:     { icon: Trash2,         color: 'text-red-400',    bg: 'bg-red-500/15',    border: 'border-red-500/30',    label: 'Deleted'               },
+  PENDING_SUBMITTED:  { icon: Send,           color: 'text-blue-400',   bg: 'bg-blue-500/15',   border: 'border-blue-500/30',   label: 'Submitted for Approval' },
+  PENDING_APPROVED:   { icon: ClipboardCheck, color: 'text-green-400',  bg: 'bg-green-500/15',  border: 'border-green-500/30',  label: 'Approval Approved'     },
+  PENDING_REJECTED:   { icon: ClipboardX,     color: 'text-red-400',    bg: 'bg-red-500/15',    border: 'border-red-500/30',    label: 'Approval Rejected'     },
 };
 
 const DEFAULT_CONFIG = { icon: Clock, color: 'text-slate-400', bg: 'bg-slate-700', border: 'border-slate-600', label: 'Activity' };
@@ -39,19 +42,22 @@ export default function MemberHistory() {
   const member = getMemberById(id);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !gymId) return;
     const load = async () => {
+      console.log('MemberHistory query', { gymId, memberId: id });
       const { data, error } = await supabase
         .from('activity_logs')
         .select('*')
         .eq('gym_id', gymId)
         .eq('member_id', id)
         .order('created_at', { ascending: false });
-      if (!error) setLogs(data || []);
+      if (error) console.error('MemberHistory fetch error:', error.message, error);
+      console.log('MemberHistory results', data);
+      setLogs(data || []);
       setLoading(false);
     };
     load();
-  }, [id]);
+  }, [id, gymId]);
 
   if (!member) {
     return (
@@ -160,6 +166,9 @@ export default function MemberHistory() {
                         </div>
                         {log.description && (
                           <p className="text-slate-400 text-xs mt-1 leading-relaxed">{log.description}</p>
+                        )}
+                        {log.performed_by && (
+                          <p className="text-slate-600 text-xs mt-1.5">by <span className="text-slate-500">{log.performed_by}</span></p>
                         )}
                       </div>
                     </div>

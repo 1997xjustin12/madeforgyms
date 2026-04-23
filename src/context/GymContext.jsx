@@ -86,8 +86,11 @@ export function GymProvider({ children }) {
   const [authLoading, setAuthLoading]   = useState(true);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [adminEmail, setAdminEmail]     = useState(null);
+  const [adminRole, setAdminRole]       = useState(null); // 'admin' | 'staff' | null
+  const [adminName, setAdminName]       = useState(null);
   const [renewalRequests, setRenewalRequests] = useState([]);
   const [instructors, setInstructors]   = useState([]);
+  const [pendingMemberships, setPendingMemberships] = useState([]);
 
   // ── Current gym (set when a gym slug is resolved) ────────────
   const [currentGym, setCurrentGym]     = useState(null);
@@ -150,6 +153,27 @@ export function GymProvider({ children }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // ── Fetch admin role whenever gym + session are both ready ────
+  useEffect(() => {
+    if (!gymId || !isAdminLoggedIn) {
+      setAdminRole(null);
+      setAdminName(null);
+      return;
+    }
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase.from('gym_admins')
+        .select('role, username, email')
+        .eq('gym_id', gymId)
+        .eq('user_id', user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          setAdminRole(data?.role || 'admin');
+          setAdminName(data?.username || data?.email || user.email || '');
+        });
+    });
+  }, [gymId, isAdminLoggedIn]);
 
   // ── Load members (only when gym is known) ────────────────────
   const loadMembers = useCallback(async () => {
@@ -499,17 +523,20 @@ export function GymProvider({ children }) {
   };
 
   const logAction = async (action, description, memberName = null, memberId = null) => {
-    if (!gymId) return;
+    if (!gymId) { console.warn('logAction: no gymId'); return; }
+    console.log('logAction', { action, gymId, memberId, memberName });
     try {
-      await supabase.from('activity_logs').insert([{
+      const { error } = await supabase.from('activity_logs').insert([{
         gym_id: gymId,
         action, description,
         member_name: memberName,
         member_id: memberId,
-        performed_by: adminEmail || 'Admin',
+        performed_by: adminName || adminEmail || 'Admin',
       }]);
+      if (error) console.error('logAction insert failed:', error.message, error);
+      else console.log('logAction insert OK');
     } catch (err) {
-      console.error('Log failed:', err);
+      console.error('logAction exception:', err);
     }
   };
 
@@ -678,6 +705,116 @@ export function GymProvider({ children }) {
 
   const getExpiringMembers = () => members.filter((m) => getMemberStatus(m).status === 'expiring');
 
+  // ── Pending memberships (staff approval queue) ───────────────
+  const loadPendingMemberships = async () => {
+    if (!gymId) return;
+    let query = supabase
+      .from('pending_memberships')
+      .select('*')
+      .eq('gym_id', gymId)
+      .order('created_at', { ascending: false });
+    if (adminRole === 'staff' && adminEmail) {
+      query = query.eq('submitted_by_email', adminEmail);
+    }
+    const { data } = await query;
+    setPendingMemberships(data || []);
+  };
+
+  useEffect(() => {
+    if (gymId && isAdminLoggedIn && (adminRole === 'admin' || (adminRole === 'staff' && adminEmail))) loadPendingMemberships();
+  }, [gymId, isAdminLoggedIn, adminRole, adminEmail]); // eslint-disable-line
+
+  const submitPendingMembership = async (type, formData, memberName, memberId = null) => {
+    if (!gymId) throw new Error('No gym loaded');
+    const { data, error } = await supabase
+      .from('pending_memberships')
+      .insert([{
+        gym_id: gymId,
+        type,
+        member_id: memberId,
+        member_name: memberName,
+        form_data: formData,
+        submitted_by_name: adminName,
+        submitted_by_email: adminEmail,
+        status: 'pending',
+      }])
+      .select()
+      .single();
+    if (error) throw error;
+
+    // Telegram notification to admin
+    if (settings.telegramBotToken && settings.telegramChatId) {
+      const label = type === 'new_member' ? 'New Member Registration' : 'Membership Renewal';
+      const msg = `📋 <b>Staff Approval Required</b>\n\n<b>${label}</b>\nMember: <b>${memberName}</b>\nSubmitted by: ${adminName}\nGym: ${settings.gymName}\n\n⏳ Awaiting your approval in the admin portal.`;
+      fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: settings.telegramChatId, text: msg, parse_mode: 'HTML' }),
+      }).catch(() => {});
+    }
+
+    // Email notification to admin
+    if (currentGym?.owner_email) {
+      const { sendStaffSubmissionAlert } = await import('../lib/email');
+      sendStaffSubmissionAlert({
+        adminEmail: currentGym.owner_email,
+        gymName: settings.gymName,
+        gymLogoUrl: settings.gymLogoUrl || null,
+        staffName: adminName,
+        type,
+        memberName,
+      }).catch(() => {});
+    }
+
+    await logAction(
+      type === 'new_member' ? 'PENDING_NEW_MEMBER' : 'PENDING_RENEWAL',
+      `${adminName} submitted ${type === 'new_member' ? 'new member' : 'renewal'} for approval: ${memberName}`,
+      memberName,
+      memberId,
+    );
+    return data;
+  };
+
+  const approvePendingMembership = async (pendingId) => {
+    const pending = pendingMemberships.find((p) => p.id === pendingId);
+    if (!pending) throw new Error('Pending record not found');
+
+    let resolvedMemberId = pending.member_id;
+    if (pending.type === 'new_member') {
+      const newMember = await addMember(pending.form_data);
+      resolvedMemberId = newMember?.id || null;
+    } else {
+      const { membershipType, paymentMethod, durationDays } = pending.form_data;
+      await renewMember(pending.member_id, membershipType, paymentMethod || 'cash', durationDays);
+    }
+
+    await supabase.from('pending_memberships').update({
+      status: 'approved',
+      reviewed_by: adminName,
+      reviewed_at: new Date().toISOString(),
+    }).eq('id', pendingId);
+
+    setPendingMemberships((prev) => prev.map((p) => p.id === pendingId ? { ...p, status: 'approved' } : p));
+
+    await logAction('PENDING_APPROVED', `Approved ${pending.type === 'new_member' ? 'new member' : 'renewal'}: ${pending.member_name}`, pending.member_name, resolvedMemberId);
+  };
+
+  const rejectPendingMembership = async (pendingId, notes) => {
+    const pending = pendingMemberships.find((p) => p.id === pendingId);
+    if (!pending) throw new Error('Pending record not found');
+
+    await supabase.from('pending_memberships').update({
+      status: 'rejected',
+      admin_notes: notes || '',
+      reviewed_by: adminName,
+      reviewed_at: new Date().toISOString(),
+    }).eq('id', pendingId);
+
+    setPendingMemberships((prev) => prev.map((p) => p.id === pendingId ? { ...p, status: 'rejected', admin_notes: notes } : p));
+
+    await logAction('PENDING_REJECTED', `Rejected ${pending.type === 'new_member' ? 'new member' : 'renewal'}: ${pending.member_name}`, pending.member_name, pending.member_id);
+  };
+
   // ── Admin login — verifies access to this gym ────────────────
   const adminLogin = async (identifier, password) => {
     if (!gymId) throw new Error('No gym loaded');
@@ -730,6 +867,12 @@ export function GymProvider({ children }) {
       refreshMembers: loadMembers,
       // Auth
       authLoading, isAdminLoggedIn, adminLogin, adminLogout, logAction,
+      adminRole, adminName, adminEmail,
+      isAdmin: isAdminLoggedIn && adminRole === 'admin',
+      isStaff: isAdminLoggedIn && adminRole === 'staff',
+      // Staff approval queue
+      pendingMemberships, loadPendingMemberships,
+      submitPendingMembership, approvePendingMembership, rejectPendingMembership,
       // Settings
       settings, saveSettings, recordBackup,
       // Renewal requests

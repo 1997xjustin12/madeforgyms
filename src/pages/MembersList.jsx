@@ -16,7 +16,7 @@ const PAGE_SIZE = 15;
 // 'active' filter includes expiring members since they are still active
 
 export default function MembersList() {
-  const { members, getMemberStatus, deleteMember, renewMember, settings, instructors, gymSlug } = useGym();
+  const { members, getMemberStatus, deleteMember, renewMember, settings, instructors, gymSlug, isStaff, submitPendingMembership } = useGym();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -238,12 +238,14 @@ export default function MembersList() {
 
                       {/* Action buttons grid */}
                       <div className="grid grid-cols-2 gap-2">
+                        {!isStaff && (
                         <button
                           onClick={() => navigate(`/${gymSlug}/admin/members/${member.id}/edit`)}
                           className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 py-2.5 rounded-xl text-sm font-medium transition-colors"
                         >
                           <Pencil size={14} /> Edit
                         </button>
+                        )}
                         <button
                           onClick={() => navigate(`/${gymSlug}/admin/members/${member.id}/history`)}
                           className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 py-2.5 rounded-xl text-sm font-medium transition-colors"
@@ -294,6 +296,8 @@ export default function MembersList() {
           settings={settings}
           promos={settings.promos?.filter((p) => p.active) || []}
           renewMember={renewMember}
+          submitPendingMembership={submitPendingMembership}
+          isStaff={isStaff}
           onClose={() => setRenewTarget(null)}
         />
       )}
@@ -346,7 +350,7 @@ const PLAN_PRICE_KEY = {
   annual:        'priceAnnual',
 };
 
-function QuickRenewModal({ member, settings, promos, renewMember, onClose }) {
+function QuickRenewModal({ member, settings, promos, renewMember, submitPendingMembership, isStaff, onClose }) {
   const [plan, setPlan]               = useState('monthly');
   const [paymentMethod, setPayment]   = useState('cash');
   const [saving, setSaving]           = useState(false);
@@ -365,11 +369,16 @@ function QuickRenewModal({ member, settings, promos, renewMember, onClose }) {
   const handleRenew = async () => {
     setSaving(true);
     try {
-      await renewMember(member.id, plan, paymentMethod, customDays);
-      toast.success(`✅ Membership renewed for ${member.name}!`);
+      if (isStaff) {
+        await submitPendingMembership('renewal', { membershipType: plan, paymentMethod, durationDays: customDays }, member.name, member.id);
+        toast.success(`Renewal submitted for approval!`);
+      } else {
+        await renewMember(member.id, plan, paymentMethod, customDays);
+        toast.success(`✅ Membership renewed for ${member.name}!`);
+      }
       onClose();
     } catch (err) {
-      toast.error(err.message || 'Failed to renew membership.');
+      toast.error(err.message || 'Failed to submit renewal.');
     } finally {
       setSaving(false);
     }

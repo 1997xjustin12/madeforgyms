@@ -27,7 +27,7 @@ export default function AdminLogin() {
   const [loading, setLoading]   = useState(false);
   const [attemptsLeft, setAttemptsLeft]   = useState(MAX_ATTEMPTS);
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
-  const { adminLogin, isAdminLoggedIn, settings, gymSlug, gymSuspended } = useGym();
+  const { adminLogin, isAdminLoggedIn, settings, gymSlug, gymSuspended, adminRole } = useGym();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function AdminLogin() {
     try {
       await adminLogin(email, password);
       clearLoginMeta();
-      toast.success('Welcome, Admin!');
+      toast.success(adminRole === 'staff' ? 'Welcome, Staff!' : 'Welcome, Admin!');
       navigate(`/${gymSlug}/admin`);
     } catch (err) {
       const msg = err?.message || '';

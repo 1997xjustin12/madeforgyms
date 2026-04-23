@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { sendRegistrationConfirmation, sendNewApplicationAlert } from '../lib/email';
-import { Dumbbell, Eye, EyeOff, Clock, Check, ArrowLeft, Loader2, ChevronRight } from 'lucide-react';
+import { Dumbbell, Eye, EyeOff, Clock, Check, ArrowLeft, Loader2, ChevronRight, X, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 function nameToSlug(name) {
@@ -53,6 +53,8 @@ export default function GymRegister() {
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [usernameAvail, setUsernameAvail]   = useState(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
+  const [agreed, setAgreed]           = useState(false);
+  const [showContract, setShowContract] = useState(false);
   const [submitting, setSubmitting]   = useState(false);
   const [done, setDone]               = useState(false);
 
@@ -133,7 +135,7 @@ export default function GymRegister() {
     form.password.length >= 8 &&
     form.password === form.confirmPassword;
 
-  const canSubmit = step1Valid && step2Valid && step3Valid && !submitting;
+  const canSubmit = step1Valid && step2Valid && step3Valid && agreed && !submitting;
 
   const handleNext = (e) => {
     e.preventDefault();
@@ -229,6 +231,113 @@ export default function GymRegister() {
 
   return (
     <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center px-4 relative overflow-hidden">
+
+      {/* ── Contract Modal ── */}
+      {showContract && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(6px)' }}>
+          <div className="relative w-full max-w-lg rounded-3xl border border-white/10 shadow-2xl flex flex-col" style={{ background: '#0f172a', maxHeight: '85vh' }}>
+            {/* Header */}
+            <div className="flex items-center gap-3 p-5 border-b border-white/8 shrink-0">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(34,197,94,0.12)' }}>
+                <FileText size={18} className="text-green-400" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-white font-bold text-base">MadeForGyms Service Agreement</h2>
+                <p className="text-slate-500 text-xs">Effective upon registration</p>
+              </div>
+              <button type="button" onClick={() => setShowContract(false)} className="text-slate-500 hover:text-white transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Scrollable body */}
+            <div className="overflow-y-auto p-5 space-y-5 text-slate-300 text-sm leading-relaxed">
+
+              <section>
+                <h3 className="text-white font-semibold mb-1.5">1. Parties</h3>
+                <p>This Service Agreement ("Agreement") is entered into between <strong className="text-white">MadeForGyms</strong> ("Platform", "we", "us") and the gym owner ("Client", "you") who completes this registration form. By checking the agreement box and submitting, you accept all terms below.</p>
+              </section>
+
+              <section>
+                <h3 className="text-white font-semibold mb-1.5">2. Services Provided</h3>
+                <p>MadeForGyms provides a cloud-based gym management platform that includes member management, attendance tracking, membership renewals, GCash payment recording, coach management, and a member-facing portal — accessible via your unique URL at <span className="text-green-400 font-mono">madeforgyms.com/[your-slug]</span>.</p>
+              </section>
+
+              <section>
+                <h3 className="text-white font-semibold mb-1.5">3. Subscription & Fees</h3>
+                <ul className="space-y-1.5 list-none">
+                  <li className="flex gap-2"><span className="text-green-400 shrink-0">•</span>A one-time setup fee of <strong className="text-white">₱1,999</strong> is due upon approval of your application.</li>
+                  <li className="flex gap-2"><span className="text-green-400 shrink-0">•</span>A monthly subscription of <strong className="text-white">₱499/month</strong> is billed each month thereafter.</li>
+                  <li className="flex gap-2"><span className="text-green-400 shrink-0">•</span>Failure to pay within 7 days of the billing date may result in temporary suspension of your portal.</li>
+                  <li className="flex gap-2"><span className="text-green-400 shrink-0">•</span>Fees are non-refundable once a billing cycle has started.</li>
+                </ul>
+              </section>
+
+              <section>
+                <h3 className="text-white font-semibold mb-1.5">4. Account Responsibilities</h3>
+                <ul className="space-y-1.5 list-none">
+                  <li className="flex gap-2"><span className="text-green-400 shrink-0">•</span>You are responsible for maintaining the confidentiality of your login credentials.</li>
+                  <li className="flex gap-2"><span className="text-green-400 shrink-0">•</span>You agree to provide accurate information during registration and keep your gym details up to date.</li>
+                  <li className="flex gap-2"><span className="text-green-400 shrink-0">•</span>You are solely responsible for any data entered into the platform, including member records and payment information.</li>
+                </ul>
+              </section>
+
+              <section>
+                <h3 className="text-white font-semibold mb-1.5">5. Data Privacy</h3>
+                <p>MadeForGyms handles all data in accordance with the <strong className="text-white">Philippine Data Privacy Act of 2012 (R.A. 10173)</strong>. Your gym's member data is stored securely and will not be shared with third parties without your consent. You, as the gym owner, are the data controller for your members' personal information and are responsible for obtaining any necessary consent from them.</p>
+              </section>
+
+              <section>
+                <h3 className="text-white font-semibold mb-1.5">6. Acceptable Use</h3>
+                <p>You agree not to use the platform for any unlawful purpose, to attempt unauthorized access to the system, or to upload harmful, fraudulent, or misleading content. Violation of this clause may result in immediate termination without refund.</p>
+              </section>
+
+              <section>
+                <h3 className="text-white font-semibold mb-1.5">7. Termination</h3>
+                <ul className="space-y-1.5 list-none">
+                  <li className="flex gap-2"><span className="text-green-400 shrink-0">•</span>You may cancel your subscription at any time by contacting MadeForGyms support. Access will remain active until the end of your current billing period.</li>
+                  <li className="flex gap-2"><span className="text-green-400 shrink-0">•</span>MadeForGyms reserves the right to suspend or terminate accounts that violate this Agreement, with or without prior notice.</li>
+                </ul>
+              </section>
+
+              <section>
+                <h3 className="text-white font-semibold mb-1.5">8. Limitation of Liability</h3>
+                <p>MadeForGyms shall not be liable for any indirect, incidental, or consequential damages arising from the use or inability to use the platform, including loss of data. Our total liability shall not exceed the total fees paid by you in the 30 days preceding the claim.</p>
+              </section>
+
+              <section>
+                <h3 className="text-white font-semibold mb-1.5">9. Amendments</h3>
+                <p>MadeForGyms may update this Agreement from time to time. Continued use of the platform after notification of changes constitutes acceptance of the revised terms.</p>
+              </section>
+
+              <section>
+                <h3 className="text-white font-semibold mb-1.5">10. Governing Law</h3>
+                <p>This Agreement is governed by the laws of the <strong className="text-white">Republic of the Philippines</strong>. Any disputes shall be resolved through the appropriate courts in the Philippines.</p>
+              </section>
+
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-white/8 shrink-0 flex gap-3">
+              <button
+                type="button"
+                onClick={() => { setAgreed(true); setShowContract(false); }}
+                className="flex-1 py-3 rounded-xl font-bold text-sm text-white transition-all flex items-center justify-center gap-2"
+                style={{ background: 'linear-gradient(135deg,#16a34a,#4ade80)', boxShadow: '0 0 16px rgba(34,197,94,0.25)' }}
+              >
+                <Check size={15} /> I Agree
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowContract(false)}
+                className="px-5 py-3 rounded-xl font-bold text-sm text-slate-400 border border-slate-700 hover:text-white hover:border-slate-500 transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="absolute inset-0 pointer-events-none"
         style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
@@ -461,6 +570,37 @@ export default function GymRegister() {
                 {form.confirmPassword && form.password !== form.confirmPassword && (
                   <p className="text-red-400 text-xs mt-1">Passwords do not match.</p>
                 )}
+              </div>
+
+              {/* Contract agreement */}
+              <div
+                className="rounded-2xl border p-4 transition-colors"
+                style={{ background: agreed ? 'rgba(34,197,94,0.06)' : 'rgba(255,255,255,0.02)', borderColor: agreed ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.08)' }}
+              >
+                <div className="flex items-start gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setAgreed((v) => !v)}
+                    className="mt-0.5 w-5 h-5 rounded flex items-center justify-center shrink-0 transition-all border"
+                    style={{
+                      background: agreed ? 'linear-gradient(135deg,#16a34a,#4ade80)' : 'transparent',
+                      borderColor: agreed ? '#16a34a' : '#475569',
+                    }}
+                  >
+                    {agreed && <Check size={12} className="text-white" />}
+                  </button>
+                  <p className="text-slate-400 text-xs leading-relaxed">
+                    I have read and agree to the{' '}
+                    <button
+                      type="button"
+                      onClick={() => setShowContract(true)}
+                      className="text-green-400 hover:text-green-300 underline underline-offset-2 font-medium transition-colors"
+                    >
+                      MadeForGyms Service Agreement
+                    </button>
+                    , including the subscription terms and data privacy policy.
+                  </p>
+                </div>
               </div>
             </>
           )}

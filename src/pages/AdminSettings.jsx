@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Save, Upload, X, Settings, Send, Plus, Trash2, Tag, ToggleLeft, ToggleRight, Dumbbell, ChevronRight, ImageIcon, Phone, MapPin, Download, QrCode } from 'lucide-react';
+import { Save, Upload, X, Settings, Send, Plus, Trash2, Tag, ToggleLeft, ToggleRight, Dumbbell, ChevronRight, ImageIcon, Phone, MapPin, Download, QrCode, Users, ShieldCheck, UserCog, Eye, EyeOff } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Link } from 'react-router-dom';
 import { useGym } from '../context/GymContext';
@@ -171,6 +171,201 @@ const PRICE_FIELDS = [
   { key: 'priceSemiAnnual', label: '6 Months' },
   { key: 'priceAnnual',     label: '1 Year' },
 ];
+
+function StaffManagement({ gymId }) {
+  const [staffList, setStaffList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newStaff, setNewStaff] = useState({ name: '', username: '', email: '', password: '' });
+  const [showPw, setShowPw] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const loadStaff = async () => {
+    if (!gymId) return;
+    setLoading(true);
+    const { data } = await supabase
+      .from('gym_admins')
+      .select('id, username, email, role, user_id')
+      .eq('gym_id', gymId)
+      .order('role');
+    setStaffList(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { loadStaff(); }, [gymId]); // eslint-disable-line
+
+  const handleChangeRole = async (adminId, newRole) => {
+    await supabase.from('gym_admins').update({ role: newRole }).eq('id', adminId);
+    setStaffList((prev) => prev.map((s) => s.id === adminId ? { ...s, role: newRole } : s));
+    toast.success(`Role updated to ${newRole}.`);
+  };
+
+  const handleAddStaff = async (e) => {
+    e.preventDefault();
+    if (!newStaff.email || !newStaff.password) return toast.error('Email and password are required.');
+    if (newStaff.password.length < 8) return toast.error('Password must be at least 8 characters.');
+    setSaving(true);
+    try {
+      // Save admin session tokens before signUp switches the session
+      const { data: { session: adminSession } } = await supabase.auth.getSession();
+      if (!adminSession) throw new Error('Admin session lost. Please log in again.');
+
+      const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+        email: newStaff.email.trim().toLowerCase(),
+        password: newStaff.password,
+      });
+      if (signUpErr) throw signUpErr;
+      if (!signUpData.user) throw new Error('Account creation failed.');
+
+      // Immediately restore admin session (signUp switches to new user when confirmation is off)
+      await supabase.auth.setSession({
+        access_token: adminSession.access_token,
+        refresh_token: adminSession.refresh_token,
+      });
+
+      const { error: gaErr } = await supabase.from('gym_admins').insert([{
+        gym_id: gymId,
+        user_id: signUpData.user.id,
+        email: newStaff.email.trim().toLowerCase(),
+        username: newStaff.username.trim().toLowerCase() || null,
+        role: 'staff',
+      }]);
+      if (gaErr) throw gaErr;
+
+      toast.success('Staff account created!');
+      setNewStaff({ name: '', username: '', email: '', password: '' });
+      setShowAdd(false);
+      await loadStaff();
+    } catch (err) {
+      toast.error(err.message || 'Failed to create staff account.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const currentUserId = staffList.find((s) => s.role === 'admin')?.user_id;
+
+  return (
+    <div className="rounded-3xl border border-slate-700/50 p-6"
+      style={{ background: 'rgba(255,255,255,0.02)' }}>
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-purple-500/15 rounded-xl flex items-center justify-center">
+            <Users size={18} className="text-purple-400" />
+          </div>
+          <div>
+            <h2 className="text-white font-bold">Staff Management</h2>
+            <p className="text-slate-500 text-xs">Add and manage staff accounts</p>
+          </div>
+        </div>
+        <button
+          onClick={() => setShowAdd((v) => !v)}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all"
+          style={{ background: 'linear-gradient(135deg,#7c3aed,#a78bfa)' }}
+        >
+          <Plus size={15} /> Add Staff
+        </button>
+      </div>
+
+      {/* Add staff form */}
+      {showAdd && (
+        <form onSubmit={handleAddStaff} className="mb-5 rounded-2xl border border-purple-500/20 p-4 space-y-3" style={{ background: 'rgba(124,58,237,0.05)' }}>
+          <p className="text-purple-300 text-xs font-semibold uppercase tracking-wider">New Staff Account</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-slate-400 text-xs mb-1">Username (optional)</label>
+              <input
+                type="text"
+                value={newStaff.username}
+                onChange={(e) => setNewStaff((s) => ({ ...s, username: e.target.value.replace(/[^a-z0-9_]/g, '').toLowerCase() }))}
+                placeholder="staffusername"
+                className="w-full bg-slate-800 border border-slate-700 focus:border-purple-500 text-white rounded-xl px-3 py-2.5 outline-none text-sm placeholder:text-slate-600"
+              />
+            </div>
+            <div>
+              <label className="block text-slate-400 text-xs mb-1">Email</label>
+              <input
+                type="email"
+                value={newStaff.email}
+                onChange={(e) => setNewStaff((s) => ({ ...s, email: e.target.value }))}
+                placeholder="staff@yourgym.com"
+                className="w-full bg-slate-800 border border-slate-700 focus:border-purple-500 text-white rounded-xl px-3 py-2.5 outline-none text-sm placeholder:text-slate-600"
+                required
+              />
+            </div>
+          </div>
+          <div className="relative">
+            <label className="block text-slate-400 text-xs mb-1">Password</label>
+            <input
+              type={showPw ? 'text' : 'password'}
+              value={newStaff.password}
+              onChange={(e) => setNewStaff((s) => ({ ...s, password: e.target.value }))}
+              placeholder="Min. 8 characters"
+              className="w-full bg-slate-800 border border-slate-700 focus:border-purple-500 text-white rounded-xl px-3 py-2.5 pr-10 outline-none text-sm placeholder:text-slate-600"
+              required
+            />
+            <button type="button" onClick={() => setShowPw((v) => !v)} className="absolute right-3 bottom-2.5 text-slate-500 hover:text-slate-300">
+              {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg,#7c3aed,#a78bfa)' }}
+            >
+              {saving ? 'Creating…' : 'Create Staff Account'}
+            </button>
+            <button type="button" onClick={() => setShowAdd(false)} className="px-4 py-2.5 rounded-xl text-sm text-slate-400 border border-slate-700 hover:text-white">
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* Staff list */}
+      {loading ? (
+        <p className="text-slate-500 text-sm">Loading...</p>
+      ) : staffList.length === 0 ? (
+        <p className="text-slate-500 text-sm">No accounts yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {staffList.map((s) => (
+            <div key={s.id} className="flex items-center gap-3 bg-slate-800/60 rounded-2xl px-4 py-3">
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${s.role === 'admin' ? 'bg-orange-500/15' : 'bg-purple-500/15'}`}>
+                {s.role === 'admin' ? <ShieldCheck size={16} className="text-orange-400" /> : <UserCog size={16} className="text-purple-400" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-sm font-medium">{s.username ? `@${s.username}` : s.email}</p>
+                {s.username && <p className="text-slate-500 text-xs truncate">{s.email}</p>}
+              </div>
+              <span className={`text-xs font-bold px-2 py-1 rounded-lg ${s.role === 'admin' ? 'bg-orange-500/15 text-orange-400' : 'bg-purple-500/15 text-purple-400'}`}>
+                {s.role}
+              </span>
+              {s.role !== 'admin' && (
+                <button
+                  onClick={() => handleChangeRole(s.id, s.role === 'admin' ? 'staff' : 'admin')}
+                  className="text-xs text-slate-400 hover:text-white border border-slate-600 hover:border-slate-400 px-2.5 py-1 rounded-lg transition-colors"
+                >
+                  → admin
+                </button>
+              )}
+              {s.role === 'admin' && staffList.filter(x => x.role === 'admin').length > 1 && (
+                <button
+                  onClick={() => handleChangeRole(s.id, 'staff')}
+                  className="text-xs text-slate-400 hover:text-white border border-slate-600 hover:border-slate-400 px-2.5 py-1 rounded-lg transition-colors"
+                >
+                  → staff
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AdminSettings() {
   const { settings, saveSettings, instructors, gymSlug, gymId } = useGym();
@@ -1001,6 +1196,9 @@ export default function AdminSettings() {
 
         {/* Login & Security */}
         <LoginSecurity gymId={gymId} />
+
+        {/* Staff Management */}
+        <StaffManagement gymId={gymId} />
 
       </div>
     </div>
