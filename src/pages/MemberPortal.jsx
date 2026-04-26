@@ -550,7 +550,6 @@ export default function MemberPortal() {
                       includeMargin={false}
                     />
                   </div>
-                  <p className="text-slate-600 text-[10px] font-medium">Scan to clock in</p>
                 </div>
               )}
             </div>
