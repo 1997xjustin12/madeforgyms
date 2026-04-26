@@ -505,7 +505,7 @@ export default function MemberPortal() {
           </div>
         </div>
 
-        <div className="max-w-lg mx-auto w-full px-4 py-5 space-y-3 pb-8">
+        <div className="max-w-lg mx-auto w-full px-4 py-5 space-y-3 pb-16">
 
           {/* ── Hero card ── */}
           <div className="rounded-2xl border border-white/8 overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)' }}>

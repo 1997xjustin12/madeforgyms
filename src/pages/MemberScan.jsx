@@ -41,6 +41,8 @@ export default function MemberScan() {
         membershipEndDate: memberRow.membership_end_date,
       };
       setMember(m);
+      // Pre-load session so /member route goes straight to their profile
+      sessionStorage.setItem('memberPortal_id', m.id);
 
       // Check existing attendance today
       const today = new Date().toISOString().split('T')[0];
@@ -167,14 +169,14 @@ export default function MemberScan() {
             </div>
           )}
 
-          {/* Back to portal */}
-          {state !== 'loading' && (
+          {/* View membership */}
+          {(state === 'checkedin' || state === 'duplicate') && (
             <Link
               to={`/${slug}/member`}
-              className="block w-full text-center border border-white/10 text-slate-400 hover:text-slate-200 font-medium py-3 rounded-2xl transition-all hover:border-white/20 mt-2"
+              className="block w-full text-center border border-white/10 text-slate-400 hover:text-slate-200 font-medium py-3 rounded-2xl transition-all hover:border-white/20"
               style={{ background: 'rgba(255,255,255,0.04)' }}
             >
-              View Full Membership
+              View My Membership
             </Link>
           )}
         </div>
