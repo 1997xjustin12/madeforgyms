@@ -36,6 +36,7 @@ const toMember = (row) => ({
   coachingPlan: row.coaching_plan || null,
   coachingStartDate: row.coaching_start_date || null,
   coachingEndDate: row.coaching_end_date || null,
+  qrToken: row.qr_token || null,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -60,6 +61,8 @@ const toSettings = (row) => ({
   siteUrl: row.site_url || '',
   lastBackupAt: row.last_backup_at || null,
   promos: Array.isArray(row.promos) ? row.promos : [],
+  philsmsToken: row.philsms_token || '',
+  philsmsSenderId: row.philsms_sender_id || 'PhilSMS',
 });
 
 const isBase64 = (str) => typeof str === 'string' && str.startsWith('data:');
@@ -109,6 +112,7 @@ export function GymProvider({ children }) {
     priceAnnual: 0, priceStudent: 0, priceCoaching: 0,
     telegramChatId: '', telegramBotToken: '', siteUrl: '',
     lastBackupAt: null, promos: [],
+    philsmsToken: '', philsmsSenderId: 'PhilSMS',
   });
 
   // ── Resolve gym by slug ──────────────────────────────────────
@@ -275,21 +279,22 @@ export function GymProvider({ children }) {
       telegram_bot_token: formData.telegramBotToken || '',
       site_url: formData.siteUrl || '',
       promos: formData.promos || [],
+      philsms_token: formData.philsmsToken || '',
+      philsms_sender_id: formData.philsmsSenderId || 'PhilSMS',
       updated_at: new Date().toISOString(),
     };
 
-    // Check if row exists for this gym
     const { data: existing } = await supabase
       .from('gym_settings')
       .select('id')
       .eq('gym_id', gymId)
-      .single();
+      .maybeSingle();
 
     let error;
     if (existing) {
       ({ error } = await supabase.from('gym_settings').update(payload).eq('gym_id', gymId));
     } else {
-      ({ error } = await supabase.from('gym_settings').insert([payload]));
+      ({ error } = await supabase.from('gym_settings').insert([{ ...payload, gym_id: gymId }]));
     }
     if (error) throw error;
     await loadSettings();

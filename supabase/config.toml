@@ -1,0 +1,5 @@
+[functions.send-sms]
+verify_jwt = false
+
+[functions.check-expiring]
+verify_jwt = false

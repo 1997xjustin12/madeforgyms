@@ -4,8 +4,9 @@ import {
   Dumbbell, ArrowLeft, User, Phone, Calendar,
   CheckCircle, AlertTriangle, XCircle, Clock, MapPin,
   CreditCard, Copy, ChevronRight, X, Upload, ImageIcon, Camera,
-  FileText, UtensilsCrossed, ChevronDown,
+  FileText, UtensilsCrossed, ChevronDown, UserCheck,
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useGym } from '../context/GymContext';
 import { supabase } from '../lib/supabase';
 import { formatDate, formatPhoneDisplay } from '../utils/helpers';
@@ -26,8 +27,8 @@ const PLAN_PRICE_KEY = {
 export default function MemberPortal() {
   const { members, getMemberStatus, MEMBERSHIP_OPTIONS, settings, submitRenewalRequest, renewalRequests, gymSlug, gymId } = useGym();
 
-  // view: 'home' | 'lookup' | 'pick' | 'result' | 'coach'
-  const [view, setView]         = useState('home');
+  // view: 'lookup' | 'pick' | 'result' | 'coach'
+  const [view, setView]         = useState('lookup');
   const [phone, setPhone]       = useState('');
   const [matches, setMatches]   = useState([]);
   const [member, setMember]     = useState(null);
@@ -39,6 +40,8 @@ export default function MemberPortal() {
   const [expandedEntryId, setExpandedEntryId] = useState(null);
   const [coachingHistory, setCoachingHistory] = useState([]);
   const [historyOpen, setHistoryOpen]         = useState(false);
+  const [checkInRecord, setCheckInRecord]     = useState(null); // null=unknown, false=not yet, {time}=done
+  const [clockingIn, setClockingIn]           = useState(false);
 
   // Restore session on refresh — once members are loaded, check sessionStorage
   useEffect(() => {
@@ -81,6 +84,41 @@ export default function MemberPortal() {
     fetch();
   }, [member]);
 
+  // Check today's attendance for the member
+  useEffect(() => {
+    if (!member?.id) { setCheckInRecord(null); return; }
+    const today = new Date().toISOString().split('T')[0];
+    supabase
+      .from('attendance')
+      .select('id, checked_in_at')
+      .eq('gym_id', gymId)
+      .eq('member_id', member.id)
+      .gte('checked_in_at', `${today}T00:00:00`)
+      .lte('checked_in_at', `${today}T23:59:59`)
+      .maybeSingle()
+      .then(({ data }) => setCheckInRecord(data || false));
+  }, [member?.id, gymId]);
+
+  const handleClockIn = async () => {
+    if (clockingIn || checkInRecord) return;
+    setClockingIn(true);
+    try {
+      const now = new Date().toISOString();
+      const { error } = await supabase.from('attendance').insert([{
+        gym_id: gymId,
+        member_id: member.id,
+        member_name: member.name,
+        checked_in_at: now,
+      }]);
+      if (error) throw error;
+      setCheckInRecord({ checked_in_at: now });
+    } catch (err) {
+      alert('Clock-in failed: ' + err.message);
+    } finally {
+      setClockingIn(false);
+    }
+  };
+
   // Fetch coaching subscription history
   useEffect(() => {
     if (!member?.id) { setCoachingHistory([]); return; }
@@ -120,13 +158,14 @@ export default function MemberPortal() {
 
   const goHome = () => {
     sessionStorage.removeItem('memberPortal_id');
-    setView('home');
+    setView('lookup');
     setPhone('');
     setMember(null);
     setMatches([]);
     setNotFound(false);
     setCoachingHistory([]);
     setHistoryOpen(false);
+    setCheckInRecord(null);
   };
 
   const getMembershipLabel = (type) => {
@@ -136,76 +175,6 @@ export default function MemberPortal() {
     return type;
   };
 
-  // ── Home View ──────────────────────────────────────────────────
-  if (view === 'home') {
-    return (
-      <div className="min-h-screen bg-[#030712] flex flex-col overflow-hidden">
-        {/* Background grid */}
-        <div className="fixed inset-0 -z-10 pointer-events-none"
-          style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
-        {/* Orbs */}
-        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] rounded-full blur-3xl"
-            style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.08) 0%, transparent 70%)' }} />
-          <div className="absolute bottom-[-10%] right-[-5%] w-[350px] h-[350px] rounded-full blur-3xl"
-            style={{ background: 'radial-gradient(circle, rgba(56,189,248,0.05) 0%, transparent 70%)' }} />
-        </div>
-
-        {/* Header */}
-        <div className="sticky top-0 z-40 backdrop-blur-xl border-b border-white/5" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
-            <Link to={`/${gymSlug}`} className="text-slate-400 hover:text-white p-1 transition-colors">
-              <ArrowLeft size={20} />
-            </Link>
-            <div className="flex items-center gap-2">
-              {settings.gymLogoUrl ? (
-                <img src={settings.gymLogoUrl} alt={settings.gymName} className="w-8 h-8 object-contain rounded-lg" style={{ background: 'rgba(255,255,255,0.06)', padding: '3px' }} />
-              ) : (
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)' }}>
-                  <Dumbbell size={16} className="text-white" />
-                </div>
-              )}
-              <span className="font-bold text-white">{settings.gymName || 'Member Portal'}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Hero */}
-        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-          {settings.gymLogoUrl ? (
-            <img src={settings.gymLogoUrl} alt={settings.gymName}
-              className="w-24 h-24 object-contain rounded-3xl mx-auto mb-5"
-              style={{ background: 'rgba(255,255,255,0.06)', padding: '8px', border: '1px solid rgba(255,255,255,0.1)' }} />
-          ) : (
-            <div className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-5"
-              style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.2)', boxShadow: '0 0 30px rgba(34,197,94,0.1)' }}>
-              <Dumbbell size={44} className="text-green-400" />
-            </div>
-          )}
-          <h1 className="text-2xl font-black text-white mb-1">{settings.gymName || 'Member Portal'}</h1>
-          <p className="text-slate-500 text-sm mb-8">Member Portal</p>
-
-          <button
-            onClick={() => setView('lookup')}
-            className="w-full max-w-xs text-white font-bold py-4 rounded-2xl text-base transition-all hover:-translate-y-0.5"
-            style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 24px rgba(34,197,94,0.3)' }}
-          >
-            Check My Membership
-          </button>
-        </div>
-
-        <style>{`
-          @keyframes blob {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            50%       { transform: translate(20px, -20px) scale(1.04); }
-          }
-          .animate-blob { animation: blob 8s ease-in-out infinite; }
-          .animation-delay-3000 { animation-delay: 3s; }
-        `}</style>
-      </div>
-    );
-  }
-
   // ── Lookup View ────────────────────────────────────────────────
   if (view === 'lookup') {
     return (
@@ -213,9 +182,9 @@ export default function MemberPortal() {
         {/* Header */}
         <div className="sticky top-0 z-40 backdrop-blur-xl border-b border-white/5" style={{ background: 'rgba(0,0,0,0.7)' }}>
           <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
-            <button onClick={goHome} className="text-slate-400 hover:text-white p-1 transition-colors">
+            <Link to={`/${gymSlug}`} className="text-slate-400 hover:text-white p-1 transition-colors">
               <ArrowLeft size={20} />
-            </button>
+            </Link>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)' }}>
                 <Dumbbell size={16} className="text-white" />
@@ -264,12 +233,6 @@ export default function MemberPortal() {
               </button>
             </form>
 
-            <button
-              onClick={goHome}
-              className="w-full text-slate-500 hover:text-slate-300 text-sm font-medium py-2 transition-colors"
-            >
-              ← Back
-            </button>
           </div>
         </div>
       </div>
@@ -547,35 +510,79 @@ export default function MemberPortal() {
           {/* ── Hero card ── */}
           <div className="rounded-2xl border border-white/8 overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)' }}>
             {/* Gradient banner */}
-            <div className={`h-20 bg-gradient-to-b ${theme.gradient} to-transparent`} />
-            {/* Avatar row */}
-            <div className="flex items-end gap-4 px-5 -mt-10 pb-5">
-              <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-700 border-4 border-slate-800 shrink-0 shadow-xl">
+            <div className={`h-16 bg-gradient-to-b ${theme.gradient} to-transparent`} />
+            {/* Avatar + info + QR row */}
+            <div className="flex items-start gap-3 px-4 -mt-8 pb-4">
+              {/* Avatar */}
+              <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-700 border-4 border-slate-800 shrink-0 shadow-xl">
                 {member.photo ? (
                   <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-green-400 font-black text-3xl">
+                  <div className="w-full h-full flex items-center justify-center text-green-400 font-black text-2xl">
                     {member.name.charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>
-              <div className="pb-1 flex-1 min-w-0">
-                <h2 className="text-white font-bold text-xl leading-tight truncate">{member.name}</h2>
-                <p className="text-slate-400 text-sm flex items-center gap-1.5 mt-0.5">
-                  <Phone size={12} />
+              {/* Name + details */}
+              <div className="pt-9 flex-1 min-w-0">
+                <h2 className="text-white font-bold text-lg leading-tight truncate">{member.name}</h2>
+                <p className="text-slate-400 text-xs flex items-center gap-1 mt-0.5">
+                  <Phone size={11} />
                   {formatPhoneDisplay(member.contactNumber)}
                 </p>
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${theme.badge}`}>
+                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                  <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${theme.badge}`}>
                     {theme.icon} {theme.label}
                   </span>
-                  <span className="text-xs px-2.5 py-1 rounded-full bg-slate-700/70 text-slate-300 font-medium">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700/70 text-slate-300 font-medium">
                     {getMembershipLabel(member.membershipType)}
                   </span>
                 </div>
               </div>
+              {/* QR Code — always visible if token exists */}
+              {member.qrToken && (
+                <div className="pt-1 shrink-0 flex flex-col items-center gap-1">
+                  <div className="bg-white p-1.5 rounded-xl shadow-lg">
+                    <QRCodeSVG
+                      value={`${window.location.origin}/${gymSlug}/m/${member.qrToken}`}
+                      size={80}
+                      level="M"
+                      includeMargin={false}
+                    />
+                  </div>
+                  <p className="text-slate-600 text-[10px] font-medium">Scan to clock in</p>
+                </div>
+              )}
             </div>
           </div>
+
+          {/* ── Clock In ── */}
+          {checkInRecord ? (
+            <div className="rounded-2xl border border-green-500/25 p-4 flex items-center gap-3" style={{ background: 'rgba(34,197,94,0.06)' }}>
+              <div className="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center shrink-0">
+                <CheckCircle size={20} className="text-green-400" />
+              </div>
+              <div>
+                <p className="text-green-400 font-semibold text-sm">Checked in today</p>
+                <p className="text-slate-400 text-xs flex items-center gap-1 mt-0.5">
+                  <Clock size={11} />
+                  {new Date(checkInRecord.checked_in_at).toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={handleClockIn}
+              disabled={clockingIn || status === 'expired'}
+              className="w-full flex items-center justify-center gap-2 text-white font-bold py-4 rounded-2xl transition-all disabled:opacity-50"
+              style={{ background: status === 'expired' ? 'rgba(239,68,68,0.15)' : 'linear-gradient(135deg, #0ea5e9, #38bdf8)', boxShadow: status !== 'expired' ? '0 0 20px rgba(14,165,233,0.25)' : 'none' }}
+            >
+              {clockingIn
+                ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                : <UserCheck size={20} />}
+              {status === 'expired' ? 'Membership Expired — Cannot Clock In' : 'Clock In'}
+            </button>
+          )}
 
           {/* ── Membership timeline card ── */}
           <div className="rounded-2xl border border-white/8 p-5" style={{ background: 'rgba(255,255,255,0.03)' }}>

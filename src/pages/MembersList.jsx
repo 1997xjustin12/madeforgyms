@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, UserPlus, Pencil, MessageSquare, Trash2, X, Download, RefreshCw, CheckCircle, Banknote, CreditCard, History, ChevronDown } from 'lucide-react';
+import { Search, UserPlus, Pencil, MessageSquare, Trash2, X, Download, RefreshCw, CheckCircle, Banknote, CreditCard, History, ChevronDown, QrCode, UserCheck } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useGym } from '../context/GymContext';
 import Navbar from '../components/Navbar';
 import Pagination from '../components/Pagination';
@@ -9,6 +10,7 @@ import SMSModal from '../components/SMSModal';
 import { MEMBERSHIP_OPTIONS } from '../context/GymContext';
 import { formatDate, formatPhoneDisplay } from '../utils/helpers';
 import { exportMembersToExcel } from '../utils/exportExcel';
+import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
 const FILTERS   = ['all', 'active', 'expiring', 'expired'];
@@ -16,7 +18,7 @@ const PAGE_SIZE = 15;
 // 'active' filter includes expiring members since they are still active
 
 export default function MembersList() {
-  const { members, getMemberStatus, deleteMember, renewMember, settings, instructors, gymSlug, isStaff, submitPendingMembership } = useGym();
+  const { members, getMemberStatus, deleteMember, renewMember, settings, instructors, gymSlug, gymId, isStaff, submitPendingMembership } = useGym();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -27,6 +29,8 @@ export default function MembersList() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [renewTarget, setRenewTarget] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+  const [qrTarget, setQrTarget] = useState(null);
+  const [clockingIn, setClockingIn] = useState(null);
 
   const filtered = useMemo(() => {
     return members.filter((m) => {
@@ -44,6 +48,40 @@ export default function MembersList() {
 
   // Reset to page 1 whenever filter or search changes
   useEffect(() => setPage(1), [filter, query]);
+
+  const handleClockIn = async (member) => {
+    setClockingIn(member.id);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { data: existing } = await supabase
+        .from('attendance')
+        .select('id')
+        .eq('gym_id', gymId)
+        .eq('member_id', member.id)
+        .gte('checked_in_at', `${today}T00:00:00`)
+        .lte('checked_in_at', `${today}T23:59:59`)
+        .maybeSingle();
+
+      if (existing) {
+        toast('Already checked in today', { icon: '✓' });
+        return;
+      }
+
+      const { error } = await supabase.from('attendance').insert([{
+        gym_id: gymId,
+        member_id: member.id,
+        member_name: member.name,
+        checked_in_at: new Date().toISOString(),
+      }]);
+
+      if (error) throw error;
+      toast.success(`${member.name} checked in!`);
+    } catch (err) {
+      toast.error('Check-in failed: ' + err.message);
+    } finally {
+      setClockingIn(null);
+    }
+  };
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -265,11 +303,31 @@ export default function MembersList() {
                           <MessageSquare size={14} /> SMS
                         </button>
                         <button
+                          onClick={() => handleClockIn(member)}
+                          disabled={clockingIn === member.id}
+                          className="flex items-center justify-center gap-2 bg-sky-500/15 hover:bg-sky-500/25 text-sky-400 py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-60"
+                        >
+                          {clockingIn === member.id
+                            ? <span className="w-3.5 h-3.5 border-2 border-sky-400/30 border-t-sky-400 rounded-full animate-spin" />
+                            : <UserCheck size={14} />}
+                          Clock In
+                        </button>
+                        {member.qrToken && (
+                          <button
+                            onClick={() => setQrTarget(member)}
+                            className="flex items-center justify-center gap-2 bg-purple-500/15 hover:bg-purple-500/25 text-purple-400 py-2.5 rounded-xl text-sm font-medium transition-colors"
+                          >
+                            <QrCode size={14} /> QR Code
+                          </button>
+                        )}
+                        {!isStaff && (
+                        <button
                           onClick={() => { setConfirmDelete(member); setExpandedId(null); }}
                           className="col-span-2 flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 py-2.5 rounded-xl text-sm font-medium transition-colors"
                         >
                           <Trash2 size={14} /> Remove Member
                         </button>
+                        )}
                       </div>
                     </div>
                   )}
@@ -309,6 +367,11 @@ export default function MembersList() {
           daysLeft={smsTarget.daysLeft}
           onClose={() => setSmsTarget(null)}
         />
+      )}
+
+      {/* QR Code Modal */}
+      {qrTarget && (
+        <QRModal member={qrTarget} gymSlug={gymSlug} onClose={() => setQrTarget(null)} />
       )}
 
       {/* Delete Confirm */}
@@ -578,6 +641,70 @@ function QuickRenewModal({ member, settings, promos, renewMember, submitPendingM
               }
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function QRModal({ member, gymSlug, onClose }) {
+  const qrUrl = `${window.location.origin}/${gymSlug}/m/${member.qrToken}`;
+
+  const handleDownload = () => {
+    const svg = document.getElementById('member-qr-svg');
+    if (!svg) return;
+    const serializer = new XMLSerializer();
+    const svgStr = serializer.serializeToString(svg);
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 300;
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 300, 300);
+      ctx.drawImage(img, 0, 0, 300, 300);
+      const a = document.createElement('a');
+      a.download = `${member.name.replace(/\s+/g, '-')}-QR.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    };
+    img.src = `data:image/svg+xml;base64,${btoa(svgStr)}`;
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+      <div className="bg-slate-800 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-700">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700">
+          <div className="flex items-center gap-2">
+            <QrCode size={18} className="text-purple-400" />
+            <h3 className="text-white font-semibold">Member QR Code</h3>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white p-1">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="p-6 flex flex-col items-center gap-4">
+          <div className="bg-white p-4 rounded-2xl">
+            <QRCodeSVG
+              id="member-qr-svg"
+              value={qrUrl}
+              size={200}
+              level="M"
+              includeMargin={false}
+            />
+          </div>
+          <div className="text-center">
+            <p className="text-white font-bold">{member.name}</p>
+            <p className="text-slate-400 text-xs mt-0.5">Scan to auto clock-in</p>
+          </div>
+          <button
+            onClick={handleDownload}
+            className="w-full flex items-center justify-center gap-2 bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 rounded-xl transition-colors"
+          >
+            <QrCode size={16} /> Download QR
+          </button>
         </div>
       </div>
     </div>
