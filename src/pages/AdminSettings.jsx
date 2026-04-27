@@ -373,7 +373,7 @@ export default function AdminSettings() {
   const downloadQR = async () => {
     const qrCanvas = document.getElementById('gym-qr-canvas');
     if (!qrCanvas) return;
-    const portalUrl = `${window.location.origin}/${gymSlug}`;
+    const portalUrl = `${window.location.origin}/${gymSlug}/member`;
     const gymName   = settings.gymName || 'Your Gym';
     const logoUrl   = settings.gymLogoUrl || null;
     const SCALE = 3, W = 480, H = 760;
@@ -538,23 +538,22 @@ export default function AdminSettings() {
 
             {/* Portal QR */}
             {gymSlug && (() => {
-              const portalUrl = `${window.location.origin}/${gymSlug}`;
-              const qrUrl     = `${portalUrl}?ref=qr`;
+              const memberUrl = `${window.location.origin}/${gymSlug}/member`;
               return (
                 <div className="bg-slate-800 rounded-2xl border border-slate-700/50 p-5">
                   <div className="flex items-center gap-2 mb-4">
                     <QrCode size={16} className="text-orange-400" />
                     <h2 className="text-white font-semibold text-sm">Member Portal QR</h2>
                   </div>
-                  <div className="hidden"><QRCodeCanvas id="gym-qr-canvas" value={qrUrl} size={200} bgColor="#f1f5f9" fgColor="#0f172a" level="H" marginSize={0} /></div>
+                  <div className="hidden"><QRCodeCanvas id="gym-qr-canvas" value={memberUrl} size={200} bgColor="#f1f5f9" fgColor="#0f172a" level="H" marginSize={0} /></div>
                   <div className="flex flex-col sm:flex-row items-center gap-5">
                     <div className="bg-white p-3 rounded-2xl shrink-0">
-                      <QRCodeCanvas value={qrUrl} size={140} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={0} />
+                      <QRCodeCanvas value={memberUrl} size={140} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={0} />
                     </div>
                     <div className="flex-1 text-center sm:text-left">
                       <p className="text-white font-semibold mb-1">{settings.gymName || 'Your Gym'}</p>
-                      <p className="text-slate-400 text-sm mb-1">Members scan this to access your portal.</p>
-                      <p className="text-slate-500 text-xs font-mono mb-4">{portalUrl}</p>
+                      <p className="text-slate-400 text-sm mb-1">Members scan this to check their membership.</p>
+                      <p className="text-slate-500 text-xs font-mono mb-4">{memberUrl}</p>
                       <button type="button" onClick={downloadQR} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:-translate-y-0.5" style={{ background: 'linear-gradient(135deg, #ea580c, #f97316)' }}>
                         <Download size={14} /> Download QR Poster
                       </button>
