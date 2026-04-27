@@ -25,7 +25,7 @@ const PLAN_PRICE_KEY = {
 };
 
 export default function MemberPortal() {
-  const { members, getMemberStatus, MEMBERSHIP_OPTIONS, settings, submitRenewalRequest, renewalRequests, gymSlug, gymId } = useGym();
+  const { members, getMemberStatus, MEMBERSHIP_OPTIONS, settings, submitRenewalRequest, submitAdvancePayment, renewalRequests, advancePayments, gymSlug, gymId } = useGym();
 
   // view: 'lookup' | 'pick' | 'result' | 'coach'
   const [view, setView]         = useState('lookup');
@@ -42,6 +42,8 @@ export default function MemberPortal() {
   const [historyOpen, setHistoryOpen]         = useState(false);
   const [checkInRecord, setCheckInRecord]     = useState(null); // null=unknown, false=not yet, {time}=done
   const [clockingIn, setClockingIn]           = useState(false);
+  const [showAdvance, setShowAdvance]         = useState(false);
+  const [advanceRenewTarget, setAdvanceRenewTarget] = useState(null);
 
   // Restore session on refresh — once members are loaded, check sessionStorage
   useEffect(() => {
@@ -617,6 +619,71 @@ export default function MemberPortal() {
             </button>
           )}
 
+          {/* ── Advance payments ── */}
+          {(() => {
+            const memberAdvPayments = advancePayments.filter((p) => p.member_id === member.id && (p.status === 'queued' || p.status === 'pending'));
+            const queued = memberAdvPayments.filter((p) => p.status === 'queued');
+            const pending = memberAdvPayments.filter((p) => p.status === 'pending');
+            if (memberAdvPayments.length === 0) return null;
+            return (
+              <div className="rounded-2xl border border-white/8 overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                <button
+                  onClick={() => setShowAdvance((v) => !v)}
+                  className="w-full flex items-center justify-between px-4 py-3.5"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <CreditCard size={15} className="text-violet-400" />
+                    <span className="text-white font-medium text-sm">Advance Payments</span>
+                    {queued.length > 0 && (
+                      <span className="text-xs bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded-full font-semibold">
+                        {queued.length} queued
+                      </span>
+                    )}
+                    {pending.length > 0 && (
+                      <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full font-semibold">
+                        {pending.length} pending
+                      </span>
+                    )}
+                  </div>
+                  <ChevronDown size={15} className={`text-slate-500 transition-transform duration-200 ${showAdvance ? 'rotate-180' : ''}`} />
+                </button>
+
+                {showAdvance && (
+                  <div className="border-t border-white/8 px-4 pb-4 space-y-2 pt-3">
+                    {memberAdvPayments.length === 0 ? (
+                      <p className="text-slate-500 text-xs text-center py-2">No advance payments</p>
+                    ) : (
+                      memberAdvPayments.map((p) => (
+                        <div key={p.id} className={`flex items-center justify-between rounded-xl px-3 py-2.5 border ${
+                          p.status === 'queued' ? 'bg-violet-500/10 border-violet-500/30' : 'bg-orange-500/10 border-orange-500/30'
+                        }`}>
+                          <div>
+                            <p className={`text-sm font-semibold capitalize ${p.status === 'queued' ? 'text-violet-300' : 'text-orange-300'}`}>
+                              {p.membership_type} membership
+                            </p>
+                            <p className="text-slate-400 text-xs mt-0.5">
+                              {p.status === 'queued' ? '✓ Approved — auto-applies on expiry' : '⏳ Awaiting admin approval'}
+                            </p>
+                          </div>
+                          {p.amount > 0 && <span className="text-slate-400 text-xs shrink-0">₱{Number(p.amount).toLocaleString()}</span>}
+                        </div>
+                      ))
+                    )}
+
+                    {settings.gcashNumber && (
+                      <button
+                        onClick={() => setAdvanceRenewTarget(member)}
+                        className="w-full mt-2 flex items-center justify-center gap-2 bg-violet-500/20 hover:bg-violet-500/30 text-violet-300 font-semibold py-3 rounded-xl transition-colors text-sm"
+                      >
+                        <CreditCard size={15} /> Pay Advance via GCash
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {/* ── Coaching card (unified: status + coach profile + program tabs) ── */}
           {coachInfo && (() => {
             const coachExpired = coachDays !== null && coachDays < 0;
@@ -740,6 +807,16 @@ export default function MemberPortal() {
             MEMBERSHIP_OPTIONS={MEMBERSHIP_OPTIONS}
             submitRenewalRequest={submitRenewalRequest}
             onClose={() => setRenewTarget(null)}
+          />
+        )}
+
+        {/* Advance Payment Modal */}
+        {advanceRenewTarget && (
+          <AdvanceGCashModal
+            member={advanceRenewTarget}
+            settings={settings}
+            submitAdvancePayment={submitAdvancePayment}
+            onClose={() => setAdvanceRenewTarget(null)}
           />
         )}
       </div>
@@ -1188,5 +1265,134 @@ function TagIcon({ size, className }) {
       <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" />
       <path d="M7 7h.01" />
     </svg>
+  );
+}
+
+/* ── Advance GCash Payment Modal ──────────────────────────────── */
+function AdvanceGCashModal({ member, settings, submitAdvancePayment, onClose }) {
+  const [amount, setAmount]           = useState('');
+  const [notes, setNotes]             = useState('');
+  const [reference, setReference]     = useState('');
+  const [receiptFile, setReceiptFile] = useState(null);
+  const [receiptPreview, setReceiptPreview] = useState(null);
+  const [submitting, setSubmitting]   = useState(false);
+  const [copied, setCopied]           = useState(false);
+  const [done, setDone]               = useState(false);
+  const receiptInputRef = useRef(null);
+  const cameraInputRef  = useRef(null);
+
+  const canSubmit = Number(amount) > 0 && (reference.trim() || receiptFile);
+
+  const handleReceiptFile = (file) => {
+    if (!file) return;
+    setReceiptFile(file);
+    setReceiptPreview(URL.createObjectURL(file));
+  };
+
+  const copyNumber = () => {
+    navigator.clipboard.writeText(settings.gcashNumber).then(() => {
+      setCopied(true); setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+    setSubmitting(true);
+    try {
+      await submitAdvancePayment({
+        memberId: member.id, memberName: member.name,
+        amount: Number(amount), notes: notes.trim(),
+        gcashReference: reference.trim(), receiptFile,
+      });
+      setDone(true);
+    } catch (err) {
+      alert('Failed to submit: ' + err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+      <div className="rounded-2xl w-full max-w-md shadow-2xl border border-white/10 flex flex-col max-h-[85vh]" style={{ background: '#0f172a' }}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/8 shrink-0">
+          <div className="flex items-center gap-2">
+            <CreditCard size={18} className="text-violet-400" />
+            <h3 className="text-white font-semibold">Pay Advance via GCash</h3>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white p-1"><X size={20} /></button>
+        </div>
+        <div className="p-5 overflow-y-auto space-y-4">
+          {!done ? (
+            <>
+              <div>
+                <label className="block text-slate-300 text-sm font-medium mb-1.5">Amount (₱)</label>
+                <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)}
+                  placeholder="e.g. 400" min="1"
+                  className="w-full bg-slate-700 border border-slate-600 focus:border-violet-500 text-white rounded-xl px-4 py-3 outline-none placeholder:text-slate-500 text-sm" />
+              </div>
+              <div>
+                <label className="block text-slate-300 text-sm font-medium mb-1.5">Notes <span className="text-slate-500 font-normal">(optional)</span></label>
+                <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)}
+                  placeholder="e.g. Half payment, will follow up remaining"
+                  className="w-full bg-slate-700 border border-slate-600 focus:border-violet-500 text-white rounded-xl px-4 py-3 outline-none placeholder:text-slate-500 text-sm" />
+              </div>
+              <div className="bg-slate-700/50 rounded-xl p-4 space-y-3">
+                <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Send to</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-white font-black text-xl tracking-widest">{settings.gcashNumber}</p>
+                    <p className="text-slate-400 text-sm mt-0.5">{settings.gcashName}</p>
+                  </div>
+                  <button onClick={copyNumber} className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl transition-colors ${copied ? 'bg-green-500 text-white' : 'bg-slate-600 hover:bg-slate-500 text-slate-300'}`}>
+                    <Copy size={13} /> {copied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+                {settings.gcashQrUrl && <img src={settings.gcashQrUrl} alt="GCash QR" className="w-36 h-36 object-contain bg-white rounded-xl p-2 mx-auto" />}
+              </div>
+              <div>
+                <label className="block text-slate-300 text-sm font-medium mb-1.5">GCash Reference / Transaction ID</label>
+                <input type="text" value={reference} onChange={(e) => setReference(e.target.value)} placeholder="e.g. 1234567890" className="w-full bg-slate-700 border border-slate-600 focus:border-violet-500 text-white rounded-xl px-4 py-3 outline-none placeholder:text-slate-500 font-mono text-sm" />
+              </div>
+              <div className="flex items-center gap-3"><div className="flex-1 h-px bg-slate-700" /><span className="text-slate-500 text-xs">OR</span><div className="flex-1 h-px bg-slate-700" /></div>
+              <div>
+                <label className="block text-slate-300 text-sm font-medium mb-1.5">Payment Screenshot</label>
+                {receiptPreview ? (
+                  <div className="relative">
+                    <img src={receiptPreview} alt="Receipt" className="w-full max-h-48 object-contain bg-slate-700 rounded-xl" />
+                    <button onClick={() => { setReceiptFile(null); setReceiptPreview(null); }} className="absolute top-2 right-2 w-7 h-7 bg-red-500 rounded-full flex items-center justify-center"><X size={14} className="text-white" /></button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <button onClick={() => cameraInputRef.current?.click()} className="flex flex-col items-center gap-2 border-2 border-dashed border-slate-600 hover:border-violet-500 rounded-xl p-4 cursor-pointer transition-colors group">
+                      <Camera size={22} className="text-slate-500 group-hover:text-violet-400" /><p className="text-slate-400 text-xs">Take Photo</p>
+                    </button>
+                    <button onClick={() => receiptInputRef.current?.click()} className="flex flex-col items-center gap-2 border-2 border-dashed border-slate-600 hover:border-violet-500 rounded-xl p-4 cursor-pointer transition-colors group">
+                      <Upload size={22} className="text-slate-500 group-hover:text-violet-400" /><p className="text-slate-400 text-xs">Upload</p>
+                    </button>
+                  </div>
+                )}
+                <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => handleReceiptFile(e.target.files[0])} />
+                <input ref={receiptInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleReceiptFile(e.target.files[0])} />
+              </div>
+              <button onClick={handleSubmit} disabled={!canSubmit || submitting} className="w-full flex items-center justify-center gap-2 bg-violet-500 hover:bg-violet-600 disabled:opacity-40 text-white font-bold py-3 rounded-xl text-sm">
+                {submitting ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Submit Payment'}
+              </button>
+            </>
+          ) : (
+            <div className="py-4 text-center space-y-4">
+              <div className="w-16 h-16 bg-violet-500/20 rounded-2xl flex items-center justify-center mx-auto">
+                <CheckCircle size={32} className="text-violet-400" />
+              </div>
+              <div>
+                <p className="text-white font-bold text-lg">Advance Payment Submitted!</p>
+                <p className="text-slate-400 text-sm mt-1 leading-relaxed">Once approved, it will be held and applied when your membership expires.</p>
+              </div>
+              <button onClick={onClose} className="w-full bg-violet-500 hover:bg-violet-600 text-white font-bold py-3 rounded-xl">Done</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

@@ -93,63 +93,62 @@ export default function AdminDashboard() {
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-6 pb-24 sm:pb-8">
 
         {/* Greeting */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-end justify-between">
           <div>
-            <p className="text-slate-400 text-sm">{greetEmoji} {greeting}</p>
-            <h1 className="text-2xl font-black text-white mt-0.5">Dashboard</h1>
+            <p className="text-slate-400 text-xs flex items-center gap-1">{greetEmoji} {greeting}</p>
+            <h1 className="text-3xl font-black text-white tracking-tight">Dashboard</h1>
           </div>
-          <div className="text-right">
-            <p className="text-slate-300 text-sm font-medium">
+          <div className="text-right pb-0.5">
+            <p className="text-slate-300 text-xs font-semibold">
               {new Date().toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' })}
             </p>
-            <p className="text-slate-500 text-xs mt-0.5">{settings.gymName || 'MadeForGyms'}</p>
+            <p className="text-slate-500 text-[10px] mt-0.5">{settings.gymName || 'MadeForGyms'}</p>
           </div>
         </div>
 
         {/* Backup Reminder */}
         {backupWarning && (
-          <div className="flex items-start gap-3 bg-yellow-500/10 border border-yellow-500/40 rounded-2xl p-4">
-            <div className="w-9 h-9 bg-yellow-500/20 rounded-xl flex items-center justify-center shrink-0">
-              <ShieldAlert size={18} className="text-yellow-400" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-yellow-300 font-semibold text-sm">
-                {daysSinceBackup === null ? 'No backup found!' : `Last backup was ${daysSinceBackup} days ago`}
-              </p>
-              <p className="text-yellow-400/70 text-xs mt-0.5">
-                Protect your data — download a backup regularly.
-              </p>
-            </div>
+          <div className="flex items-center gap-3 bg-yellow-500/10 border border-yellow-500/30 rounded-2xl px-4 py-3">
+            <ShieldAlert size={16} className="text-yellow-400 shrink-0" />
+            <p className="text-yellow-300 font-medium text-xs flex-1 min-w-0">
+              {daysSinceBackup === null ? 'No backup found!' : `Last backup ${daysSinceBackup}d ago`} — back up your data regularly.
+            </p>
             <button
               onClick={() => { exportJSON(members, settings.gymName); recordBackup(); toast.success('Backup downloaded!'); }}
-              className="shrink-0 flex items-center gap-1.5 bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold text-xs px-3 py-2 rounded-xl transition-colors"
+              className="shrink-0 flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold text-xs px-2.5 py-1.5 rounded-lg transition-colors"
             >
-              <Download size={13} /> Backup Now
+              <Download size={11} /> Backup
             </button>
           </div>
         )}
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {stats.map((s) => (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+          {stats.map((s, i) => (
             <div
               key={s.label}
               onClick={s.link ? () => navigate(s.link) : undefined}
-              className={`bg-slate-800 rounded-2xl border overflow-hidden relative ${
-                s.link ? 'cursor-pointer hover:border-blue-500/50 transition-colors' : ''
-              } ${s.alert ? 'border-orange-500/50 shadow-lg shadow-orange-500/10' : 'border-slate-700/30'}`}
+              className={`bg-slate-800/80 rounded-2xl border overflow-hidden relative ${
+                stats.length % 2 !== 0 && i === stats.length - 1 ? 'col-span-2 lg:col-span-1' : ''
+              } ${s.link ? 'cursor-pointer active:scale-95 transition-transform' : ''} ${
+                s.alert ? 'border-orange-500/40 shadow-md shadow-orange-500/10' : 'border-slate-700/40'
+              }`}
             >
-              {/* Colored top accent bar */}
-              <div className={`h-1 ${s.accent} ${s.alert ? 'animate-pulse' : ''}`} />
-              <div className="p-4">
-                <div className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center mb-3 ${s.color}`}>
-                  {s.icon}
+              <div className={`h-0.5 ${s.accent} ${s.alert ? 'opacity-100' : 'opacity-60'}`} />
+              <div className="p-3.5">
+                <div className="flex items-start justify-between mb-2">
+                  <div className={`w-8 h-8 ${s.bg} rounded-xl flex items-center justify-center ${s.color}`}>
+                    {s.icon}
+                  </div>
+                  {s.alert && (
+                    <span className={`w-2 h-2 rounded-full ${s.accent} animate-pulse`} />
+                  )}
                 </div>
-                <p className={`text-3xl font-black leading-none ${s.alert ? (s.color || 'text-orange-400') : 'text-white'}`}>
+                <p className={`text-3xl font-black leading-none tabular-nums ${s.alert ? s.color : 'text-white'}`}>
                   {s.value}
                 </p>
-                <p className="text-slate-400 text-xs mt-1 font-medium">{s.label}</p>
-                <p className={`text-xs mt-0.5 ${s.alert ? 'text-slate-500' : 'text-slate-600'}`}>{s.sub}</p>
+                <p className="text-slate-300 text-xs mt-1.5 font-semibold">{s.label}</p>
+                <p className="text-slate-500 text-[10px] mt-0.5 leading-tight">{s.sub}</p>
               </div>
             </div>
           ))}
@@ -214,77 +213,61 @@ export default function AdminDashboard() {
 
         {/* Quick Actions */}
         <div>
-          <h2 className="text-white font-bold mb-3 flex items-center gap-2">
-            <TrendingUp size={16} className="text-orange-400" /> Quick Actions
+          <h2 className="text-white font-bold mb-3 flex items-center gap-2 text-sm">
+            <TrendingUp size={14} className="text-orange-400" /> Quick Actions
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
 
             <button
               onClick={() => navigate(`/${gymSlug}/admin/register`)}
-              className="group flex items-center gap-4 bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-orange-500/60 rounded-2xl p-4 text-left transition-all hover:shadow-lg hover:shadow-orange-500/5"
+              className="group flex flex-col gap-3 bg-slate-800/80 border border-slate-700/40 hover:border-orange-500/50 rounded-2xl p-4 text-left transition-all active:scale-95"
             >
-              <div className="w-11 h-11 bg-orange-500/20 group-hover:bg-orange-500/30 rounded-xl flex items-center justify-center transition-colors">
-                <UserPlus size={22} className="text-orange-400" />
+              <div className="w-10 h-10 bg-orange-500/20 rounded-xl flex items-center justify-center">
+                <UserPlus size={20} className="text-orange-400" />
               </div>
               <div>
-                <p className="text-white font-semibold">Register Member</p>
-                <p className="text-slate-400 text-xs">Add a new gym member</p>
+                <p className="text-white font-semibold text-sm">Register</p>
+                <p className="text-slate-500 text-xs">Add new member</p>
               </div>
-              <ChevronRight size={18} className="ml-auto text-slate-600 group-hover:text-orange-400 transition-colors" />
-            </button>
-
-            <div className="bg-slate-800 border border-slate-700 hover:border-green-500/50 rounded-2xl p-4 transition-all">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-11 h-11 bg-green-500/20 rounded-xl flex items-center justify-center">
-                  <Download size={22} className="text-green-400" />
-                </div>
-                <div>
-                  <p className="text-white font-semibold">Export / Backup</p>
-                  <p className="text-slate-400 text-xs">Download your member data</p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => { exportMembersToExcel(members, settings.gymName); toast.success('Excel downloaded!'); }}
-                  className="flex-1 flex items-center justify-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-2 rounded-xl transition-colors"
-                >
-                  <Download size={13} /> Excel
-                </button>
-                <button
-                  onClick={() => { exportJSON(members, settings.gymName); recordBackup(); toast.success('Backup downloaded!'); }}
-                  className="flex-1 flex items-center justify-center gap-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold py-2 rounded-xl transition-colors"
-                >
-                  <Download size={13} /> JSON
-                </button>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowRestore(true)}
-              className="group flex items-center gap-4 bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-sky-500/60 rounded-2xl p-4 text-left transition-all hover:shadow-lg hover:shadow-sky-500/5"
-            >
-              <div className="w-11 h-11 bg-sky-500/20 group-hover:bg-sky-500/30 rounded-xl flex items-center justify-center transition-colors">
-                <RefreshCw size={22} className="text-sky-400" />
-              </div>
-              <div>
-                <p className="text-white font-semibold">Restore Backup</p>
-                <p className="text-slate-400 text-xs">Import from backup file</p>
-              </div>
-              <ChevronRight size={18} className="ml-auto text-slate-600 group-hover:text-sky-400 transition-colors" />
             </button>
 
             <button
               onClick={() => navigate(`/${gymSlug}/admin/members`)}
-              className="group flex items-center gap-4 bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-sky-500/60 rounded-2xl p-4 text-left transition-all"
+              className="group flex flex-col gap-3 bg-slate-800/80 border border-slate-700/40 hover:border-sky-500/50 rounded-2xl p-4 text-left transition-all active:scale-95"
             >
-              <div className="w-11 h-11 bg-sky-500/20 group-hover:bg-sky-500/30 rounded-xl flex items-center justify-center transition-colors">
-                <Users size={22} className="text-sky-400" />
+              <div className="w-10 h-10 bg-sky-500/20 rounded-xl flex items-center justify-center">
+                <Users size={20} className="text-sky-400" />
               </div>
               <div>
-                <p className="text-white font-semibold">View All Members</p>
-                <p className="text-slate-400 text-xs">{members.length} total members</p>
+                <p className="text-white font-semibold text-sm">Members</p>
+                <p className="text-slate-500 text-xs">{members.length} total</p>
               </div>
-              <ChevronRight size={18} className="ml-auto text-slate-600 group-hover:text-sky-400 transition-colors" />
+            </button>
+
+            <button
+              onClick={() => { exportMembersToExcel(members, settings.gymName); toast.success('Excel downloaded!'); }}
+              className="group flex flex-col gap-3 bg-slate-800/80 border border-slate-700/40 hover:border-green-500/50 rounded-2xl p-4 text-left transition-all active:scale-95"
+            >
+              <div className="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center">
+                <Download size={20} className="text-green-400" />
+              </div>
+              <div>
+                <p className="text-white font-semibold text-sm">Export</p>
+                <p className="text-slate-500 text-xs">Download Excel</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setShowRestore(true)}
+              className="group flex flex-col gap-3 bg-slate-800/80 border border-slate-700/40 hover:border-violet-500/50 rounded-2xl p-4 text-left transition-all active:scale-95"
+            >
+              <div className="w-10 h-10 bg-violet-500/20 rounded-xl flex items-center justify-center">
+                <RefreshCw size={20} className="text-violet-400" />
+              </div>
+              <div>
+                <p className="text-white font-semibold text-sm">Restore</p>
+                <p className="text-slate-500 text-xs">Import backup</p>
+              </div>
             </button>
           </div>
         </div>

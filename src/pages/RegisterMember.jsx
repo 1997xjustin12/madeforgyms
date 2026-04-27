@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Camera, User, Phone, Calendar, Tag, FileText, RefreshCw, Save, Trash2, AlertTriangle, History, Dumbbell } from 'lucide-react';
+import { Camera, User, Phone, Calendar, Tag, FileText, RefreshCw, Save, Trash2, AlertTriangle, History, Dumbbell, ChevronRight } from 'lucide-react';
 import { useGym } from '../context/GymContext';
 import Navbar from '../components/Navbar';
 import CameraCapture from '../components/CameraCapture';
@@ -28,6 +28,11 @@ const EMPTY_FORM = {
   coachingEndDate: '',
 };
 
+const PLAN_PRICE_KEY = {
+  monthly: 'priceMonthly', quarterly: 'priceQuarterly',
+  'semi-annual': 'priceSemiAnnual', annual: 'priceAnnual', student: 'priceStudent',
+};
+
 export default function RegisterMember() {
   const { id } = useParams();
   const isEdit = Boolean(id);
@@ -35,6 +40,12 @@ export default function RegisterMember() {
   const { addMember, updateMember, deleteMember, getMemberById, settings, instructors, gymSlug, isStaff, isAdmin, submitPendingMembership } = useGym();
   const activeInstructors = instructors.filter((i) => i.is_active);
   const activePromos = settings.promos?.filter((p) => p.active) || [];
+
+  const availablePlans = [
+    ...MEMBERSHIP_OPTIONS.filter((opt) => (settings[PLAN_PRICE_KEY[opt.value]] || 0) > 0),
+    ...(settings.priceStudent > 0 ? [{ value: 'student', label: 'Student' }] : []),
+    ...activePromos.map((p) => ({ value: p.name, label: p.name, promo: true, days: p.duration_days })),
+  ];
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [showCamera, setShowCamera] = useState(false);
@@ -118,254 +129,209 @@ export default function RegisterMember() {
     toast.success('Start date updated to today!');
   };
 
+  const selectedPrice = settings[PLAN_PRICE_KEY[form.membershipType]] || 0;
+
   return (
     <div className="min-h-screen bg-slate-900">
       <Navbar title={isEdit ? 'Edit Member' : 'Register Member'} showBack />
 
-      <div className="max-w-lg mx-auto px-4 py-6 pb-24 sm:pb-8">
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Photo section */}
-          <div className="flex flex-col items-center gap-3 py-4">
-            <div className="relative">
-              <div className="w-28 h-28 rounded-2xl overflow-hidden bg-slate-800 border-2 border-slate-700 flex items-center justify-center">
-                {form.photo ? (
-                  <img src={form.photo} alt="Member" className="w-full h-full object-cover" />
-                ) : (
-                  <User size={40} className="text-slate-600" />
-                )}
+      <div className="max-w-lg mx-auto px-4 py-5 pb-28 sm:pb-8">
+        <form onSubmit={handleSubmit} className="space-y-4">
+
+          {/* Photo */}
+          <div className="flex justify-center py-2">
+            <button type="button" onClick={() => setShowCamera(true)} className="relative group">
+              <div className="w-24 h-24 rounded-2xl overflow-hidden bg-slate-800 border-2 border-slate-700 group-hover:border-orange-500/60 transition-colors flex items-center justify-center">
+                {form.photo
+                  ? <img src={form.photo} alt="Member" className="w-full h-full object-cover" />
+                  : <User size={36} className="text-slate-600" />}
               </div>
-              {form.photo && (
-                <button
-                  type="button"
-                  onClick={() => set('photo', null)}
-                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white"
-                >
-                  <Trash2 size={12} />
-                </button>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowCamera(true)}
-              className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
-            >
-              <Camera size={16} /> {form.photo ? 'Retake Photo' : 'Take Photo'}
+              <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                <Camera size={15} className="text-white" />
+              </div>
             </button>
           </div>
 
-          {/* Form fields */}
-          <div className="space-y-4">
-            {/* Name */}
-            <FormField label="Full Name" icon={<User size={15} />}>
+          {/* Member Info */}
+          <div className="bg-slate-800/60 rounded-2xl border border-slate-700/50 divide-y divide-slate-700/50">
+            <div className="px-4 py-3.5">
+              <label className="text-slate-500 text-[10px] font-semibold uppercase tracking-wider">Full Name</label>
               <input
                 type="text"
                 value={form.name}
                 onChange={(e) => set('name', e.target.value)}
                 placeholder="e.g. Juan dela Cruz"
                 required
-                className="input-field"
+                className="w-full bg-transparent text-white text-sm font-medium mt-1 outline-none placeholder:text-slate-600"
               />
-            </FormField>
-
-            {/* Contact */}
-            <FormField label="Contact Number" icon={<Phone size={15} />}>
+            </div>
+            <div className="px-4 py-3.5">
+              <label className="text-slate-500 text-[10px] font-semibold uppercase tracking-wider">Contact Number</label>
               <input
                 type="tel"
                 value={form.contactNumber}
                 onChange={(e) => set('contactNumber', e.target.value)}
                 placeholder="e.g. 09171234567"
                 required
-                className="input-field"
+                className="w-full bg-transparent text-white text-sm font-medium mt-1 outline-none placeholder:text-slate-600"
               />
-            </FormField>
+            </div>
+          </div>
 
-            {/* Membership Type */}
-            <FormField label="Membership Plan" icon={<Tag size={15} />}>
-              <select
-                value={form.membershipType}
-                onChange={(e) => set('membershipType', e.target.value)}
-                className="input-field"
-              >
-                <optgroup label="Standard Plans">
-                  {MEMBERSHIP_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </optgroup>
-                {settings.priceStudent > 0 && (
-                  <optgroup label="Student">
-                    <option value="student">Student (30 days)</option>
-                  </optgroup>
-                )}
-                {activePromos.length > 0 && (
-                  <optgroup label="Special Promos">
-                    {activePromos.map((promo) => (
-                      <option key={promo.id} value={promo.name}>
-                        {promo.name} ({promo.duration_days} days)
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
-            </FormField>
-
-            {/* Student ID reminder */}
-            {form.membershipType === 'student' && (
-              <div className="flex items-start gap-2.5 bg-sky-500/10 border border-sky-500/30 rounded-xl px-4 py-3">
-                <span className="text-sky-400 text-base shrink-0">🎓</span>
-                <p className="text-sky-300 text-xs leading-relaxed">
-                  Student membership requires a valid school ID. Please verify upon visit.
-                </p>
-              </div>
-            )}
-
-            {/* Start Date */}
-            <FormField label="Membership Start Date" icon={<Calendar size={15} />}>
-              <div className="flex gap-2">
-                <input
-                  type="date"
-                  value={form.membershipStartDate}
-                  onChange={(e) => set('membershipStartDate', e.target.value)}
-                  required
-                  className="input-field flex-1"
-                />
-                {isEdit && (
+          {/* Membership Plan */}
+          <div className="bg-slate-800/60 rounded-2xl border border-slate-700/50 p-4 space-y-3">
+            <p className="text-slate-500 text-[10px] font-semibold uppercase tracking-wider">Membership Plan</p>
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+              {availablePlans.map((opt) => {
+                const price = settings[PLAN_PRICE_KEY[opt.value]] || 0;
+                const selected = form.membershipType === opt.value;
+                return (
                   <button
+                    key={opt.value}
                     type="button"
-                    onClick={handleRenew}
-                    title="Set to today (renew)"
-                    className="flex items-center gap-1.5 bg-orange-500/20 hover:bg-orange-500/40 text-orange-400 px-3 rounded-xl text-sm font-medium transition-colors shrink-0"
+                    onClick={() => set('membershipType', opt.value)}
+                    className={`shrink-0 flex flex-col items-center px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                      selected
+                        ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
+                        : 'bg-slate-700/60 text-slate-400 border border-slate-600/50'
+                    }`}
                   >
-                    <RefreshCw size={14} /> Renew
+                    <span>{opt.label}</span>
+                    {price > 0 && (
+                      <span className={`text-[10px] font-medium mt-0.5 ${selected ? 'text-orange-100' : 'text-slate-500'}`}>
+                        ₱{price.toLocaleString()}
+                      </span>
+                    )}
                   </button>
-                )}
-              </div>
-              <p className="text-slate-500 text-xs mt-1.5">
-                {isEdit ? 'Click "Renew" to restart membership from today' : 'Date when membership begins'}
-              </p>
-            </FormField>
-
-            {/* Notes */}
-            <FormField label="Notes (optional)" icon={<FileText size={15} />}>
-              <textarea
-                value={form.notes}
-                onChange={(e) => set('notes', e.target.value)}
-                placeholder="Additional notes..."
-                rows={3}
-                className="input-field resize-none"
-              />
-            </FormField>
-
-            {/* Coach / Instructor */}
-            {activeInstructors.length > 0 && (
-              <FormField label="Gym Coach (optional)" icon={<Dumbbell size={15} />}>
-                <select
-                  value={form.instructorId}
-                  onChange={(e) => {
-                    set('instructorId', e.target.value);
-                    if (!e.target.value) {
-                      set('coachingPlan', '');
-                      set('coachingEndDate', '');
-                    }
-                  }}
-                  className="input-field"
-                >
-                  <option value="">— No coach assigned —</option>
-                  {activeInstructors.map((inst) => (
-                    <option key={inst.id} value={inst.id}>
-                      {inst.name}{inst.specialty ? ` · ${inst.specialty}` : ''}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-slate-500 text-xs mt-1.5">
-                  Assign a personal trainer for this member
-                </p>
-              </FormField>
-            )}
-
-            {/* Coaching package — visible only when a coach is assigned */}
-            {form.instructorId && (
-              <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-2xl p-4 space-y-3">
-                <p className="text-yellow-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-                  <Dumbbell size={12} /> Coaching Subscription
-                </p>
-
-                {/* Plan picker */}
-                {settings.coachingPlans?.length > 0 ? (
-                  <div>
-                    <label className="block text-slate-300 text-sm font-medium mb-1.5">Package</label>
-                    <select
-                      value={form.coachingPlan}
-                      onChange={(e) => {
-                        const planName = e.target.value;
-                        set('coachingPlan', planName);
-                        const plan = settings.coachingPlans.find((p) => p.name === planName);
-                        if (plan && form.coachingStartDate) {
-                          set('coachingEndDate', addDays(form.coachingStartDate, plan.duration_days));
-                        } else {
-                          set('coachingEndDate', '');
-                        }
-                      }}
-                      className="input-field"
-                    >
-                      <option value="">— Select a coaching package —</option>
-                      {settings.coachingPlans.map((p) => (
-                        <option key={p.id} value={p.name}>
-                          {p.name} — ₱{Number(p.price).toLocaleString()} ({p.duration_days} days)
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ) : (
-                  <p className="text-slate-500 text-xs">No coaching packages set up yet. Add them in Settings → Coaching Packages.</p>
-                )}
-
-                {/* Coaching dates */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-slate-300 text-sm font-medium mb-1.5">Start Date</label>
-                    <input
-                      type="date"
-                      value={form.coachingStartDate}
-                      onChange={(e) => {
-                        set('coachingStartDate', e.target.value);
-                        const plan = settings.coachingPlans?.find((p) => p.name === form.coachingPlan);
-                        if (plan && e.target.value) {
-                          set('coachingEndDate', addDays(e.target.value, plan.duration_days));
-                        }
-                      }}
-                      className="input-field"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-300 text-sm font-medium mb-1.5">End Date</label>
-                    <input
-                      type="date"
-                      value={form.coachingEndDate}
-                      onChange={(e) => set('coachingEndDate', e.target.value)}
-                      className="input-field"
-                    />
-                    <p className="text-slate-600 text-xs mt-1">Auto-set by package, or override manually</p>
-                  </div>
-                </div>
+                );
+              })}
+            </div>
+            {form.membershipType === 'student' && (
+              <div className="flex items-center gap-2 bg-sky-500/10 border border-sky-500/20 rounded-xl px-3 py-2">
+                <span className="text-base">🎓</span>
+                <p className="text-sky-300 text-xs">Requires a valid school ID upon visit.</p>
               </div>
             )}
           </div>
+
+          {/* Start Date */}
+          <div className="bg-slate-800/60 rounded-2xl border border-slate-700/50 divide-y divide-slate-700/50">
+            <div className="px-4 py-3.5">
+              <label className="text-slate-500 text-[10px] font-semibold uppercase tracking-wider">Membership Start Date</label>
+              <input
+                type="date"
+                value={form.membershipStartDate}
+                onChange={(e) => set('membershipStartDate', e.target.value)}
+                required
+                className="w-full bg-transparent text-white text-sm font-medium mt-1 outline-none"
+              />
+            </div>
+            {isEdit && (
+              <button
+                type="button"
+                onClick={handleRenew}
+                className="w-full flex items-center justify-center gap-2 text-orange-400 hover:bg-orange-500/10 py-3 rounded-b-2xl text-sm font-semibold transition-colors"
+              >
+                <RefreshCw size={13} /> Set to Today
+              </button>
+            )}
+          </div>
+
+          {/* Notes */}
+          <div className="bg-slate-800/60 rounded-2xl border border-slate-700/50 px-4 py-3.5">
+            <label className="text-slate-500 text-[10px] font-semibold uppercase tracking-wider">Notes</label>
+            <textarea
+              value={form.notes}
+              onChange={(e) => set('notes', e.target.value)}
+              placeholder="Optional notes..."
+              rows={2}
+              className="w-full bg-transparent text-white text-sm mt-1 outline-none resize-none placeholder:text-slate-600"
+            />
+          </div>
+
+          {/* Coach */}
+          {activeInstructors.length > 0 && (
+            <div className="bg-slate-800/60 rounded-2xl border border-slate-700/50 px-4 py-3.5">
+              <label className="text-slate-500 text-[10px] font-semibold uppercase tracking-wider">Gym Coach</label>
+              <select
+                value={form.instructorId}
+                onChange={(e) => {
+                  set('instructorId', e.target.value);
+                  if (!e.target.value) { set('coachingPlan', ''); set('coachingEndDate', ''); }
+                }}
+                className="w-full bg-transparent text-white text-sm font-medium mt-1 outline-none"
+              >
+                <option value="" className="bg-slate-800">— No coach assigned —</option>
+                {activeInstructors.map((inst) => (
+                  <option key={inst.id} value={inst.id} className="bg-slate-800">
+                    {inst.name}{inst.specialty ? ` · ${inst.specialty}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Coaching package */}
+          {form.instructorId && (
+            <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-2xl p-4 space-y-3">
+              <p className="text-yellow-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <Dumbbell size={11} /> Coaching Subscription
+              </p>
+              {settings.coachingPlans?.length > 0 ? (
+                <div>
+                  <label className="text-slate-400 text-xs font-medium mb-1.5 block">Package</label>
+                  <select
+                    value={form.coachingPlan}
+                    onChange={(e) => {
+                      const planName = e.target.value;
+                      set('coachingPlan', planName);
+                      const plan = settings.coachingPlans.find((p) => p.name === planName);
+                      if (plan && form.coachingStartDate) set('coachingEndDate', addDays(form.coachingStartDate, plan.duration_days));
+                      else set('coachingEndDate', '');
+                    }}
+                    className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-3 py-2.5 text-sm outline-none"
+                  >
+                    <option value="">— Select package —</option>
+                    {settings.coachingPlans.map((p) => (
+                      <option key={p.id} value={p.name}>
+                        {p.name} — ₱{Number(p.price).toLocaleString()} ({p.duration_days} days)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <p className="text-slate-500 text-xs">No coaching packages set up yet.</p>
+              )}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-slate-400 text-xs font-medium mb-1.5 block">Start Date</label>
+                  <input type="date" value={form.coachingStartDate}
+                    onChange={(e) => {
+                      set('coachingStartDate', e.target.value);
+                      const plan = settings.coachingPlans?.find((p) => p.name === form.coachingPlan);
+                      if (plan && e.target.value) set('coachingEndDate', addDays(e.target.value, plan.duration_days));
+                    }}
+                    className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-3 py-2.5 text-sm outline-none" />
+                </div>
+                <div>
+                  <label className="text-slate-400 text-xs font-medium mb-1.5 block">End Date</label>
+                  <input type="date" value={form.coachingEndDate}
+                    onChange={(e) => set('coachingEndDate', e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-3 py-2.5 text-sm outline-none" />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Submit */}
           <button
             type="submit"
             disabled={saving}
-            className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold py-4 rounded-2xl transition-colors text-base"
+            className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 disabled:opacity-50 text-white font-bold py-4 rounded-2xl transition-colors text-base shadow-lg shadow-orange-500/20"
           >
-            {saving ? (
-              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <>
-                <Save size={18} /> {isEdit ? 'Save Changes' : 'Register Member'}
-              </>
-            )}
+            {saving
+              ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              : <><Save size={18} /> {isEdit ? 'Save Changes' : isStaff ? 'Submit for Approval' : 'Register Member'}</>}
           </button>
 
           {/* Edit-mode actions */}
@@ -411,19 +377,16 @@ export default function RegisterMember() {
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
                   disabled={deleting}
-                  className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-medium text-sm transition-colors"
-                >
-                  Cancel
-                </button>
+                  className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-medium text-sm"
+                >Cancel</button>
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white py-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
                 >
                   {deleting
                     ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    : <><Trash2 size={14} /> Delete</>
-                  }
+                    : <><Trash2 size={14} /> Delete</>}
                 </button>
               </div>
             </div>
@@ -431,48 +394,12 @@ export default function RegisterMember() {
         </div>
       )}
 
-      {/* Camera Modal */}
       {showCamera && (
         <CameraCapture
           onCapture={(photo) => set('photo', photo)}
           onClose={() => setShowCamera(false)}
         />
       )}
-
-      <style>{`
-        .input-field {
-          width: 100%;
-          background: #1e293b;
-          border: 1px solid #334155;
-          color: #f1f5f9;
-          border-radius: 0.75rem;
-          padding: 0.75rem 1rem;
-          outline: none;
-          font-size: 0.875rem;
-          transition: border-color 0.15s;
-        }
-        .input-field:focus {
-          border-color: rgba(249, 115, 22, 0.6);
-        }
-        .input-field::placeholder {
-          color: #475569;
-        }
-        .input-field option {
-          background: #1e293b;
-        }
-      `}</style>
-    </div>
-  );
-}
-
-function FormField({ label, icon, children }) {
-  return (
-    <div>
-      <label className="flex items-center gap-1.5 text-slate-300 text-sm font-medium mb-2">
-        <span className="text-slate-500">{icon}</span>
-        {label}
-      </label>
-      {children}
     </div>
   );
 }

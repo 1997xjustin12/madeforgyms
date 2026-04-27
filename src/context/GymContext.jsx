@@ -94,6 +94,7 @@ export function GymProvider({ children }) {
   const [renewalRequests, setRenewalRequests] = useState([]);
   const [instructors, setInstructors]   = useState([]);
   const [pendingMemberships, setPendingMemberships] = useState([]);
+  const [advancePayments, setAdvancePayments] = useState([]);
 
   // ── Current gym (set when a gym slug is resolved) ────────────
   const [currentGym, setCurrentGym]     = useState(null);
@@ -336,6 +337,145 @@ export function GymProvider({ children }) {
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, [gymId, loadRenewalRequests]);
+
+  // ── Advance payments ─────────────────────────────────────────
+  const loadAdvancePayments = useCallback(async () => {
+    if (!gymId) return;
+    try {
+      const { data, error } = await supabase
+        .from('advance_payments')
+        .select('*')
+        .eq('gym_id', gymId)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      setAdvancePayments(data || []);
+    } catch (err) {
+      console.error('Failed to load advance payments:', err);
+    }
+  }, [gymId]);
+
+  useEffect(() => { loadAdvancePayments(); }, [loadAdvancePayments]);
+
+  useEffect(() => {
+    if (!gymId) return;
+    const channel = supabase
+      .channel(`advance_payments_${gymId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'advance_payments', filter: `gym_id=eq.${gymId}` },
+        () => loadAdvancePayments())
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [gymId, loadAdvancePayments]);
+
+  const addAdvancePayment = async (memberId, memberName, { amount, notes }) => {
+    if (!gymId) throw new Error('No gym loaded');
+    const { error } = await supabase.from('advance_payments').insert([{
+      gym_id: gymId, member_id: memberId, member_name: memberName,
+      amount: Number(amount) || 0, notes: notes || '', status: 'queued',
+    }]);
+    if (error) throw error;
+    await loadAdvancePayments();
+    await logAction('ADVANCE_PAYMENT_ADDED', `Added advance payment ₱${amount} for: ${memberName}`, memberName, memberId);
+  };
+
+  const submitAdvancePayment = async ({ memberId, memberName, amount, notes, gcashReference, receiptFile }) => {
+    if (!gymId) throw new Error('No gym loaded');
+    let receiptUrl = null;
+    if (receiptFile) {
+      const path = `${gymId}/receipts/adv-${Date.now()}.jpg`;
+      const res = await fetch(URL.createObjectURL(receiptFile));
+      const blob = await res.blob();
+      const { error: upErr } = await supabase.storage.from('member-photos').upload(path, blob, { contentType: 'image/jpeg', upsert: true });
+      if (!upErr) {
+        const { data } = supabase.storage.from('member-photos').getPublicUrl(path);
+        receiptUrl = data.publicUrl;
+      }
+    }
+    const { error } = await supabase.from('advance_payments').insert([{
+      gym_id: gymId, member_id: memberId, member_name: memberName,
+      amount: Number(amount) || 0, notes: notes || '',
+      gcash_reference: gcashReference || '',
+      receipt_url: receiptUrl, status: 'pending',
+    }]);
+    if (error) throw error;
+    await loadAdvancePayments();
+  };
+
+  const approveAdvancePayment = async (id) => {
+    const ap = advancePayments.find((p) => p.id === id);
+    const { error } = await supabase.from('advance_payments')
+      .update({ status: 'queued', updated_at: new Date().toISOString() }).eq('id', id);
+    if (error) throw error;
+    await loadAdvancePayments();
+    await logAction('ADVANCE_PAYMENT_APPROVED', `Approved advance payment for: ${ap?.member_name}`, ap?.member_name, ap?.member_id);
+  };
+
+  const cancelAdvancePayment = async (id) => {
+    const ap = advancePayments.find((p) => p.id === id);
+    const { error } = await supabase.from('advance_payments')
+      .update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', id);
+    if (error) throw error;
+    await loadAdvancePayments();
+    await logAction('ADVANCE_PAYMENT_CANCELLED', `Cancelled advance payment for: ${ap?.member_name}`, ap?.member_name, ap?.member_id);
+  };
+
+  const PLAN_PRICE_KEY = { monthly: 'priceMonthly', quarterly: 'priceQuarterly', 'semi-annual': 'priceSemiAnnual', annual: 'priceAnnual', student: 'priceStudent' };
+
+  const applyAdvancePayment = async (id, membershipType) => {
+    const ap = advancePayments.find((p) => p.id === id);
+    if (!ap) throw new Error('Payment not found');
+    const member = members.find((m) => m.id === ap.member_id);
+    if (!member) throw new Error('Member not found');
+
+    // Sum ALL queued payments for this member, not just the one clicked
+    const allQueued = advancePayments.filter((p) => p.member_id === ap.member_id && p.status === 'queued');
+    const totalAmount = allQueued.reduce((s, p) => s + Number(p.amount || 0), 0);
+
+    const planPrice = settings[PLAN_PRICE_KEY[membershipType]] || 0;
+
+    if (planPrice > 0 && totalAmount < planPrice) {
+      throw new Error(`Not enough balance. Total queued ₱${totalAmount.toLocaleString()}, ${membershipType} costs ₱${planPrice.toLocaleString()}.`);
+    }
+
+    // How many full periods the total covers
+    const periodMonths = MEMBERSHIP_MONTHS[membershipType] || 1;
+    const periods = planPrice > 0 ? Math.max(1, Math.floor(totalAmount / planPrice)) : 1;
+    const totalMonthsToAdd = periods * periodMonths;
+    const excess = planPrice > 0 ? totalAmount - periods * planPrice : 0;
+
+    const startFrom = new Date(member.membershipEndDate || new Date().toISOString().split('T')[0]);
+    const newEnd = addMonths(startFrom, totalMonthsToAdd).toISOString().split('T')[0];
+
+    const { data, error: mErr } = await supabase.from('members')
+      .update({ membership_end_date: newEnd, updated_at: new Date().toISOString() })
+      .eq('id', ap.member_id).select().single();
+    if (mErr) throw mErr;
+    setMembers((prev) => prev.map((m) => m.id === ap.member_id ? toMember(data) : m));
+
+    // Mark ALL queued payments as applied
+    const ids = allQueued.map((p) => p.id);
+    const { error: apErr } = await supabase.from('advance_payments')
+      .update({ status: 'applied', applied_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .in('id', ids);
+    if (apErr) throw apErr;
+
+    if (excess > 0) {
+      await supabase.from('advance_payments').insert([{
+        gym_id: gymId,
+        member_id: ap.member_id,
+        member_name: ap.member_name,
+        amount: excess,
+        notes: `Excess carry-forward from ₱${totalAmount.toLocaleString()} applied payment`,
+        status: 'queued',
+      }]);
+    }
+
+    await loadAdvancePayments();
+    await logAction(
+      'ADVANCE_PAYMENT_APPLIED',
+      `Applied ${allQueued.length} payment(s) (${membershipType} ×${periods}) ₱${totalAmount.toLocaleString()} → new expiry: ${newEnd}${excess > 0 ? `. ₱${excess.toLocaleString()} carried forward.` : ''}`,
+      ap.member_name, ap.member_id,
+    );
+  };
 
   // ── Instructors ──────────────────────────────────────────────
   const loadInstructors = useCallback(async () => {
@@ -883,6 +1023,9 @@ export function GymProvider({ children }) {
       // Renewal requests
       renewalRequests, pendingRenewals, loadRenewalRequests,
       submitRenewalRequest, approveRenewalRequest, rejectRenewalRequest,
+      // Advance payments
+      advancePayments, addAdvancePayment, submitAdvancePayment,
+      approveAdvancePayment, cancelAdvancePayment, applyAdvancePayment,
       // Instructors
       instructors, addInstructor, updateInstructor, deleteInstructor, toggleInstructor,
       // Constants

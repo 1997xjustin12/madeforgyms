@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, UserPlus, Pencil, MessageSquare, Trash2, X, Download, RefreshCw, CheckCircle, Banknote, CreditCard, History, ChevronDown, QrCode, UserCheck } from 'lucide-react';
+import { Search, UserPlus, Pencil, MessageSquare, Trash2, X, Download, RefreshCw, CheckCircle, Banknote, CreditCard, History, ChevronDown, QrCode, UserCheck, CalendarPlus, Copy } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import AdvancePaymentModal from '../components/AdvancePaymentModal';
 import { useGym } from '../context/GymContext';
 import Navbar from '../components/Navbar';
 import Pagination from '../components/Pagination';
@@ -18,7 +19,7 @@ const PAGE_SIZE = 15;
 // 'active' filter includes expiring members since they are still active
 
 export default function MembersList() {
-  const { members, getMemberStatus, deleteMember, renewMember, settings, instructors, gymSlug, gymId, isStaff, submitPendingMembership } = useGym();
+  const { members, getMemberStatus, deleteMember, renewMember, settings, instructors, gymSlug, gymId, isStaff, submitPendingMembership, advancePayments } = useGym();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -31,6 +32,15 @@ export default function MembersList() {
   const [expandedId, setExpandedId] = useState(null);
   const [qrTarget, setQrTarget] = useState(null);
   const [clockingIn, setClockingIn] = useState(null);
+  const [advanceTarget, setAdvanceTarget] = useState(null);
+  const [copied, setCopied] = useState(null);
+
+  const copyToClipboard = (text, key) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(key);
+      setTimeout(() => setCopied(null), 2000);
+    });
+  };
 
   const filtered = useMemo(() => {
     return members.filter((m) => {
@@ -256,6 +266,30 @@ export default function MembersList() {
                         </span>
                       </div>
 
+                      {/* Copy name & number */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => copyToClipboard(member.name, `${member.id}-name`)}
+                          className="flex-1 flex items-center justify-between gap-2 bg-slate-700/50 hover:bg-slate-700 px-3 py-2 rounded-xl transition-colors group"
+                        >
+                          <span className="text-slate-300 text-xs font-medium truncate">{member.name}</span>
+                          {copied === `${member.id}-name`
+                            ? <CheckCircle size={13} className="text-green-400 shrink-0" />
+                            : <Copy size={13} className="text-slate-500 group-hover:text-slate-300 shrink-0" />}
+                        </button>
+                        {member.contactNumber && (
+                          <button
+                            onClick={() => copyToClipboard(member.contactNumber, `${member.id}-phone`)}
+                            className="flex-1 flex items-center justify-between gap-2 bg-slate-700/50 hover:bg-slate-700 px-3 py-2 rounded-xl transition-colors group"
+                          >
+                            <span className="text-slate-300 text-xs font-medium truncate">{formatPhoneDisplay(member.contactNumber)}</span>
+                            {copied === `${member.id}-phone`
+                              ? <CheckCircle size={13} className="text-green-400 shrink-0" />
+                              : <Copy size={13} className="text-slate-500 group-hover:text-slate-300 shrink-0" />}
+                          </button>
+                        )}
+                      </div>
+
                       {/* Expiry progress bar */}
                       {statusInfo.status === 'expiring' && (
                         <div>
@@ -274,61 +308,65 @@ export default function MembersList() {
                         </div>
                       )}
 
-                      {/* Action buttons grid */}
-                      <div className="grid grid-cols-2 gap-2">
+                      {/* Secondary actions — compact pill row */}
+                      <div className="flex flex-wrap gap-1.5">
                         {!isStaff && (
-                        <button
-                          onClick={() => navigate(`/${gymSlug}/admin/members/${member.id}/edit`)}
-                          className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 py-2.5 rounded-xl text-sm font-medium transition-colors"
-                        >
-                          <Pencil size={14} /> Edit
-                        </button>
+                          <button
+                            onClick={() => navigate(`/${gymSlug}/admin/members/${member.id}/edit`)}
+                            className="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                          >
+                            <Pencil size={12} /> Edit
+                          </button>
                         )}
                         <button
                           onClick={() => navigate(`/${gymSlug}/admin/members/${member.id}/history`)}
-                          className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 py-2.5 rounded-xl text-sm font-medium transition-colors"
+                          className="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                         >
-                          <History size={14} /> History
-                        </button>
-                        <button
-                          onClick={() => { setRenewTarget(member); setExpandedId(null); }}
-                          className="flex items-center justify-center gap-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 py-2.5 rounded-xl text-sm font-medium transition-colors"
-                        >
-                          <RefreshCw size={14} /> Renew
+                          <History size={12} /> History
                         </button>
                         <button
                           onClick={() => setSmsTarget({ member, daysLeft: statusInfo.daysLeft })}
-                          className="flex items-center justify-center gap-2 bg-orange-500/15 hover:bg-orange-500/25 text-orange-400 py-2.5 rounded-xl text-sm font-medium transition-colors"
+                          className="flex items-center gap-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                         >
-                          <MessageSquare size={14} /> SMS
+                          <MessageSquare size={12} /> SMS
                         </button>
-                        <button
-                          onClick={() => handleClockIn(member)}
-                          disabled={clockingIn === member.id}
-                          className="flex items-center justify-center gap-2 bg-sky-500/15 hover:bg-sky-500/25 text-sky-400 py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-60"
-                        >
-                          {clockingIn === member.id
-                            ? <span className="w-3.5 h-3.5 border-2 border-sky-400/30 border-t-sky-400 rounded-full animate-spin" />
-                            : <UserCheck size={14} />}
-                          Clock In
-                        </button>
-                        {member.qrToken && (
-                          <button
-                            onClick={() => setQrTarget(member)}
-                            className="flex items-center justify-center gap-2 bg-purple-500/15 hover:bg-purple-500/25 text-purple-400 py-2.5 rounded-xl text-sm font-medium transition-colors"
-                          >
-                            <QrCode size={14} /> QR Code
-                          </button>
-                        )}
-                        {!isStaff && (
+                        {!isStaff && (() => {
+                          const advCount = advancePayments.filter((p) => p.member_id === member.id && p.status === 'queued').length;
+                          const pendingAdv = advancePayments.filter((p) => p.member_id === member.id && p.status === 'pending').length;
+                          const total = advCount + pendingAdv;
+                          return (
+                            <button
+                              onClick={() => setAdvanceTarget(member)}
+                              className="relative flex items-center gap-1.5 bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                            >
+                              <CalendarPlus size={12} /> Advance
+                              {total > 0 && (
+                                <span className="w-4 h-4 bg-violet-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                                  {total}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })()}
+                      </div>
+
+                      {/* Primary actions */}
+                      <button
+                        onClick={() => { setRenewTarget(member); setExpandedId(null); }}
+                        className="w-full flex items-center justify-center gap-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                      >
+                        <RefreshCw size={14} /> Renew
+                      </button>
+
+                      {/* Danger */}
+                      {!isStaff && (
                         <button
                           onClick={() => { setConfirmDelete(member); setExpandedId(null); }}
-                          className="col-span-2 flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 py-2.5 rounded-xl text-sm font-medium transition-colors"
+                          className="w-full flex items-center justify-center gap-2 bg-red-500/8 hover:bg-red-500/15 text-red-400/70 hover:text-red-400 py-2 rounded-xl text-xs font-medium transition-colors"
                         >
-                          <Trash2 size={14} /> Remove Member
+                          <Trash2 size={12} /> Remove Member
                         </button>
-                        )}
-                      </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -372,6 +410,11 @@ export default function MembersList() {
       {/* QR Code Modal */}
       {qrTarget && (
         <QRModal member={qrTarget} gymSlug={gymSlug} onClose={() => setQrTarget(null)} />
+      )}
+
+      {/* Advance Payment Modal */}
+      {advanceTarget && (
+        <AdvancePaymentModal member={advanceTarget} onClose={() => setAdvanceTarget(null)} />
       )}
 
       {/* Delete Confirm */}
