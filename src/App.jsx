@@ -65,6 +65,38 @@ function GymRoutes() {
     }
   }, [settings.gymName]);
 
+  // Swap manifest + Apple meta tags to per-gym values once gym is loaded
+  useEffect(() => {
+    if (gymLoading || gymNotFound || !slug) return;
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const manifestUrl = `${supabaseUrl}/functions/v1/gym-manifest?slug=${slug}`;
+
+    // <link rel="manifest">
+    let link = document.querySelector('link[rel="manifest"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'manifest';
+      document.head.appendChild(link);
+    }
+    const prevManifest = link.href;
+    link.href = manifestUrl;
+
+    // Apple PWA meta tags
+    const gymName = settings.gymName || '';
+    const logoUrl = settings.gymLogoUrl || '';
+
+    let appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+    if (appleTitle && gymName) appleTitle.content = gymName;
+
+    let appleIcon = document.querySelector('link[rel="apple-touch-icon"]');
+    if (appleIcon && logoUrl) appleIcon.href = logoUrl;
+
+    return () => {
+      if (link) link.href = prevManifest || '/manifest.webmanifest';
+    };
+  }, [slug, gymLoading, gymNotFound, settings.gymName, settings.gymLogoUrl]);
+
   if (gymLoading) return <LoadingScreen />;
   if (gymNotFound) return <GymNotFound slug={slug} />;
 
