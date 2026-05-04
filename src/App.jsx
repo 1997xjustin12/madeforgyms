@@ -18,6 +18,7 @@ import CheckIn from './pages/CheckIn';
 import AdminAttendance from './pages/AdminAttendance';
 import AdminInstructors from './pages/AdminInstructors';
 import StaffApprovals from './pages/StaffApprovals';
+import WorkoutPlanEditor from './pages/WorkoutPlanEditor';
 import CoachLogin from './pages/CoachLogin';
 import CoachPortal from './pages/CoachPortal';
 import CoachMemberDetail from './pages/CoachMemberDetail';
@@ -109,6 +110,7 @@ function GymRoutes() {
       <Route path="admin/register" element={<PrivateRoute><RegisterMember /></PrivateRoute>} />
       <Route path="admin/members/:id/edit" element={<PrivateRoute><RegisterMember /></PrivateRoute>} />
       <Route path="admin/members/:id/history" element={<PrivateRoute><MemberHistory /></PrivateRoute>} />
+      <Route path="admin/members/:id/workout" element={<PrivateRoute><WorkoutPlanEditor /></PrivateRoute>} />
       <Route path="admin/logs" element={<PrivateRoute><AdminLogs /></PrivateRoute>} />
       <Route path="admin/settings" element={<PrivateRoute><AdminSettings /></PrivateRoute>} />
       <Route path="admin/renewals" element={<PrivateRoute><RenewalRequests /></PrivateRoute>} />

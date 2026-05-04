@@ -122,7 +122,7 @@ export default function AdvancePaymentModal({ member, onClose }) {
               Total balance: <span className="text-white font-bold">₱{totalQueued.toLocaleString()}</span>
             </p>
             <div className="flex-1 min-h-0 overflow-y-auto space-y-2">
-              {MEMBERSHIP_OPTIONS.map((opt) => {
+              {MEMBERSHIP_OPTIONS.filter((opt) => (settings?.[PLAN_PRICE_KEY[opt.value]] || 0) > 0).map((opt) => {
                 const { price, affordable, periods, excess } = getPlanInfo(opt.value);
                 const selected = applyPlan === opt.value;
                 return (

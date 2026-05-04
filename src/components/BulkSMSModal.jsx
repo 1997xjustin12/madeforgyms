@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, MessageSquare, Copy, ExternalLink, CheckCircle, Users, Wifi, Send } from 'lucide-react';
 import { buildSmsMessage, openSmsApp, formatPhoneDisplay } from '../utils/helpers';
 import { useGym } from '../context/GymContext';
-import { sendPhilSMS } from '../lib/sms';
+import { sendSemaphoreSMS } from '../lib/sms';
 import toast from 'react-hot-toast';
 
 export default function BulkSMSModal({ onClose }) {
@@ -11,7 +11,7 @@ export default function BulkSMSModal({ onClose }) {
   const [sent, setSent] = useState({});
   const [sending, setSending] = useState(null);
 
-  const hasPhilSMS = !!settings.philsmsToken;
+  const hasSemaphore = !!settings.semaphoreApiKey;
   const markSent = (id) => setSent((prev) => ({ ...prev, [id]: true }));
   const allSent = expiring.length > 0 && expiring.every((m) => sent[m.id]);
   const sentCount = Object.keys(sent).length;
@@ -21,11 +21,11 @@ export default function BulkSMSModal({ onClose }) {
     const { daysLeft } = getMemberStatus(member);
     const message = buildSmsMessage(member, daysLeft, settings.gymName);
 
-    if (hasPhilSMS) {
+    if (hasSemaphore) {
       setSending(member.id);
       try {
-        await sendPhilSMS({ recipient: member.contactNumber, message, token: settings.philsmsToken, senderId: settings.philsmsSenderId });
-        await logAction('SMS_SENT', `Sent SMS via PhilSMS to: ${member.name}`, member.name, member.id);
+        await sendSemaphoreSMS({ recipient: member.contactNumber, message, gymId });
+        await logAction('SMS_SENT', `Sent SMS via Semaphore to: ${member.name}`, member.name, member.id);
         markSent(member.id);
       } catch (err) {
         toast.error(`Failed to send to ${member.name}: ${err.message}`);
@@ -40,7 +40,7 @@ export default function BulkSMSModal({ onClose }) {
   };
 
   const handleSendAll = async () => {
-    if (!hasPhilSMS) {
+    if (!hasSemaphore) {
       const next = expiring.find((m) => !sent[m.id]);
       if (next) handleSend(next);
       return;
@@ -74,9 +74,9 @@ export default function BulkSMSModal({ onClose }) {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-white font-semibold">Send SMS to All</h3>
-                {hasPhilSMS && (
+                {hasSemaphore && (
                   <span className="flex items-center gap-1 text-xs text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full">
-                    <Wifi size={10} /> PhilSMS
+                    <Wifi size={10} /> Semaphore
                   </span>
                 )}
               </div>
@@ -154,7 +154,7 @@ export default function BulkSMSModal({ onClose }) {
                     >
                       {isSending
                         ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        : hasPhilSMS ? <Send size={15} /> : <ExternalLink size={15} />}
+                        : hasSemaphore ? <Send size={15} /> : <ExternalLink size={15} />}
                     </button>
                   )}
                 </div>
@@ -181,7 +181,7 @@ export default function BulkSMSModal({ onClose }) {
                   <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <><MessageSquare size={18} />
-                  {hasPhilSMS ? `Send All via PhilSMS` : `Send Next (${expiring.length - sentCount} remaining)`}</>
+                  {hasSemaphore ? `Send All via Semaphore` : `Send Next (${expiring.length - sentCount} remaining)`}</>
                 )}
               </button>
             )}

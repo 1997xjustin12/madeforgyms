@@ -300,7 +300,7 @@ export default function AdminSettings() {
     gcashNumber: '', gcashName: '', coachingPlans: [], gcashQrUrl: null, gcashQrFile: null, gcashQrPreview: null,
     priceMonthly: '', priceQuarterly: '', priceSemiAnnual: '', priceAnnual: '', priceStudent: '',
     telegramChatId: '', telegramBotToken: '', siteUrl: '',
-    promos: [], philsmsToken: '', philsmsSenderId: 'PhilSMS',
+    promos: [], semaphoreApiKey: '', semaphoreSenderName: '',
   });
   const [saving, setSaving] = useState(false);
   const [newPromo, setNewPromo] = useState({ name: '', price: '', duration_days: '' });
@@ -331,8 +331,8 @@ export default function AdminSettings() {
       telegramBotToken: settings.telegramBotToken  || '',
       siteUrl:          settings.siteUrl           || '',
       promos:           settings.promos            || [],
-      philsmsToken:     settings.philsmsToken      || '',
-      philsmsSenderId:  settings.philsmsSenderId   || 'PhilSMS',
+      semaphoreApiKey:     settings.semaphoreApiKey     || '',
+      semaphoreSenderName: settings.semaphoreSenderName || '',
     }));
   }, [settings]);
 
@@ -769,29 +769,31 @@ export default function AdminSettings() {
               </div>
             </div>
 
-            {/* PhilSMS */}
+            {/* Semaphore SMS */}
             <div className="bg-slate-800 rounded-2xl border border-slate-700/50 p-5 space-y-4">
               <div className="flex items-center gap-2">
                 <MessageSquare size={15} className="text-green-400" />
                 <div>
-                  <h2 className="text-white font-semibold text-sm">PhilSMS</h2>
+                  <h2 className="text-white font-semibold text-sm">Semaphore SMS</h2>
                   <p className="text-slate-500 text-xs">Send SMS to members · Auto reminders on expiry</p>
                 </div>
               </div>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-slate-300 text-xs font-medium mb-1.5">API Token</label>
-                  <input type="text" value={form.philsmsToken} onChange={(e) => set('philsmsToken', e.target.value)} placeholder="Your PhilSMS API token"
+                  <label className="block text-slate-300 text-xs font-medium mb-1.5">API Key</label>
+                  <input type="text" value={form.semaphoreApiKey} onChange={(e) => set('semaphoreApiKey', e.target.value)} placeholder="Your Semaphore API key"
                     className="w-full bg-slate-700 border border-slate-600 focus:border-green-500 text-white rounded-xl px-4 py-2.5 outline-none transition-colors placeholder:text-slate-500 text-sm font-mono" />
-                  <p className="text-slate-500 text-xs mt-1">Found in dashboard.philsms.com → Developers</p>
+                  <p className="text-slate-500 text-xs mt-1">Found in semaphore.co → Account → API</p>
                 </div>
                 <div>
-                  <label className="block text-slate-300 text-xs font-medium mb-1.5">Sender ID</label>
-                  <input type="text" value={form.philsmsSenderId} onChange={(e) => set('philsmsSenderId', e.target.value)} placeholder="PhilSMS" maxLength={11}
+                  <label className="block text-slate-300 text-xs font-medium mb-1.5">
+                    Sender Name <span className="text-slate-500 font-normal">(optional)</span>
+                  </label>
+                  <input type="text" value={form.semaphoreSenderName} onChange={(e) => set('semaphoreSenderName', e.target.value)} placeholder="SEMAPHORE" maxLength={11}
                     className="w-full bg-slate-700 border border-slate-600 focus:border-green-500 text-white rounded-xl px-4 py-2.5 outline-none transition-colors placeholder:text-slate-500 text-sm" />
-                  <p className="text-slate-500 text-xs mt-1">Max 11 characters. Use "PhilSMS" if you don't have a registered sender ID.</p>
+                  <p className="text-slate-500 text-xs mt-1">Max 11 characters. Leave blank to use "SEMAPHORE". Register your sender name at semaphore.co for branding.</p>
                 </div>
-                {form.philsmsToken && (
+                {form.semaphoreApiKey && (
                   <>
                     <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-xl px-3 py-2">
                       <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />

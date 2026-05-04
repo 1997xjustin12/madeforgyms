@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { differenceInDays, addDays, addMonths } from 'date-fns';
 import { supabase } from '../lib/supabase';
+import { getTemplateForBMI } from '../utils/workoutTemplates';
 import toast from 'react-hot-toast';
 
 const GymContext = createContext();
@@ -37,6 +38,9 @@ const toMember = (row) => ({
   coachingStartDate: row.coaching_start_date || null,
   coachingEndDate: row.coaching_end_date || null,
   qrToken: row.qr_token || null,
+  birthdate: row.birthdate || null,
+  height: row.height ? Number(row.height) : null,
+  weight: row.weight ? Number(row.weight) : null,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -61,8 +65,8 @@ const toSettings = (row) => ({
   siteUrl: row.site_url || '',
   lastBackupAt: row.last_backup_at || null,
   promos: Array.isArray(row.promos) ? row.promos : [],
-  philsmsToken: row.philsms_token || '',
-  philsmsSenderId: row.philsms_sender_id || 'PhilSMS',
+  semaphoreApiKey: row.semaphore_api_key || '',
+  semaphoreSenderName: row.semaphore_sender_name || '',
 });
 
 const isBase64 = (str) => typeof str === 'string' && str.startsWith('data:');
@@ -113,7 +117,7 @@ export function GymProvider({ children }) {
     priceAnnual: 0, priceStudent: 0, priceCoaching: 0,
     telegramChatId: '', telegramBotToken: '', siteUrl: '',
     lastBackupAt: null, promos: [],
-    philsmsToken: '', philsmsSenderId: 'PhilSMS',
+    semaphoreApiKey: '', semaphoreSenderName: '',
   });
 
   // ── Resolve gym by slug ──────────────────────────────────────
@@ -280,8 +284,8 @@ export function GymProvider({ children }) {
       telegram_bot_token: formData.telegramBotToken || '',
       site_url: formData.siteUrl || '',
       promos: formData.promos || [],
-      philsms_token: formData.philsmsToken || '',
-      philsms_sender_id: formData.philsmsSenderId || 'PhilSMS',
+      semaphore_api_key: formData.semaphoreApiKey || '',
+      semaphore_sender_name: formData.semaphoreSenderName || '',
       updated_at: new Date().toISOString(),
     };
 
@@ -711,6 +715,9 @@ export function GymProvider({ children }) {
         coaching_plan: formData.coachingPlan || null,
         coaching_start_date: formData.coachingStartDate || null,
         coaching_end_date: formData.coachingEndDate || null,
+        birthdate: formData.birthdate || null,
+        height: formData.height ? Number(formData.height) : null,
+        weight: formData.weight ? Number(formData.weight) : null,
       }])
       .select()
       .single();
@@ -762,7 +769,7 @@ export function GymProvider({ children }) {
 
     const { data, error } = await supabase
       .from('members')
-      .update({ name: normalizedName, contact_number: formData.contactNumber, photo_url: photoUrl, membership_type: membershipType, membership_start_date: startDate, membership_end_date: endDate, notes: formData.notes || '', instructor_id: formData.instructorId || null, coaching_plan: formData.coachingPlan || null, coaching_start_date: formData.coachingStartDate || null, coaching_end_date: formData.coachingEndDate || null, updated_at: new Date().toISOString() })
+      .update({ name: normalizedName, contact_number: formData.contactNumber, photo_url: photoUrl, membership_type: membershipType, membership_start_date: startDate, membership_end_date: endDate, notes: formData.notes || '', instructor_id: formData.instructorId || null, coaching_plan: formData.coachingPlan || null, coaching_start_date: formData.coachingStartDate || null, coaching_end_date: formData.coachingEndDate || null, birthdate: formData.birthdate || null, height: formData.height ? Number(formData.height) : null, weight: formData.weight ? Number(formData.weight) : null, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
       .single();
@@ -960,6 +967,55 @@ export function GymProvider({ children }) {
     await logAction('PENDING_REJECTED', `Rejected ${pending.type === 'new_member' ? 'new member' : 'renewal'}: ${pending.member_name}`, pending.member_name, pending.member_id);
   };
 
+  // ── Workout plans ────────────────────────────────────────────
+  const loadWorkoutPlan = async (memberId, bmiKey, fitnessLevel) => {
+    if (!gymId || !memberId) return null;
+    const { data } = await supabase
+      .from('workout_plans')
+      .select('*')
+      .eq('gym_id', gymId)
+      .eq('member_id', memberId)
+      .maybeSingle();
+    if (data) return data;
+    // No plan yet — only auto-create if fitnessLevel is provided
+    if (!bmiKey || !fitnessLevel) return null;
+    const template = getTemplateForBMI(bmiKey, fitnessLevel);
+    if (!template) return null;
+    const payload = { gym_id: gymId, member_id: memberId, bmi_key: bmiKey, fitness_level: fitnessLevel, days: template.days, is_custom: false };
+    const { data: created, error } = await supabase.from('workout_plans').insert([payload]).select().single();
+    if (error) { console.error('loadWorkoutPlan insert:', error); return null; }
+    return created;
+  };
+
+  const saveWorkoutPlan = async (memberId, bmiKey, days, fitnessLevel) => {
+    if (!gymId || !memberId) throw new Error('No gym/member');
+    const payload = { gym_id: gymId, member_id: memberId, bmi_key: bmiKey, days, is_custom: true, updated_at: new Date().toISOString(), ...(fitnessLevel ? { fitness_level: fitnessLevel } : {}) };
+    const { error } = await supabase.from('workout_plans').upsert([payload], { onConflict: 'gym_id,member_id' });
+    if (error) throw error;
+  };
+
+  const logWorkout = async (memberId, { exerciseId, exerciseName, dayIndex, dayName, setsCompleted = 1 }) => {
+    if (!gymId || !memberId) return;
+    await supabase.from('workout_logs').insert([{
+      gym_id: gymId, member_id: memberId, exercise_id: exerciseId,
+      exercise_name: exerciseName, day_index: dayIndex, day_name: dayName,
+      sets_completed: setsCompleted, logged_at: new Date().toISOString(),
+    }]);
+  };
+
+  const getWorkoutLogs = async (memberId, daysBack = 30) => {
+    if (!gymId || !memberId) return [];
+    const since = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString();
+    const { data } = await supabase
+      .from('workout_logs')
+      .select('*')
+      .eq('gym_id', gymId)
+      .eq('member_id', memberId)
+      .gte('logged_at', since)
+      .order('logged_at', { ascending: true });
+    return data || [];
+  };
+
   // ── Admin login — verifies access to this gym ────────────────
   const adminLogin = async (identifier, password) => {
     if (!gymId) throw new Error('No gym loaded');
@@ -1028,6 +1084,8 @@ export function GymProvider({ children }) {
       approveAdvancePayment, cancelAdvancePayment, applyAdvancePayment,
       // Instructors
       instructors, addInstructor, updateInstructor, deleteInstructor, toggleInstructor,
+      // Workout plans
+      loadWorkoutPlan, saveWorkoutPlan, logWorkout, getWorkoutLogs,
       // Constants
       MEMBERSHIP_OPTIONS, renewMember,
     }}>

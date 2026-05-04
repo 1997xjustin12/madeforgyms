@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Camera, User, Phone, Calendar, Tag, FileText, RefreshCw, Save, Trash2, AlertTriangle, History, Dumbbell, ChevronRight } from 'lucide-react';
+import { Camera, User, Phone, Calendar, Tag, FileText, RefreshCw, Save, Trash2, AlertTriangle, History, Dumbbell, ChevronRight, Ruler, Weight, Activity } from 'lucide-react';
+import { calcBMI, getBMICategory, calcAge } from '../utils/helpers';
 import { useGym } from '../context/GymContext';
 import Navbar from '../components/Navbar';
 import CameraCapture from '../components/CameraCapture';
@@ -26,6 +27,9 @@ const EMPTY_FORM = {
   coachingPlan: '',
   coachingStartDate: today(),
   coachingEndDate: '',
+  birthdate: '',
+  height: '',
+  weight: '',
 };
 
 const PLAN_PRICE_KEY = {
@@ -73,6 +77,9 @@ export default function RegisterMember() {
           coachingPlan: member.coachingPlan || '',
           coachingStartDate: member.coachingStartDate || today(),
           coachingEndDate: member.coachingEndDate || '',
+          birthdate: member.birthdate || '',
+          height: member.height || '',
+          weight: member.weight || '',
         });
       } else {
         toast.error('Member not found');
@@ -132,7 +139,7 @@ export default function RegisterMember() {
   const selectedPrice = settings[PLAN_PRICE_KEY[form.membershipType]] || 0;
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-[#030712]">
       <Navbar title={isEdit ? 'Edit Member' : 'Register Member'} showBack />
 
       <div className="max-w-lg mx-auto px-4 py-5 pb-28 sm:pb-8">
@@ -179,9 +186,9 @@ export default function RegisterMember() {
           </div>
 
           {/* Membership Plan */}
-          <div className="bg-slate-800/60 rounded-2xl border border-slate-700/50 p-4 space-y-3">
-            <p className="text-slate-500 text-[10px] font-semibold uppercase tracking-wider">Membership Plan</p>
-            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+          <div className="bg-slate-800/60 rounded-2xl border border-slate-700/50 p-4 space-y-2.5">
+            <p className="text-slate-500 text-[10px] font-semibold uppercase tracking-wider mb-1">Membership Plan</p>
+            <div className="max-h-[260px] overflow-y-auto space-y-2 pr-0.5">
               {availablePlans.map((opt) => {
                 const price = settings[PLAN_PRICE_KEY[opt.value]] || 0;
                 const selected = form.membershipType === opt.value;
@@ -190,28 +197,35 @@ export default function RegisterMember() {
                     key={opt.value}
                     type="button"
                     onClick={() => set('membershipType', opt.value)}
-                    className={`shrink-0 flex flex-col items-center px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all border ${
                       selected
-                        ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
-                        : 'bg-slate-700/60 text-slate-400 border border-slate-600/50'
+                        ? 'bg-orange-500/10 border-orange-500/40'
+                        : 'bg-slate-700/40 border-slate-600/30 hover:border-slate-500/50'
                     }`}
                   >
-                    <span>{opt.label}</span>
+                    <div className={`w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors ${
+                      selected ? 'border-orange-500 bg-orange-500' : 'border-slate-500'
+                    }`}>
+                      {selected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-semibold leading-tight ${selected ? 'text-white' : 'text-slate-300'}`}>{opt.label}</p>
+                      {opt.promo && opt.days && (
+                        <p className="text-[10px] text-slate-500 mt-0.5">{opt.days} days access</p>
+                      )}
+                      {opt.value === 'student' && (
+                        <p className="text-[10px] text-slate-500 mt-0.5">Valid school ID required</p>
+                      )}
+                    </div>
                     {price > 0 && (
-                      <span className={`text-[10px] font-medium mt-0.5 ${selected ? 'text-orange-100' : 'text-slate-500'}`}>
+                      <p className={`text-sm font-bold shrink-0 tabular-nums ${selected ? 'text-orange-400' : 'text-slate-500'}`}>
                         ₱{price.toLocaleString()}
-                      </span>
+                      </p>
                     )}
                   </button>
                 );
               })}
             </div>
-            {form.membershipType === 'student' && (
-              <div className="flex items-center gap-2 bg-sky-500/10 border border-sky-500/20 rounded-xl px-3 py-2">
-                <span className="text-base">🎓</span>
-                <p className="text-sky-300 text-xs">Requires a valid school ID upon visit.</p>
-              </div>
-            )}
           </div>
 
           {/* Start Date */}
@@ -236,6 +250,63 @@ export default function RegisterMember() {
               </button>
             )}
           </div>
+
+          {/* Body Metrics */}
+          {(() => {
+            const bmi = calcBMI(form.height, form.weight);
+            const cat = getBMICategory(bmi);
+            const age = calcAge(form.birthdate);
+            return (
+              <div className="bg-slate-800/60 rounded-2xl border border-slate-700/50 divide-y divide-slate-700/50">
+                <div className="px-4 py-3.5">
+                  <label className="text-slate-500 text-[10px] font-semibold uppercase tracking-wider">Birthdate</label>
+                  <input
+                    type="date"
+                    value={form.birthdate}
+                    onChange={(e) => set('birthdate', e.target.value)}
+                    max={today()}
+                    className="w-full bg-transparent text-white text-sm font-medium mt-1 outline-none"
+                  />
+                  {age !== null && <p className="text-slate-500 text-xs mt-1">{age} years old</p>}
+                </div>
+                <div className="flex divide-x divide-slate-700/50">
+                  <div className="flex-1 px-4 py-3.5">
+                    <label className="text-slate-500 text-[10px] font-semibold uppercase tracking-wider">Height (cm)</label>
+                    <input
+                      type="number"
+                      value={form.height}
+                      onChange={(e) => set('height', e.target.value)}
+                      placeholder="e.g. 170"
+                      min={50} max={250}
+                      className="w-full bg-transparent text-white text-sm font-medium mt-1 outline-none placeholder:text-slate-600"
+                    />
+                  </div>
+                  <div className="flex-1 px-4 py-3.5">
+                    <label className="text-slate-500 text-[10px] font-semibold uppercase tracking-wider">Weight (kg)</label>
+                    <input
+                      type="number"
+                      value={form.weight}
+                      onChange={(e) => set('weight', e.target.value)}
+                      placeholder="e.g. 65"
+                      min={10} max={300}
+                      className="w-full bg-transparent text-white text-sm font-medium mt-1 outline-none placeholder:text-slate-600"
+                    />
+                  </div>
+                </div>
+                {bmi && cat && (
+                  <div className={`flex items-center justify-between px-4 py-3 ${cat.bg}`}>
+                    <div className="flex items-center gap-2">
+                      <Activity size={14} className={cat.color} />
+                      <span className={`text-sm font-bold ${cat.color}`}>BMI: {bmi.toFixed(1)}</span>
+                    </div>
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${cat.color} ${cat.border} ${cat.bg}`}>
+                      {cat.label}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Notes */}
           <div className="bg-slate-800/60 rounded-2xl border border-slate-700/50 px-4 py-3.5">

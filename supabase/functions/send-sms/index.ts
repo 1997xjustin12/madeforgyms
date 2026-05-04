@@ -6,11 +6,14 @@ const CORS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const json = (body: unknown) =>
+  new Response(JSON.stringify(body), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+
 function formatPHPhone(num: string): string {
   const digits = num.replace(/\D/g, '');
-  if (digits.startsWith('63') && digits.length === 12) return digits;
-  if (digits.startsWith('0') && digits.length === 11) return '63' + digits.slice(1);
-  if (digits.startsWith('9') && digits.length === 10) return '63' + digits;
+  if (digits.startsWith('63') && digits.length === 12) return '0' + digits.slice(2);
+  if (digits.startsWith('0') && digits.length === 11) return digits;
+  if (digits.startsWith('9') && digits.length === 10) return '0' + digits;
   return digits;
 }
 
@@ -20,9 +23,7 @@ serve(async (req) => {
   try {
     const { gymId, recipient, message } = await req.json();
     if (!gymId || !recipient || !message) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-        status: 400, headers: { ...CORS, 'Content-Type': 'application/json' },
-      });
+      return json({ ok: false, error: 'Missing required fields' });
     }
 
     const supabase = createClient(
@@ -32,47 +33,42 @@ serve(async (req) => {
 
     const { data: gym } = await supabase
       .from('gym_settings')
-      .select('philsms_token, philsms_sender_id')
+      .select('semaphore_api_key, semaphore_sender_name')
       .eq('gym_id', gymId)
       .single();
 
-    const token = gym?.philsms_token;
-    const senderId = gym?.philsms_sender_id || 'PhilSMS';
+    const apiKey = gym?.semaphore_api_key;
+    const senderName = gym?.semaphore_sender_name || '';
 
-    if (!token) {
-      return new Response(JSON.stringify({ error: 'PhilSMS not configured for this gym' }), {
-        status: 400, headers: { ...CORS, 'Content-Type': 'application/json' },
-      });
+    if (!apiKey) {
+      return json({ ok: false, error: 'Semaphore not configured for this gym' });
     }
 
-    const phone = formatPHPhone(recipient);
+    const number = formatPHPhone(recipient);
+    const payload: Record<string, string> = { apikey: apiKey, number, message };
+    if (senderName) payload.sendername = senderName;
 
-    const res = await fetch('https://dashboard.philsms.com/api/v3/sms/send', {
+    const res = await fetch('https://api.semaphore.co/api/v4/messages', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({ recipient: phone, sender_id: senderId, type: 'plain', message }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
     });
 
     const data = await res.json();
-    console.log('PhilSMS response:', JSON.stringify(data));
+    console.log('Semaphore response:', JSON.stringify(data));
 
-    if (!res.ok || data.status === 'error' || data.success === false) {
-      const errMsg = data.message || data.error || `PhilSMS error ${res.status}`;
-      return new Response(JSON.stringify({ error: errMsg, raw: data }), {
-        status: 400, headers: { ...CORS, 'Content-Type': 'application/json' },
-      });
+    const msg = Array.isArray(data) ? data[0] : data;
+    if (!res.ok || msg?.status === 'Failed') {
+      const errMsg =
+        msg?.message ||
+        msg?.senderName ||
+        Object.values(msg || {}).find((v) => typeof v === 'string') ||
+        `Semaphore error ${res.status}`;
+      return json({ ok: false, error: errMsg });
     }
 
-    return new Response(JSON.stringify({ ok: true, raw: data }), {
-      headers: { ...CORS, 'Content-Type': 'application/json' },
-    });
+    return json({ ok: true });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500, headers: { ...CORS, 'Content-Type': 'application/json' },
-    });
+    return json({ ok: false, error: (err as Error).message ?? 'Unknown error' });
   }
 });

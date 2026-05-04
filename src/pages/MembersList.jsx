@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, UserPlus, Pencil, MessageSquare, Trash2, X, Download, RefreshCw, CheckCircle, Banknote, CreditCard, History, ChevronDown, QrCode, UserCheck, CalendarPlus, Copy } from 'lucide-react';
+import { Search, UserPlus, Pencil, MessageSquare, Trash2, X, Download, RefreshCw, CheckCircle, Banknote, CreditCard, History, ChevronDown, QrCode, UserCheck, CalendarPlus, Copy, Dumbbell } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import AdvancePaymentModal from '../components/AdvancePaymentModal';
 import { useGym } from '../context/GymContext';
@@ -9,7 +9,7 @@ import Pagination from '../components/Pagination';
 import StatusBadge from '../components/StatusBadge';
 import SMSModal from '../components/SMSModal';
 import { MEMBERSHIP_OPTIONS } from '../context/GymContext';
-import { formatDate, formatPhoneDisplay } from '../utils/helpers';
+import { formatDate, formatPhoneDisplay, calcBMI, getBMICategory, calcAge } from '../utils/helpers';
 import { exportMembersToExcel } from '../utils/exportExcel';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -113,12 +113,12 @@ export default function MembersList() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="h-screen bg-[#030712] flex flex-col overflow-hidden">
       <Navbar title="Members" />
 
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-4 pb-24 sm:pb-8">
+      <div className="max-w-4xl mx-auto w-full px-4 pt-4 pb-3 space-y-3 shrink-0">
         {/* Header Row */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-end justify-between">
           <div>
             <h1 className="text-2xl font-black text-white tracking-tight">Members</h1>
             <p className="text-slate-500 text-xs mt-0.5">{filtered.length} of {members.length} members</p>
@@ -126,38 +126,64 @@ export default function MembersList() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => { exportMembersToExcel(members, settings.gymName); toast.success('Excel file downloaded!'); }}
-              className="w-9 h-9 flex items-center justify-center bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded-xl transition-colors"
+              className="w-9 h-9 flex items-center justify-center bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 text-slate-400 rounded-xl transition-colors"
               title="Export to Excel"
             >
               <Download size={16} />
             </button>
             <button
               onClick={() => navigate(`/${gymSlug}/admin/register`)}
-              className="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl font-semibold text-sm transition-colors"
+              className="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-400 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-orange-500/20 active:scale-[0.98]"
             >
               <UserPlus size={15} /> Add
             </button>
           </div>
         </div>
 
+        {/* Quick stats strip */}
+        {(() => {
+          const activeCount   = members.filter((m) => { const s = getMemberStatus(m).status; return s === 'active' || s === 'expiring'; }).length;
+          const expiringCount = members.filter((m) => getMemberStatus(m).status === 'expiring').length;
+          const expiredCount  = members.filter((m) => getMemberStatus(m).status === 'expired').length;
+          return (
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-2xl px-3.5 py-3 border border-green-500/20" style={{ background: 'rgba(34,197,94,0.05)' }}>
+                <p className="text-xl font-black text-green-400 leading-none tabular-nums">{activeCount}</p>
+                <p className="text-[10px] font-bold mt-1 uppercase tracking-wider text-green-700">Active</p>
+              </div>
+              <div className="rounded-2xl px-3.5 py-3 border border-orange-500/20" style={{ background: 'rgba(249,115,22,0.05)' }}>
+                <p className="text-xl font-black text-orange-400 leading-none tabular-nums">{expiringCount}</p>
+                <p className="text-[10px] font-bold mt-1 uppercase tracking-wider text-orange-700">Expiring</p>
+              </div>
+              <div className="rounded-2xl px-3.5 py-3 border border-red-500/20" style={{ background: 'rgba(239,68,68,0.05)' }}>
+                <p className="text-xl font-black text-red-400 leading-none tabular-nums">{expiredCount}</p>
+                <p className="text-[10px] font-bold mt-1 uppercase tracking-wider text-red-700">Expired</p>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Search */}
         <div className="relative">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by name or number..."
-            className="w-full bg-slate-800/80 border border-slate-700/60 focus:border-orange-500/50 text-white rounded-2xl pl-10 pr-10 py-2.5 outline-none transition-colors placeholder:text-slate-600 text-sm"
+            className="w-full border focus:border-orange-500/40 text-white rounded-2xl pl-10 pr-10 py-3 outline-none transition-all placeholder:text-slate-700 text-sm"
+            style={{ background: 'rgba(30,41,59,0.6)', borderColor: 'rgba(255,255,255,0.07)' }}
+            onFocus={(e) => { e.target.style.borderColor = 'rgba(249,115,22,0.4)'; }}
+            onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.07)'; }}
           />
           {query && (
-            <button onClick={() => setQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
-              <X size={15} />
+            <button onClick={() => setQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-white">
+              <X size={14} />
             </button>
           )}
         </div>
 
-        {/* Filter tabs */}
-        <div className="flex bg-slate-800/60 border border-slate-700/40 rounded-2xl p-1 gap-1">
+        {/* Filter chips */}
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-0.5">
           {FILTERS.map((f) => {
             const count = members.filter((m) => {
               const s = getMemberStatus(m).status;
@@ -166,30 +192,43 @@ export default function MembersList() {
               return s === f;
             }).length;
             const isActive = filter === f;
-            const color = f === 'expiring' ? 'bg-orange-500' : f === 'expired' ? 'bg-red-500/80' : 'bg-slate-600';
+            const cfgMap = {
+              all:      { on: 'bg-slate-700 text-white border-slate-500',              dot: 'bg-slate-400'   },
+              active:   { on: 'bg-green-500/15 text-green-400 border-green-500/40',    dot: 'bg-green-400'   },
+              expiring: { on: 'bg-orange-500/15 text-orange-400 border-orange-500/40', dot: 'bg-orange-400'  },
+              expired:  { on: 'bg-red-500/15 text-red-400 border-red-500/40',          dot: 'bg-red-400'     },
+            };
+            const cfg = cfgMap[f] || cfgMap.all;
             return (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`flex-1 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                  isActive ? `${color} text-white shadow-sm` : 'text-slate-500 hover:text-slate-300'
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border shrink-0 ${
+                  isActive ? cfg.on : 'bg-slate-800/50 border-slate-700/50 text-slate-500 hover:text-slate-300'
                 }`}
               >
+                {isActive && <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />}
                 {f.charAt(0).toUpperCase() + f.slice(1)}
-                <span className={`ml-1 ${isActive ? 'text-white/80' : 'text-slate-600'}`}>({count})</span>
+                <span className={`font-black tabular-nums ${isActive ? 'opacity-80' : 'text-slate-600'}`}>{count}</span>
               </button>
             );
           })}
         </div>
 
+      </div>
+
+      {/* Scrollable member list */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="max-w-4xl mx-auto px-4 pt-1 pb-24 sm:pb-8">
+
         {/* Members List */}
         {filtered.length === 0 ? (
-          <div className="text-center py-16 bg-slate-800/40 rounded-2xl border border-slate-700/30">
-            <div className="w-14 h-14 bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Search size={24} className="text-slate-500" />
+          <div className="text-center py-16 rounded-2xl border border-slate-700/30" style={{ background: 'rgba(30,41,59,0.4)' }}>
+            <div className="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-700/50">
+              <Search size={22} className="text-slate-600" />
             </div>
-            <p className="text-slate-300 font-semibold">No members found</p>
-            <p className="text-slate-500 text-sm mt-1">Try a different name, number, or filter</p>
+            <p className="text-slate-300 font-bold">No members found</p>
+            <p className="text-slate-600 text-sm mt-1">Try a different name, number, or filter</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -205,13 +244,15 @@ export default function MembersList() {
               return (
                 <div
                   key={member.id}
-                  className={`bg-slate-800/80 rounded-2xl border overflow-hidden transition-all ${
-                    statusInfo.status === 'expiring' ? 'border-orange-500/40' :
-                    statusInfo.status === 'expired'  ? 'border-red-500/20'   : 'border-slate-700/40'
+                  className={`relative rounded-2xl border overflow-hidden transition-all ${
+                    statusInfo.status === 'expiring' ? 'border-orange-500/30' :
+                    statusInfo.status === 'expired'  ? 'border-red-500/20'    :
+                    isExpanded ? 'border-slate-600/50' : 'border-slate-700/30'
                   }`}
+                  style={{ background: 'rgba(30,41,59,0.7)' }}
                 >
-                  {/* Status accent line */}
-                  <div className={`h-0.5 ${
+                  {/* Left accent bar */}
+                  <div className={`absolute left-0 inset-y-0 w-[3px] ${
                     statusInfo.status === 'expiring' ? 'bg-orange-500' :
                     statusInfo.status === 'expired'  ? 'bg-red-500'    :
                     statusInfo.status === 'active'   ? 'bg-green-500'  : 'bg-slate-600'
@@ -219,15 +260,15 @@ export default function MembersList() {
 
                   {/* Collapsed row */}
                   <button
-                    className="w-full flex items-center gap-3 px-3.5 py-3 text-left"
+                    className="w-full flex items-center gap-3 pl-4 pr-3 py-3.5 text-left"
                     onClick={() => setExpandedId(isExpanded ? null : member.id)}
                   >
                     {/* Avatar */}
-                    <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-700 shrink-0">
+                    <div className="w-11 h-11 rounded-xl overflow-hidden shrink-0" style={{ background: 'rgba(51,65,85,0.9)' }}>
                       {member.photo ? (
                         <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className={`w-full h-full flex items-center justify-center font-bold text-sm ${
+                        <div className={`w-full h-full flex items-center justify-center font-black text-base ${
                           statusInfo.status === 'expiring' ? 'text-orange-400 bg-orange-500/10' :
                           statusInfo.status === 'expired'  ? 'text-red-400 bg-red-500/10'       : 'text-sky-400 bg-sky-500/10'
                         }`}>
@@ -238,31 +279,41 @@ export default function MembersList() {
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-white font-semibold text-sm truncate">{member.name}</p>
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <p className="text-white font-bold text-sm truncate leading-tight">{member.name}</p>
                         <StatusBadge status={statusInfo.status} label={statusInfo.label} />
                       </div>
-                      <div className="flex items-center gap-2 mt-0.5">
+                      <div className="flex items-center gap-1.5">
                         <p className="text-slate-500 text-xs truncate">{formatPhoneDisplay(member.contactNumber)}</p>
-                        <span className="text-slate-700">·</span>
+                        <span className="text-slate-700 text-xs">·</span>
                         <p className="text-slate-500 text-xs capitalize shrink-0">{member.membershipType}</p>
-                        <span className="text-slate-700">·</span>
-                        <p className={`text-xs shrink-0 ${statusInfo.status === 'expired' ? 'text-red-400/70' : statusInfo.status === 'expiring' ? 'text-orange-400/80' : 'text-slate-500'}`}>
+                        <span className="text-slate-700 text-xs">·</span>
+                        <p className={`text-xs font-medium shrink-0 ${statusInfo.status === 'expired' ? 'text-red-400/70' : statusInfo.status === 'expiring' ? 'text-orange-400' : 'text-slate-600'}`}>
                           {statusInfo.status === 'expired' ? 'Expired' : 'Ends'} {formatDate(member.membershipEndDate)}
                         </p>
                       </div>
                     </div>
 
-                    <ChevronDown size={16} className={`text-slate-600 shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                    {/* Days remaining + chevron */}
+                    <div className="shrink-0 flex flex-col items-center gap-0.5 ml-1">
+                      {statusInfo.status !== 'expired' ? (
+                        <span className={`text-sm font-black tabular-nums leading-none ${statusInfo.status === 'expiring' ? 'text-orange-400' : 'text-slate-300'}`}>
+                          {statusInfo.daysLeft}<span className="text-[9px] font-semibold opacity-40">d</span>
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-bold text-red-400/50 leading-none uppercase tracking-wide">End</span>
+                      )}
+                      <ChevronDown size={13} className={`text-slate-600 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                    </div>
                   </button>
 
                   {/* Expanded section */}
                   {isExpanded && (
-                    <div className="border-t border-slate-700/40">
+                    <div className="border-t border-slate-700/30">
 
                       {/* Expiry progress bar */}
                       {statusInfo.status === 'expiring' && (
-                        <div className="px-3.5 pt-3">
+                        <div className="pl-4 pr-3.5 pt-3">
                           <div className="flex items-center justify-between text-xs mb-1.5">
                             <span className="text-slate-500">Expiring</span>
                             <span className="text-orange-400 font-semibold">
@@ -277,7 +328,7 @@ export default function MembersList() {
                       )}
 
                       {/* Copy row */}
-                      <div className="flex gap-2 px-3.5 pt-3">
+                      <div className="flex gap-2 pl-4 pr-3.5 pt-3">
                         <button onClick={() => copyToClipboard(member.name, `${member.id}-name`)}
                           className="flex-1 flex items-center justify-between gap-1.5 bg-slate-700/50 hover:bg-slate-700 px-3 py-2 rounded-xl transition-colors group">
                           <span className="text-slate-300 text-xs font-medium truncate">{member.name}</span>
@@ -296,8 +347,30 @@ export default function MembersList() {
                         )}
                       </div>
 
+                      {/* BMI row */}
+                      {(() => {
+                        const bmi = calcBMI(member.height, member.weight);
+                        const cat = getBMICategory(bmi);
+                        const age = calcAge(member.birthdate);
+                        if (!bmi || !cat) return null;
+                        return (
+                          <div className={`ml-4 mr-3.5 mt-2 flex items-center justify-between px-3 py-2 rounded-xl ${cat.bg} border ${cat.border}`}>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-xs font-bold ${cat.color}`}>BMI {bmi.toFixed(1)}</span>
+                              <span className={`text-xs ${cat.color} opacity-70`}>·</span>
+                              <span className={`text-xs font-semibold ${cat.color}`}>{cat.label}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-slate-500 text-xs">
+                              {age !== null && <span>{age} yrs</span>}
+                              {member.height && <span>{member.height}cm</span>}
+                              {member.weight && <span>{member.weight}kg</span>}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
                       {/* Action grid */}
-                      <div className="grid grid-cols-4 gap-1.5 px-3.5 pt-2.5">
+                      <div className="grid grid-cols-4 gap-1.5 pl-4 pr-3.5 pt-2.5">
                         {!isStaff && (
                           <button onClick={() => navigate(`/${gymSlug}/admin/members/${member.id}/edit`)}
                             className="flex flex-col items-center gap-1 bg-slate-700/50 hover:bg-slate-700 py-2.5 rounded-xl transition-colors">
@@ -310,6 +383,13 @@ export default function MembersList() {
                           <History size={14} className="text-slate-300" />
                           <span className="text-[10px] text-slate-400 font-medium">History</span>
                         </button>
+                        {member.height && member.weight && (
+                          <button onClick={() => navigate(`/${gymSlug}/admin/members/${member.id}/workout`)}
+                            className="flex flex-col items-center gap-1 bg-green-500/10 hover:bg-green-500/20 py-2.5 rounded-xl transition-colors">
+                            <Dumbbell size={14} className="text-green-400" />
+                            <span className="text-[10px] text-green-400 font-medium">Workout</span>
+                          </button>
+                        )}
                         <button onClick={() => setSmsTarget({ member, daysLeft: statusInfo.daysLeft })}
                           className="flex flex-col items-center gap-1 bg-orange-500/10 hover:bg-orange-500/20 py-2.5 rounded-xl transition-colors">
                           <MessageSquare size={14} className="text-orange-400" />
@@ -330,7 +410,7 @@ export default function MembersList() {
                       </div>
 
                       {/* Renew + Remove */}
-                      <div className="px-3.5 pt-2 pb-3 space-y-1.5">
+                      <div className="pl-4 pr-3.5 pt-2 pb-3 space-y-1.5">
                         <button
                           onClick={() => { setRenewTarget(member); setExpandedId(null); }}
                           className="w-full flex items-center justify-center gap-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 py-2.5 rounded-xl text-sm font-semibold transition-colors"
@@ -362,6 +442,7 @@ export default function MembersList() {
           onPrev={() => setPage((p) => p - 1)}
           onNext={() => setPage((p) => p + 1)}
         />
+        </div>
       </div>
 
       {/* Quick Renew Modal */}
@@ -436,7 +517,8 @@ const PLAN_PRICE_KEY = {
 };
 
 function QuickRenewModal({ member, settings, promos, renewMember, submitPendingMembership, isStaff, onClose }) {
-  const [plan, setPlan]               = useState('monthly');
+  const firstAvailable = MEMBERSHIP_OPTIONS.find((opt) => (settings[PLAN_PRICE_KEY[opt.value]] || 0) > 0)?.value || 'monthly';
+  const [plan, setPlan]               = useState(firstAvailable);
   const [paymentMethod, setPayment]   = useState('cash');
   const [saving, setSaving]           = useState(false);
 
@@ -494,9 +576,9 @@ function QuickRenewModal({ member, settings, promos, renewMember, submitPendingM
           {/* Plan selection */}
           <div>
             <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-2">Membership Plan</p>
-            <div className="space-y-2">
-              {MEMBERSHIP_OPTIONS.map((opt) => {
-                const optPrice = settings[PLAN_PRICE_KEY[opt.value]] || 0;
+            <div className="max-h-[260px] overflow-y-auto space-y-2 pr-0.5">
+              {MEMBERSHIP_OPTIONS.filter((opt) => (settings[PLAN_PRICE_KEY[opt.value]] || 0) > 0).map((opt) => {
+                const optPrice = settings[PLAN_PRICE_KEY[opt.value]];
                 return (
                   <label
                     key={opt.value}
@@ -520,7 +602,7 @@ function QuickRenewModal({ member, settings, promos, renewMember, submitPendingM
                       </span>
                     </div>
                     <span className={`font-bold text-sm ${plan === opt.value ? 'text-green-400' : 'text-slate-300'}`}>
-                      {optPrice > 0 ? `₱${optPrice.toLocaleString()}` : '—'}
+                      ₱{optPrice.toLocaleString()}
                     </span>
                   </label>
                 );

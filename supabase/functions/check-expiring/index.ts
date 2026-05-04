@@ -25,18 +25,26 @@ function addMonthsToDate(dateStr: string, months: number): string {
   return d.toISOString().split('T')[0];
 }
 
-async function sendSMS(token: string, senderId: string, phone: string, message: string): Promise<boolean> {
+function formatPHPhoneLocal(num: string): string {
+  const digits = num.replace(/\D/g, '');
+  if (digits.startsWith('63') && digits.length === 12) return '0' + digits.slice(2);
+  if (digits.startsWith('0') && digits.length === 11) return digits;
+  if (digits.startsWith('9') && digits.length === 10) return '0' + digits;
+  return digits;
+}
+
+async function sendSMS(apiKey: string, senderName: string, phone: string, message: string): Promise<boolean> {
   try {
-    const res = await fetch('https://dashboard.philsms.com/api/v3/sms/send', {
+    const number = formatPHPhoneLocal(phone);
+    const res = await fetch('https://api.semaphore.co/api/v4/messages', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({ recipient: phone, sender_id: senderId, type: 'plain', message }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(senderName ? { apikey: apiKey, number, message, sendername: senderName } : { apikey: apiKey, number, message }),
     });
-    return res.ok;
+    if (!res.ok) return false;
+    const data = await res.json();
+    const msg = Array.isArray(data) ? data[0] : data;
+    return msg?.status !== 'Failed';
   } catch {
     return false;
   }
@@ -56,7 +64,7 @@ serve(async (req) => {
 
   const { data: gyms } = await supabase
     .from('gym_settings')
-    .select('gym_id, philsms_token, philsms_sender_id, gym_name, price_monthly');
+    .select('gym_id, semaphore_api_key, semaphore_sender_name, gym_name, price_monthly');
 
   let totalSent = 0;
   let totalAutoApplied = 0;
@@ -64,9 +72,9 @@ serve(async (req) => {
   for (const gym of (gyms || [])) {
     const gymName = gym.gym_name || 'Your Gym';
     const monthlyPrice = Number(gym.price_monthly) || 0;
-    const hasSMS = !!gym.philsms_token;
-    const token = gym.philsms_token;
-    const senderId = gym.philsms_sender_id || 'PhilSMS';
+    const hasSMS = !!gym.semaphore_api_key;
+    const apiKey = gym.semaphore_api_key;
+    const senderName = gym.semaphore_sender_name || 'SEMAPHORE';
 
     const { data: members } = await supabase
       .from('members')
@@ -152,7 +160,7 @@ serve(async (req) => {
             if (hasSMS && member.contact_number) {
               const phone = formatPHPhone(member.contact_number);
               const msg = `Hi ${member.name}! Your ${gymName} membership has been auto-renewed using your advance payment. New expiry: ${newEnd}. Thank you!`;
-              const sent = await sendSMS(token, senderId, phone, msg);
+              const sent = await sendSMS(apiKey, senderName, phone, msg);
               if (sent) totalSent++;
             }
           }
@@ -194,7 +202,7 @@ serve(async (req) => {
         : `Hi ${member.name}! Your ${gymName} membership expires in 3 days. Please renew soon to avoid interruption. Thank you!`;
 
       const phone = formatPHPhone(member.contact_number);
-      const sent = await sendSMS(token, senderId, phone, message);
+      const sent = await sendSMS(apiKey, senderName, phone, message);
 
       if (sent) {
         await supabase.from('activity_logs').insert([{
