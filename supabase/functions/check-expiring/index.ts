@@ -33,7 +33,7 @@ function formatPHPhoneLocal(num: string): string {
   return digits;
 }
 
-async function sendSMS(apiKey: string, senderName: string, phone: string, message: string): Promise<boolean> {
+async function sendSMS(apiKey: string, senderName: string, phone: string, message: string): Promise<{ ok: boolean; error?: string }> {
   try {
     const number = formatPHPhoneLocal(phone);
     const res = await fetch('https://api.semaphore.co/api/v4/messages', {
@@ -41,12 +41,15 @@ async function sendSMS(apiKey: string, senderName: string, phone: string, messag
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(senderName ? { apikey: apiKey, number, message, sendername: senderName } : { apikey: apiKey, number, message }),
     });
-    if (!res.ok) return false;
     const data = await res.json();
     const msg = Array.isArray(data) ? data[0] : data;
-    return msg?.status !== 'Failed';
-  } catch {
-    return false;
+    if (!res.ok || msg?.status === 'Failed') {
+      const errMsg = msg?.message || msg?.error || Object.values(msg || {}).find((v) => typeof v === 'string') || `HTTP ${res.status}`;
+      return { ok: false, error: String(errMsg) };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
   }
 }
 
@@ -73,6 +76,8 @@ serve(async (req) => {
   let skippedNoPhone = 0;
   let skippedAdvance = 0;
   let skippedDuplicate = 0;
+  let smsFailed = 0;
+  let lastSmsError = '';
 
   for (const gym of (gyms || [])) {
     const gymName = gym.gym_name || 'Your Gym';
@@ -166,8 +171,8 @@ serve(async (req) => {
             if (hasSMS && member.contact_number) {
               const phone = formatPHPhone(member.contact_number);
               const msg = `Hi ${member.name}! Your ${gymName} membership has been auto-renewed using your advance payment. New expiry: ${newEnd}. Thank you!`;
-              const sent = await sendSMS(apiKey, senderName, phone, msg);
-              if (sent) totalSent++;
+              const result = await sendSMS(apiKey, senderName, phone, msg);
+              if (result.ok) totalSent++;
             }
           }
 
@@ -209,9 +214,9 @@ serve(async (req) => {
         : `Hi ${member.name}! Your ${gymName} membership expires in 3 days. Please renew soon to avoid interruption. Thank you!`;
 
       const phone = formatPHPhone(member.contact_number);
-      const sent = await sendSMS(apiKey, senderName, phone, message);
+      const result = await sendSMS(apiKey, senderName, phone, message);
 
-      if (sent) {
+      if (result.ok) {
         await supabase.from('activity_logs').insert([{
           gym_id: gym.gym_id,
           member_id: member.id,
@@ -224,12 +229,14 @@ serve(async (req) => {
         }]);
         totalSent++;
       } else {
-        console.error(`SMS failed for ${member.name}`);
+        smsFailed++;
+        lastSmsError = result.error || 'Unknown error';
+        console.error(`SMS failed for ${member.name}: ${lastSmsError}`);
       }
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, smsSent: totalSent, autoApplied: totalAutoApplied, date: today, debug: { found: totalFound, skippedNoKey, skippedNoPhone, skippedAdvance, skippedDuplicate } }), {
+  return new Response(JSON.stringify({ ok: true, smsSent: totalSent, autoApplied: totalAutoApplied, date: today, debug: { found: totalFound, skippedNoKey, skippedNoPhone, skippedAdvance, skippedDuplicate, smsFailed, lastSmsError } }), {
     headers: { ...CORS, 'Content-Type': 'application/json' },
   });
 });

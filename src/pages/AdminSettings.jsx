@@ -319,11 +319,13 @@ function TestAutoSMS({ gymId }) {
       const d = data.debug || {};
       const parts = [`Sent: ${data.smsSent ?? 0}`];
       if (d.found !== undefined) parts.push(`Found: ${d.found}`);
-      if (d.skippedNoKey)    parts.push(`No API key: ${d.skippedNoKey}`);
-      if (d.skippedNoPhone)  parts.push(`No phone: ${d.skippedNoPhone}`);
-      if (d.skippedAdvance)  parts.push(`Has advance: ${d.skippedAdvance}`);
+      if (d.skippedNoKey)     parts.push(`No API key: ${d.skippedNoKey}`);
+      if (d.skippedNoPhone)   parts.push(`No phone: ${d.skippedNoPhone}`);
+      if (d.skippedAdvance)   parts.push(`Has advance: ${d.skippedAdvance}`);
       if (d.skippedDuplicate) parts.push(`Already sent: ${d.skippedDuplicate}`);
-      toast.success(parts.join(' · '), { duration: 6000 });
+      if (d.smsFailed)        parts.push(`Failed: ${d.smsFailed}`);
+      const fn = d.smsFailed ? toast.error : toast.success;
+      fn(parts.join(' · ') + (d.lastSmsError ? ` — ${d.lastSmsError}` : ''), { duration: 8000 });
     } catch (err) {
       toast.error(err.message || 'Failed to run check');
     } finally {
