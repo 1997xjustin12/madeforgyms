@@ -251,6 +251,57 @@ function StaffManagement({ gymId }) {
 const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+function SendTestSMS({ gymId }) {
+  const [number, setNumber] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const handleSend = async () => {
+    const trimmed = number.trim();
+    if (!trimmed) return toast.error('Enter a phone number');
+    setSending(true);
+    try {
+      const { sendSemaphoreSMS } = await import('../lib/sms');
+      await sendSemaphoreSMS({
+        recipient: trimmed,
+        message: 'Test SMS from MadeForGyms. Your Semaphore integration is working correctly!',
+        gymId,
+      });
+      toast.success('Test SMS sent successfully!');
+      setNumber('');
+    } catch (err) {
+      toast.error(err.message || 'Failed to send test SMS');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-slate-300 text-xs font-medium">Send Test SMS</label>
+      <div className="flex gap-2">
+        <input
+          type="tel"
+          value={number}
+          onChange={(e) => setNumber(e.target.value)}
+          placeholder="e.g. 09171234567"
+          className="flex-1 bg-slate-700 border border-slate-600 focus:border-green-500 text-white rounded-xl px-4 py-2.5 outline-none transition-colors placeholder:text-slate-500 text-sm"
+        />
+        <button
+          type="button"
+          onClick={handleSend}
+          disabled={sending || !number.trim()}
+          className="flex items-center gap-1.5 bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shrink-0"
+        >
+          {sending
+            ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            : <><Send size={13} /> Send</>}
+        </button>
+      </div>
+      <p className="text-slate-500 text-xs">Sends a real SMS to verify your API key and sender name are working.</p>
+    </div>
+  );
+}
+
 function TestAutoSMS({ gymId }) {
   const [running, setRunning] = useState(false);
   const handleTest = async () => {
@@ -789,9 +840,9 @@ export default function AdminSettings() {
                   <label className="block text-slate-300 text-xs font-medium mb-1.5">
                     Sender Name <span className="text-slate-500 font-normal">(optional)</span>
                   </label>
-                  <input type="text" value={form.semaphoreSenderName} onChange={(e) => set('semaphoreSenderName', e.target.value)} placeholder="SEMAPHORE" maxLength={11}
+                  <input type="text" value={form.semaphoreSenderName} onChange={(e) => set('semaphoreSenderName', e.target.value)} placeholder="MadeForGyms" maxLength={11}
                     className="w-full bg-slate-700 border border-slate-600 focus:border-green-500 text-white rounded-xl px-4 py-2.5 outline-none transition-colors placeholder:text-slate-500 text-sm" />
-                  <p className="text-slate-500 text-xs mt-1">Max 11 characters. Leave blank to use "SEMAPHORE". Register your sender name at semaphore.co for branding.</p>
+                  <p className="text-slate-500 text-xs mt-1">Max 11 characters. This is the name members will see as the SMS sender.</p>
                 </div>
                 {form.semaphoreApiKey && (
                   <>
@@ -799,6 +850,7 @@ export default function AdminSettings() {
                       <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                       <p className="text-green-300 text-xs">Active · Auto reminders enabled — daily at 9 AM PH time</p>
                     </div>
+                    <SendTestSMS gymId={gymId} />
                     <TestAutoSMS gymId={gymId} />
                   </>
                 )}
