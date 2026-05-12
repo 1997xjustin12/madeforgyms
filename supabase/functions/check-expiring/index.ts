@@ -84,7 +84,7 @@ serve(async (req) => {
     const monthlyPrice = Number(gym.price_monthly) || 0;
     const hasSMS = !!gym.semaphore_api_key;
     const apiKey = gym.semaphore_api_key;
-    const senderName = gym.semaphore_sender_name || 'SEMAPHORE';
+    const senderName = gym.semaphore_sender_name || '';
 
     const { data: members } = await supabase
       .from('members')
