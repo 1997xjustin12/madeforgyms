@@ -106,7 +106,7 @@ export default function SMSModal({ member, daysLeft, onClose }) {
                 ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 : sent
                 ? <><CheckCircle size={16} /> Sent</>
-                : <><Send size={16} /> Send via Semaphore</>}
+                : <><Send size={16} /> Send</>}
             </button>
           ) : (
             <a

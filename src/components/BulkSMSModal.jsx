@@ -181,7 +181,7 @@ export default function BulkSMSModal({ onClose }) {
                   <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <><MessageSquare size={18} />
-                  {hasSemaphore ? `Send All via Semaphore` : `Send Next (${expiring.length - sentCount} remaining)`}</>
+                  {hasSemaphore ? `Send All` : `Send Next (${expiring.length - sentCount} remaining)`}</>
                 )}
               </button>
             )}
