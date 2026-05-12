@@ -68,6 +68,11 @@ serve(async (req) => {
 
   let totalSent = 0;
   let totalAutoApplied = 0;
+  let totalFound = 0;
+  let skippedNoKey = 0;
+  let skippedNoPhone = 0;
+  let skippedAdvance = 0;
+  let skippedDuplicate = 0;
 
   for (const gym of (gyms || [])) {
     const gymName = gym.gym_name || 'Your Gym';
@@ -83,6 +88,7 @@ serve(async (req) => {
       .in('membership_end_date', [today, in3Days]);
 
     if (!members?.length) continue;
+    totalFound += members.length;
 
     for (const member of members) {
       const isExpiredToday = member.membership_end_date === today;
@@ -178,11 +184,12 @@ serve(async (req) => {
           .limit(1)
           .maybeSingle();
 
-        if (advPayment) continue;
+        if (advPayment) { skippedAdvance++; continue; }
       }
 
       // ── Regular expiry / reminder SMS ──────────────────────────
-      if (!hasSMS || !member.contact_number) continue;
+      if (!hasSMS) { skippedNoKey++; continue; }
+      if (!member.contact_number) { skippedNoPhone++; continue; }
 
       const action = isExpiredToday ? 'AUTO_SMS_EXPIRED' : 'AUTO_SMS_EXPIRING';
 
@@ -195,7 +202,7 @@ serve(async (req) => {
         .gte('created_at', todayStart)
         .maybeSingle();
 
-      if (already) continue;
+      if (already) { skippedDuplicate++; continue; }
 
       const message = isExpiredToday
         ? `Hi ${member.name}! Your ${gymName} membership has EXPIRED today. Please renew to continue. Visit us or contact the gym. Thank you!`
@@ -222,7 +229,7 @@ serve(async (req) => {
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, smsSent: totalSent, autoApplied: totalAutoApplied, date: today }), {
+  return new Response(JSON.stringify({ ok: true, smsSent: totalSent, autoApplied: totalAutoApplied, date: today, debug: { found: totalFound, skippedNoKey, skippedNoPhone, skippedAdvance, skippedDuplicate } }), {
     headers: { ...CORS, 'Content-Type': 'application/json' },
   });
 });
