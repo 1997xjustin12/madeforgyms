@@ -263,7 +263,7 @@ function SendTestSMS({ gymId }) {
       const { sendSemaphoreSMS } = await import('../lib/sms');
       await sendSemaphoreSMS({
         recipient: trimmed,
-        message: 'Test SMS from MadeForGyms. Your Semaphore integration is working correctly!',
+        message: 'Test SMS from MadeForGyms. Your SMS notifications are working correctly!',
         gymId,
       });
       toast.success('Test SMS sent successfully!');
@@ -302,45 +302,6 @@ function SendTestSMS({ gymId }) {
   );
 }
 
-function TestAutoSMS({ gymId }) {
-  const [running, setRunning] = useState(false);
-  const handleTest = async () => {
-    setRunning(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token || SUPABASE_ANON;
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/check-expiring`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({}),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Function error');
-      const d = data.debug || {};
-      const parts = [`Sent: ${data.smsSent ?? 0}`];
-      if (d.found !== undefined) parts.push(`Found: ${d.found}`);
-      if (d.skippedNoKey)     parts.push(`No API key: ${d.skippedNoKey}`);
-      if (d.skippedNoPhone)   parts.push(`No phone: ${d.skippedNoPhone}`);
-      if (d.skippedAdvance)   parts.push(`Has advance: ${d.skippedAdvance}`);
-      if (d.skippedDuplicate) parts.push(`Already sent: ${d.skippedDuplicate}`);
-      if (d.smsFailed)        parts.push(`Failed: ${d.smsFailed}`);
-      const fn = d.smsFailed ? toast.error : toast.success;
-      fn(parts.join(' · ') + (d.lastSmsError ? ` — ${d.lastSmsError}` : ''), { duration: 8000 });
-    } catch (err) {
-      toast.error(err.message || 'Failed to run check');
-    } finally {
-      setRunning(false);
-    }
-  };
-  return (
-    <button type="button" onClick={handleTest} disabled={running}
-      className="w-full flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-medium py-2.5 rounded-xl transition-colors disabled:opacity-50">
-      {running
-        ? <><span className="w-4 h-4 border-2 border-slate-400/30 border-t-slate-300 rounded-full animate-spin" /> Running check...</>
-        : <><MessageSquare size={14} /> Test Auto SMS Now</>}
-    </button>
-  );
-}
 
 // ── Tabs config ───────────────────────────────────────────────────────────────
 const TABS = [
@@ -829,21 +790,21 @@ export default function AdminSettings() {
               </div>
             </div>
 
-            {/* Semaphore SMS */}
+            {/* SMS Settings */}
             <div className="bg-slate-800 rounded-2xl border border-slate-700/50 p-5 space-y-4">
               <div className="flex items-center gap-2">
                 <MessageSquare size={15} className="text-green-400" />
                 <div>
-                  <h2 className="text-white font-semibold text-sm">Semaphore SMS</h2>
+                  <h2 className="text-white font-semibold text-sm">SMS Notifications</h2>
                   <p className="text-slate-500 text-xs">Send SMS to members · Auto reminders on expiry</p>
                 </div>
               </div>
               <div className="space-y-3">
                 <div>
                   <label className="block text-slate-300 text-xs font-medium mb-1.5">API Key</label>
-                  <input type="text" value={form.semaphoreApiKey} onChange={(e) => set('semaphoreApiKey', e.target.value)} placeholder="Your Semaphore API key"
+                  <input type="text" value={form.semaphoreApiKey} onChange={(e) => set('semaphoreApiKey', e.target.value)} placeholder="Enter your SMS API key"
                     className="w-full bg-slate-700 border border-slate-600 focus:border-green-500 text-white rounded-xl px-4 py-2.5 outline-none transition-colors placeholder:text-slate-500 text-sm font-mono" />
-                  <p className="text-slate-500 text-xs mt-1">Found in semaphore.co → Account → API</p>
+                  <p className="text-slate-500 text-xs mt-1">Found in your SMS provider dashboard → Account → API</p>
                 </div>
                 <div>
                   <label className="block text-slate-300 text-xs font-medium mb-1.5">
@@ -857,10 +818,9 @@ export default function AdminSettings() {
                   <>
                     <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-xl px-3 py-2">
                       <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                      <p className="text-green-300 text-xs">Active · Auto reminders enabled — daily at 9 AM PH time</p>
+                      <p className="text-green-300 text-xs">Active · SMS notifications enabled</p>
                     </div>
                     <SendTestSMS gymId={gymId} />
-                    <TestAutoSMS gymId={gymId} />
                   </>
                 )}
               </div>

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, MessageSquare, Copy, ExternalLink, CheckCircle, Users, Wifi, Send } from 'lucide-react';
 import { buildSmsMessage, openSmsApp, formatPhoneDisplay } from '../utils/helpers';
 import { useGym } from '../context/GymContext';
 import { sendSemaphoreSMS } from '../lib/sms';
+import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
 export default function BulkSMSModal({ onClose }) {
@@ -10,11 +11,36 @@ export default function BulkSMSModal({ onClose }) {
   const expiring = getExpiringMembers();
   const [sent, setSent] = useState({});
   const [sending, setSending] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const hasSemaphore = !!settings.semaphoreApiKey;
   const markSent = (id) => setSent((prev) => ({ ...prev, [id]: true }));
   const allSent = expiring.length > 0 && expiring.every((m) => sent[m.id]);
   const sentCount = Object.keys(sent).length;
+
+  // On open, check which members already got SMS today
+  useEffect(() => {
+    if (!gymId || !expiring.length) { setLoading(false); return; }
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const memberIds = expiring.map((m) => m.id);
+    supabase
+      .from('activity_logs')
+      .select('member_id')
+      .eq('gym_id', gymId)
+      .in('action', ['SMS_SENT', 'AUTO_SMS_EXPIRING', 'AUTO_SMS_EXPIRED'])
+      .in('member_id', memberIds)
+      .gte('created_at', todayStart.toISOString())
+      .then(({ data }) => {
+        if (data?.length) {
+          const alreadySent = {};
+          data.forEach((row) => { alreadySent[row.member_id] = true; });
+          setSent(alreadySent);
+        }
+        setLoading(false);
+      });
+  }, [gymId]);
 
   const handleSend = async (member) => {
     if (sent[member.id] || sending === member.id) return;
@@ -76,7 +102,7 @@ export default function BulkSMSModal({ onClose }) {
                 <h3 className="text-white font-semibold">Send SMS to All</h3>
                 {hasSemaphore && (
                   <span className="flex items-center gap-1 text-xs text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full">
-                    <Wifi size={10} /> Semaphore
+                    <Wifi size={10} /> Online
                   </span>
                 )}
               </div>
@@ -108,7 +134,11 @@ export default function BulkSMSModal({ onClose }) {
 
         {/* Members list */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
-          {expiring.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-10">
+              <span className="w-6 h-6 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" />
+            </div>
+          ) : expiring.length === 0 ? (
             <div className="text-center py-10">
               <CheckCircle size={40} className="text-green-400 mx-auto mb-3" />
               <p className="text-white font-semibold">No expiring members</p>
@@ -143,8 +173,8 @@ export default function BulkSMSModal({ onClose }) {
                     {daysLeft}d left
                   </span>
                   {isSent ? (
-                    <div className="shrink-0 w-9 h-9 bg-green-500/20 rounded-xl flex items-center justify-center">
-                      <CheckCircle size={18} className="text-green-400" />
+                    <div className="shrink-0 flex items-center gap-1.5 bg-green-500/20 text-green-400 text-xs font-semibold px-3 h-9 rounded-xl">
+                      <CheckCircle size={14} /> Sent today
                     </div>
                   ) : (
                     <button
@@ -169,12 +199,12 @@ export default function BulkSMSModal({ onClose }) {
             {allSent ? (
               <div className="flex items-center justify-center gap-2 bg-green-500/10 border border-green-500/30 rounded-xl py-3">
                 <CheckCircle size={18} className="text-green-400" />
-                <p className="text-green-400 font-semibold text-sm">All messages sent!</p>
+                <p className="text-green-400 font-semibold text-sm">All messages sent today!</p>
               </div>
             ) : (
               <button
                 onClick={handleSendAll}
-                disabled={!!sending}
+                disabled={!!sending || loading}
                 className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl transition-colors disabled:opacity-60"
               >
                 {sending ? (

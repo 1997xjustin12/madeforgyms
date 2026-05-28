@@ -27,7 +27,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'MadeForGyms <onboarding@resend.dev>',
+        from: 'MadeForGyms <noreply@madeforgyms.com>',
         to: [to],
         subject,
         html,

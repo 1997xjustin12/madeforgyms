@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MadeForGyms — System Features</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #fff;
+    color: #1e293b;
+    line-height: 1.6;
+    font-size: 14px;
+  }
+
+  /* ── COVER PAGE ── */
+  .cover {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 40px;
+    page-break-after: always;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(34,197,94,0.12) 0%, transparent 65%);
+    pointer-events: none;
+  }
+
+  .cover-logo {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 36px;
+    box-shadow: 0 20px 60px rgba(34,197,94,0.35);
+  }
+
+  .cover h1 {
+    font-size: 48px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+  }
+
+  .cover h1 span { color: #22c55e; }
+
+  .cover .tagline {
+    font-size: 18px;
+    color: #94a3b8;
+    margin-bottom: 48px;
+    font-weight: 400;
+  }
+
+  .cover-divider {
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    border-radius: 2px;
+    margin: 0 auto 48px;
+  }
+
+  .cover-meta {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .cover-meta-item {
+    text-align: center;
+  }
+
+  .cover-meta-item .val {
+    font-size: 28px;
+    font-weight: 900;
+    color: #22c55e;
+  }
+
+  .cover-meta-item .lbl {
+    font-size: 11px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  .cover-footer {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: #475569;
+    white-space: nowrap;
+  }
+
+  /* ── CONTENT PAGES ── */
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 56px 48px;
+    page-break-after: always;
+  }
+
+  .page:last-child { page-break-after: avoid; }
+
+  /* ── SECTION HEADERS ── */
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #22c55e;
+    margin-bottom: 8px;
+  }
+
+  .section-label::before {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 2px;
+    background: #22c55e;
+    border-radius: 1px;
+  }
+
+  h2.section-title {
+    font-size: 28px;
+    font-weight: 900;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+
+  .section-desc {
+    color: #64748b;
+    font-size: 14px;
+    margin-bottom: 32px;
+    max-width: 600px;
+  }
+
+  /* ── TOC ── */
+  .toc-list {
+    list-style: none;
+    counter-reset: toc-counter;
+  }
+
+  .toc-list li {
+    counter-increment: toc-counter;
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed #e2e8f0;
+    color: #334155;
+    font-weight: 500;
+  }
+
+  .toc-list li::before {
+    content: counter(toc-counter, decimal-leading-zero);
+    font-size: 11px;
+    font-weight: 800;
+    color: #22c55e;
+    width: 32px;
+    shrink: 0;
+  }
+
+  .toc-list li .toc-dot {
+    flex: 1;
+    border-bottom: 2px dotted #e2e8f0;
+    margin: 0 12px;
+    height: 1px;
+    align-self: flex-end;
+    margin-bottom: 6px;
+  }
+
+  .toc-list li .toc-page {
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 600;
+  }
+
+  /* ── FEATURE CARDS ── */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .feature-card {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px;
+    background: #f8fafc;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent, #22c55e), transparent);
+  }
+
+  .feature-card .fc-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--icon-bg, rgba(34,197,94,0.1));
+    color: var(--accent, #22c55e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .feature-card h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 6px;
+  }
+
+  .feature-card p {
+    font-size: 12.5px;
+    color: #64748b;
+    line-height: 1.55;
+  }
+
+  /* ── FEATURE LIST ── */
+  .feature-list {
+    list-style: none;
+    space: 8px 0;
+  }
+
+  .feature-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 13.5px;
+    color: #334155;
+  }
+
+  .feature-list li:last-child { border-bottom: none; }
+
+  .feature-list li::before {
+    content: '✓';
+    color: #22c55e;
+    font-weight: 900;
+    font-size: 12px;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .feature-list li strong { color: #0f172a; }
+
+  /* ── INFO BOXES ── */
+  .info-box {
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    border: 1.5px solid;
+  }
+
+  .info-box.green {
+    background: rgba(34,197,94,0.05);
+    border-color: rgba(34,197,94,0.25);
+  }
+
+  .info-box.blue {
+    background: rgba(14,165,233,0.05);
+    border-color: rgba(14,165,233,0.25);
+  }
+
+  .info-box.orange {
+    background: rgba(249,115,22,0.05);
+    border-color: rgba(249,115,22,0.25);
+  }
+
+  .info-box.purple {
+    background: rgba(139,92,246,0.05);
+    border-color: rgba(139,92,246,0.25);
+  }
+
+  .info-box h5 {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .info-box.green h5 { color: #16a34a; }
+  .info-box.blue h5 { color: #0284c7; }
+  .info-box.orange h5 { color: #ea580c; }
+  .info-box.purple h5 { color: #7c3aed; }
+
+  .info-box p, .info-box li {
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.6;
+  }
+
+  .info-box ul { list-style: none; }
+  .info-box ul li { padding: 2px 0; }
+  .info-box ul li::before { content: '• '; color: #94a3b8; }
+
+  /* ── ROLE TABLE ── */
+  .role-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+
+  .role-table th {
+    background: #0f172a;
+    color: #fff;
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .role-table th:first-child { border-radius: 10px 0 0 0; }
+  .role-table th:last-child { border-radius: 0 10px 0 0; }
+
+  .role-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    vertical-align: middle;
+  }
+
+  .role-table tr:nth-child(even) td { background: #f8fafc; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .badge.yes { background: rgba(34,197,94,0.1); color: #16a34a; }
+  .badge.no  { background: rgba(100,116,139,0.1); color: #94a3b8; }
+  .badge.lim { background: rgba(249,115,22,0.1); color: #ea580c; }
+
+  /* ── FLOW STEPS ── */
+  .flow-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+    margin-bottom: 24px;
+  }
+
+  .flow-step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    position: relative;
+  }
+
+  .flow-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 42px;
+    bottom: -8px;
+    width: 2px;
+    background: #e2e8f0;
+  }
+
+  .step-num {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #0f172a;
+    color: #22c55e;
+    font-weight: 900;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-bottom: 16px;
+    z-index: 1;
+    position: relative;
+  }
+
+  .step-content h5 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 3px;
+    padding-top: 10px;
+  }
+
+  .step-content p {
+    font-size: 13px;
+    color: #64748b;
+    padding-bottom: 10px;
+  }
+
+  /* ── HIGHLIGHT STRIP ── */
+  .highlight-strip {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    border-radius: 16px;
+    padding: 24px 28px;
+    color: #fff;
+    margin-bottom: 24px;
+  }
+
+  .highlight-strip h4 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+  .highlight-strip p { font-size: 13px; color: #94a3b8; }
+
+  .stat-row {
+    display: flex;
+    gap: 32px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .stat-item .s-val {
+    font-size: 28px;
+    font-weight: 900;
+    color: #22c55e;
+  }
+
+  .stat-item .s-lbl {
+    font-size: 11px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .cover { min-height: 100vh; }
+    .page { padding: 40px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ COVER ══════════════════ -->
+<div class="cover">
+  <div class="cover-logo">🏋️</div>
+  <h1>Made<span>For</span>Gyms</h1>
+  <p class="tagline">Complete Gym Management System — Feature Overview</p>
+  <div class="cover-divider"></div>
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <div class="val">8+</div>
+      <div class="lbl">Core Modules</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="val">3</div>
+      <div class="lbl">User Roles</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="val">24/7</div>
+      <div class="lbl">Self-Service Portal</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="val">SMS</div>
+      <div class="lbl">Auto Reminders</div>
+    </div>
+  </div>
+  <div class="cover-footer">Confidential — Prepared for Client Presentation &nbsp;·&nbsp; MadeForGyms &nbsp;·&nbsp; 2025</div>
+</div>
+
+
+<!-- ══════════════════ TABLE OF CONTENTS ══════════════════ -->
+<div class="page">
+  <div class="section-label">Document Guide</div>
+  <h2 class="section-title">Table of Contents</h2>
+  <p class="section-desc">This document covers every module and feature available in the MadeForGyms system.</p>
+
+  <ol class="toc-list">
+    <li>System Overview <span class="toc-dot"></span> <span class="toc-page">3</span></li>
+    <li>Member Management <span class="toc-dot"></span> <span class="toc-page">4</span></li>
+    <li>Membership Plans & Payments <span class="toc-dot"></span> <span class="toc-page">5</span></li>
+    <li>Member Self-Service Portal <span class="toc-dot"></span> <span class="toc-page">6</span></li>
+    <li>Attendance & Check-In <span class="toc-dot"></span> <span class="toc-page">7</span></li>
+    <li>Workout Plans <span class="toc-dot"></span> <span class="toc-page">8</span></li>
+    <li>Coach / Trainer Management <span class="toc-dot"></span> <span class="toc-page">9</span></li>
+    <li>Notifications & SMS Reminders <span class="toc-dot"></span> <span class="toc-page">10</span></li>
+    <li>Reports, Logs & Data Export <span class="toc-dot"></span> <span class="toc-page">11</span></li>
+    <li>System Settings & Security <span class="toc-dot"></span> <span class="toc-page">12</span></li>
+    <li>User Roles & Permissions <span class="toc-dot"></span> <span class="toc-page">13</span></li>
+  </ol>
+</div>
+
+
+<!-- ══════════════════ OVERVIEW ══════════════════ -->
+<div class="page">
+  <div class="section-label">Section 01</div>
+  <h2 class="section-title">System Overview</h2>
+  <p class="section-desc">MadeForGyms is a cloud-based gym management platform built for Filipino gyms. It handles everything — from member registration to workout planning — in one place.</p>
+
+  <div class="highlight-strip">
+    <h4>An all-in-one platform for modern gyms</h4>
+    <p>Manage members, payments, attendance, workouts, and coaches from any device — no app install required.</p>
+    <div class="stat-row">
+      <div class="stat-item"><div class="s-val">Web</div><div class="s-lbl">Works on any browser</div></div>
+      <div class="stat-item"><div class="s-val">PWA</div><div class="s-lbl">Installable on phones</div></div>
+      <div class="stat-item"><div class="s-val">Cloud</div><div class="s-lbl">Real-time sync</div></div>
+      <div class="stat-item"><div class="s-val">PH</div><div class="s-lbl">Peso-ready & SMS</div></div>
+    </div>
+  </div>
+
+  <div class="feature-grid">
+    <div class="feature-card" style="--accent:#22c55e;--icon-bg:rgba(34,197,94,0.1)">
+      <div class="fc-icon">👤</div>
+      <h4>Admin Dashboard</h4>
+      <p>Real-time overview of total, active, expiring, and expired members with quick actions and alerts.</p>
+    </div>
+    <div class="feature-card" style="--accent:#0ea5e9;--icon-bg:rgba(14,165,233,0.1)">
+      <div class="fc-icon">📱</div>
+      <h4>Member Portal</h4>
+      <p>Members can check their status, view their workout plan, and submit renewal payments — no account needed.</p>
+    </div>
+    <div class="feature-card" style="--accent:#f97316;--icon-bg:rgba(249,115,22,0.1)">
+      <div class="fc-icon">💳</div>
+      <h4>Payment Tracking</h4>
+      <p>Accept GCash, cash, and advance payments with receipt upload and admin approval workflows.</p>
+    </div>
+    <div class="feature-card" style="--accent:#a855f7;--icon-bg:rgba(168,85,247,0.1)">
+      <div class="fc-icon">💪</div>
+      <h4>Smart Workout Plans</h4>
+      <p>Auto-generate personalized workout plans based on each member's BMI and fitness level.</p>
+    </div>
+  </div>
+
+  <div class="info-box green">
+    <h5>Who is this for?</h5>
+    <ul>
+      <li>Gym owners who want to go paperless and stop manually tracking memberships</li>
+      <li>Gyms offering coaching programs that need to manage trainers and member assignments</li>
+      <li>Any gym that wants to send professional SMS renewal reminders without a separate tool</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ══════════════════ MEMBER MANAGEMENT ══════════════════ -->
+<div class="page">
+  <div class="section-label">Section 02</div>
+  <h2 class="section-title">Member Management</h2>
+  <p class="section-desc">Register, search, view, and manage every member from one screen. Full profile support including photos, body metrics, and membership history.</p>
+
+  <div class="feature-grid">
+    <div class="feature-card" style="--accent:#22c55e;--icon-bg:rgba(34,197,94,0.1)">
+      <div class="fc-icon">➕</div>
+      <h4>Member Registration</h4>
+      <p>Add members with name, contact, photo, birthdate, height, weight, and membership plan in one form.</p>
+    </div>
+    <div class="feature-card" style="--accent:#0ea5e9;--icon-bg:rgba(14,165,233,0.1)">
+      <div class="fc-icon">🔍</div>
+      <h4>Search & Filter</h4>
+      <p>Instantly search by name or number. Filter by Active, Expiring, or Expired status with live counts.</p>
+    </div>
+    <div class="feature-card" style="--accent:#f97316;--icon-bg:rgba(249,115,22,0.1)">
+      <div class="fc-icon">📷</div>
+      <h4>Photo Capture</h4>
+      <p>Take member photos directly from the device camera. Photos are stored securely in the cloud.</p>
+    </div>
+    <div class="feature-card" style="--accent:#a855f7;--icon-bg:rgba(168,85,247,0.1)">
+      <div class="fc-icon">📊</div>
+      <h4>BMI Tracking</h4>
+      <p>Automatically calculates BMI from height and weight with color-coded category labels (Underweight, Normal, Overweight, Obese).</p>
+    </div>
+  </div>
+
+  <ul class="feature-list">
+    <li><strong>Member profiles</strong> — full profile with photo, contact, birthdate, body metrics, notes, and assigned coach</li>
+    <li><strong>Membership history</strong> — see every renewal, payment, and status change for each member over time</li>
+    <li><strong>Edit & update</strong> — update any member detail, renew membership, or change their plan at any time</li>
+    <li><strong>Days remaining indicator</strong> — each member card shows exactly how many days are left on their membership</li>
+    <li><strong>Status badges</strong> — color-coded Active (green), Expiring Soon (orange), and Expired (red) labels</li>
+    <li><strong>Duplicate name warning</strong> — system alerts you if a member with the same name already exists</li>
+    <li><strong>Pagination</strong> — handles large member lists efficiently with paginated browsing</li>
+    <li><strong>Member deletion</strong> — permanently remove a member and their photo with confirmation protection</li>
+    <li><strong>Staff submissions</strong> — staff can add members and submit for admin approval before they are saved</li>
+  </ul>
+</div>
+
+
+<!-- ══════════════════ MEMBERSHIP PLANS & PAYMENTS ══════════════════ -->
+<div class="page">
+  <div class="section-label">Section 03</div>
+  <h2 class="section-title">Membership Plans & Payments</h2>
+  <p class="section-desc">Flexible plan options, promo support, GCash integration, and advance payment tracking — all built in.</p>
+
+  <div class="info-box green">
+    <h5>Available Plan Types</h5>
+    <ul>
+      <li><strong>Monthly</strong> — 30-day rolling membership</li>
+      <li><strong>Quarterly</strong> — 90-day membership</li>
+      <li><strong>Semi-Annual</strong> — 180-day membership</li>
+      <li><strong>Annual</strong> — 365-day membership</li>
+      <li><strong>Student</strong> — discounted 30-day plan (requires valid school ID)</li>
+      <li><strong>Custom Promos</strong> — create unlimited special promotions with custom duration and price</li>
+    </ul>
+  </div>
+
+  <h3 style="font-size:16px;font-weight:800;color:#0f172a;margin-bottom:16px;margin-top:8px;">Payment Workflows</h3>
+
+  <div class="feature-grid">
+    <div class="feature-card" style="--accent:#22c55e;--icon-bg:rgba(34,197,94,0.1)">
+      <div class="fc-icon">💵</div>
+      <h4>Quick Renew (Admin)</h4>
+      <p>Admins can renew any member instantly — select plan, choose Cash or GCash, confirm. Membership extends immediately.</p>
+    </div>
+    <div class="feature-card" style="--accent:#0ea5e9;--icon-bg:rgba(14,165,233,0.1)">
+      <div class="fc-icon">📲</div>
+      <h4>GCash Self-Renewal</h4>
+      <p>Members upload their GCash receipt from their phone. Admin gets notified and approves with one tap.</p>
+    </div>
+    <div class="feature-card" style="--accent:#f97316;--icon-bg:rgba(249,115,22,0.1)">
+      <div class="fc-icon">🗓️</div>
+      <h4>Advance Payments</h4>
+      <p>Accept partial or full payments in advance. The system queues them and applies to the next renewal automatically.</p>
+    </div>
+    <div class="feature-card" style="--accent:#a855f7;--icon-bg:rgba(168,85,247,0.1)">
+      <div class="fc-icon">🔗</div>
+      <h4>Review Payment Link</h4>
+      <p>One-tap review link sent via Telegram. Admin can approve or reject renewal requests from anywhere — no login needed.</p>
+    </div>
+  </div>
+
+  <ul class="feature-list">
+    <li><strong>Renewal request queue</strong> — all pending GCash renewals in one approval screen with receipt viewing</li>
+    <li><strong>Batch approve/reject</strong> — process multiple renewal requests at once</li>
+    <li><strong>Auto end-date calculation</strong> — system automatically sets the new expiry date on approval</li>
+    <li><strong>Advance payment carry-forward</strong> — excess balance rolls over to next renewal period</li>
+    <li><strong>Payment method tracking</strong> — records whether payment was Cash or GCash for each transaction</li>
+  </ul>
+</div>
+
+
+<!-- ══════════════════ MEMBER SELF-SERVICE PORTAL ══════════════════ -->
+<div class="page">
+  <div class="section-label">Section 04</div>
+  <h2 class="section-title">Member Self-Service Portal</h2>
+  <p class="section-desc">Members access their own dashboard without creating an account — just their name or phone number. Available on any phone browser.</p>
+
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h5>Member looks up their profile</h5>
+        <p>Enter name or contact number — or scan the gym's QR code to go directly to their portal.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h5>View membership status</h5>
+        <p>Instantly see membership plan, days remaining, expiry date, and current status with color-coded indicators.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h5>Submit a renewal payment</h5>
+        <p>Select a plan, upload GCash receipt, and submit for admin approval — all from the phone browser.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h5>Access workout plan</h5>
+        <p>View their personalized workout plan with exercise names, sets, reps, rest times, and demo videos/images.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="feature-grid">
+    <div class="feature-card" style="--accent:#22c55e;--icon-bg:rgba(34,197,94,0.1)">
+      <div class="fc-icon">🪪</div>
+      <h4>Digital Membership Card</h4>
+      <p>Premium card view showing plan type, expiry date, and status — members can screenshot and show at the gym entrance.</p>
+    </div>
+    <div class="feature-card" style="--accent:#0ea5e9;--icon-bg:rgba(14,165,233,0.1)">
+      <div class="fc-icon">⏰</div>
+      <h4>Self Clock-In</h4>
+      <p>Members can clock themselves in from the portal. Logged automatically with a timestamp in attendance records.</p>
+    </div>
+    <div class="feature-card" style="--accent:#f97316;--icon-bg:rgba(249,115,22,0.1)">
+      <div class="fc-icon">📋</div>
+      <h4>Workout Dashboard</h4>
+      <p>See today's workout day, all exercises with sets/reps, and track completed sets per session.</p>
+    </div>
+    <div class="feature-card" style="--accent:#a855f7;--icon-bg:rgba(168,85,247,0.1)">
+      <div class="fc-icon">👨‍🏫</div>
+      <h4>Coach Info</h4>
+      <p>View assigned coach name, specialty, and coaching subscription dates directly from the portal.</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════ ATTENDANCE & CHECK-IN ══════════════════ -->
+<div class="page">
+  <div class="section-label">Section 05</div>
+  <h2 class="section-title">Attendance & Check-In</h2>
+  <p class="section-desc">Track who's in the gym every day with multiple check-in methods — kiosk search, admin clock-in, or member self-check-in via portal.</p>
+
+  <div class="feature-grid">
+    <div class="feature-card" style="--accent:#22c55e;--icon-bg:rgba(34,197,94,0.1)">
+      <div class="fc-icon">🖥️</div>
+      <h4>Kiosk Check-In Screen</h4>
+      <p>A dedicated full-screen check-in page. Members search their name or number and tap to clock in — designed for a tablet at the front desk.</p>
+    </div>
+    <div class="feature-card" style="--accent:#0ea5e9;--icon-bg:rgba(14,165,233,0.1)">
+      <div class="fc-icon">📅</div>
+      <h4>Daily Attendance Log</h4>
+      <p>Admin view showing every check-in by day. Navigate between dates to see who visited on any given day.</p>
+    </div>
+    <div class="feature-card" style="--accent:#f97316;--icon-bg:rgba(249,115,22,0.1)">
+      <div class="fc-icon">🚫</div>
+      <h4>Duplicate Prevention</h4>
+      <p>System prevents a member from being clocked in twice on the same day, keeping records accurate.</p>
+    </div>
+    <div class="feature-card" style="--accent:#a855f7;--icon-bg:rgba(168,85,247,0.1)">
+      <div class="fc-icon">⏱️</div>
+      <h4>Timestamped Records</h4>
+      <p>Every check-in is stored with the exact time, member name, and date for complete attendance history.</p>
+    </div>
+  </div>
+
+  <ul class="feature-list">
+    <li><strong>Admin clock-in from member list</strong> — staff can clock in a member directly from the Members page with one tap</li>
+    <li><strong>Member self clock-in</strong> — members can check themselves in from their self-service portal</li>
+    <li><strong>QR scan entry</strong> — members can scan a QR code to go directly to their portal and clock in</li>
+    <li><strong>Date navigator</strong> — browse attendance by any date with forward/back navigation</li>
+    <li><strong>Member name & timestamp display</strong> — full list of check-ins with name and exact time per day</li>
+  </ul>
+</div>
+
+
+<!-- ══════════════════ WORKOUT PLANS ══════════════════ -->
+<div class="page">
+  <div class="section-label">Section 06</div>
+  <h2 class="section-title">Workout Plans</h2>
+  <p class="section-desc">Automatically generate personalized weekly workout plans based on each member's BMI and fitness level. Fully customizable by admin or coach.</p>
+
+  <div class="info-box blue">
+    <h5>How Auto-Generation Works</h5>
+    <p>When a workout plan is created, the system uses the member's <strong>BMI category</strong> (Underweight, Normal, Overweight, Obese) and their <strong>fitness level</strong> (Beginner, Intermediate, Advanced) to pick the right template — a full 7-day weekly program with appropriate exercises pre-filled.</p>
+  </div>
+
+  <div class="feature-grid">
+    <div class="feature-card" style="--accent:#22c55e;--icon-bg:rgba(34,197,94,0.1)">
+      <div class="fc-icon">🤖</div>
+      <h4>BMI-Based Templates</h4>
+      <p>12 pre-built templates covering all BMI categories × fitness levels. Right program for every body type.</p>
+    </div>
+    <div class="feature-card" style="--accent:#0ea5e9;--icon-bg:rgba(14,165,233,0.1)">
+      <div class="fc-icon">✏️</div>
+      <h4>Fully Editable</h4>
+      <p>Add, remove, or modify any exercise per day. Change sets, reps, rest time, and muscle group focus.</p>
+    </div>
+    <div class="feature-card" style="--accent:#f97316;--icon-bg:rgba(249,115,22,0.1)">
+      <div class="fc-icon">🎬</div>
+      <h4>Exercise Media</h4>
+      <p>Upload a demo video and/or image for any exercise. Members see the media directly in their workout view.</p>
+    </div>
+    <div class="feature-card" style="--accent:#a855f7;--icon-bg:rgba(168,85,247,0.1)">
+      <div class="fc-icon">📆</div>
+      <h4>7-Day Weekly Structure</h4>
+      <p>Plans are organized by day (Mon–Sun) with rest days clearly marked. Members see today's day highlighted.</p>
+    </div>
+  </div>
+
+  <ul class="feature-list">
+    <li><strong>Day tabs</strong> — navigate between each day of the week to view or edit that day's exercises</li>
+    <li><strong>Exercise details</strong> — each exercise shows name, sets, reps/duration, rest time, muscle group, and description</li>
+    <li><strong>Muscle group labels</strong> — Chest, Back, Shoulders, Biceps, Triceps, Quads, Hamstrings, Glutes, Calves, Core, Full Body, Cardio</li>
+    <li><strong>Reset to template</strong> — reset the entire plan back to the default template at any time</li>
+    <li><strong>Member-side view</strong> — members see their plan in the portal with exercise media and set tracking</li>
+    <li><strong>Fitness level selector</strong> — switch between Beginner, Intermediate, and Advanced to change template difficulty</li>
+  </ul>
+</div>
+
+
+<!-- ══════════════════ COACHES ══════════════════ -->
+<div class="page">
+  <div class="section-label">Section 07</div>
+  <h2 class="section-title">Coach & Trainer Management</h2>
+  <p class="section-desc">Manage your coaching team, assign members to coaches, set up coaching packages, and give coaches their own secure login portal.</p>
+
+  <div class="feature-grid">
+    <div class="feature-card" style="--accent:#22c55e;--icon-bg:rgba(34,197,94,0.1)">
+      <div class="fc-icon">👨‍🏫</div>
+      <h4>Coach Profiles</h4>
+      <p>Each coach has a profile with name, specialty, photo, contact, email, bio, and active status toggle.</p>
+    </div>
+    <div class="feature-card" style="--accent:#0ea5e9;--icon-bg:rgba(14,165,233,0.1)">
+      <div class="fc-icon">🔐</div>
+      <h4>Coach Access Code</h4>
+      <p>Coaches log in with a unique access code (no password needed). Admin sets and manages the code.</p>
+    </div>
+    <div class="feature-card" style="--accent:#f97316;--icon-bg:rgba(249,115,22,0.1)">
+      <div class="fc-icon">🗂️</div>
+      <h4>Coach Dashboard</h4>
+      <p>Coaches see all their assigned members, coaching subscription dates, and member details in their own portal.</p>
+    </div>
+    <div class="feature-card" style="--accent:#a855f7;--icon-bg:rgba(168,85,247,0.1)">
+      <div class="fc-icon">📦</div>
+      <h4>Coaching Packages</h4>
+      <p>Create coaching subscription packages with custom name, price, and duration. Assign to members at registration.</p>
+    </div>
+  </div>
+
+  <ul class="feature-list">
+    <li><strong>Member–coach assignment</strong> — assign any coach to a member at registration or during profile editing</li>
+    <li><strong>Coaching subscription dates</strong> — track coaching start and end dates separately from membership dates</li>
+    <li><strong>Auto end-date calculation</strong> — select a package and the system calculates the end date automatically</li>
+    <li><strong>Active/inactive toggle</strong> — deactivate a coach without deleting their record; they won't appear in the assignment list</li>
+    <li><strong>Multiple packages</strong> — set up as many coaching packages as needed with different durations and prices</li>
+    <li><strong>Coach portal separation</strong> — coaches only see their own members and cannot access admin settings or other members</li>
+  </ul>
+
+  <div class="info-box orange">
+    <h5>Coaching Subscription Flow</h5>
+    <p>When registering a member: select a coach → choose a package → start date is set → end date auto-calculates → saved with the member profile. Coaches can then view the member from their portal with the coaching timeline visible.</p>
+  </div>
+</div>
+
+
+<!-- ══════════════════ NOTIFICATIONS ══════════════════ -->
+<div class="page">
+  <div class="section-label">Section 08</div>
+  <h2 class="section-title">Notifications & SMS Reminders</h2>
+  <p class="section-desc">Keep members informed and reduce no-shows with automated SMS reminders and real-time Telegram alerts for admins.</p>
+
+  <div class="feature-grid">
+    <div class="feature-card" style="--accent:#22c55e;--icon-bg:rgba(34,197,94,0.1)">
+      <div class="fc-icon">💬</div>
+      <h4>SMS Renewal Reminders</h4>
+      <p>Send personalized SMS to individual members or all expiring members at once via Semaphore (Philippine SMS gateway).</p>
+    </div>
+    <div class="feature-card" style="--accent:#0ea5e9;--icon-bg:rgba(14,165,233,0.1)">
+      <div class="fc-icon">📢</div>
+      <h4>Bulk SMS</h4>
+      <p>One-click bulk SMS to all members expiring within 5 days. Message includes name, days left, and GCash details.</p>
+    </div>
+    <div class="feature-card" style="--accent:#f97316;--icon-bg:rgba(249,115,22,0.1)">
+      <div class="fc-icon">📡</div>
+      <h4>Telegram Admin Alerts</h4>
+      <p>Instant Telegram notification when a member submits a GCash renewal — includes receipt and a one-tap approve link.</p>
+    </div>
+    <div class="feature-card" style="--accent:#a855f7;--icon-bg:rgba(168,85,247,0.1)">
+      <div class="fc-icon">🔔</div>
+      <h4>Expiry Alert on Dashboard</h4>
+      <p>Admin dashboard highlights all members expiring within 5 days with a prominent alert section and send-SMS buttons.</p>
+    </div>
+  </div>
+
+  <ul class="feature-list">
+    <li><strong>Custom SMS message</strong> — each SMS is pre-filled with the member's name, days remaining, and gym's GCash number</li>
+    <li><strong>Semaphore integration</strong> — uses Philippine SMS API with configurable sender name (up to 11 characters)</li>
+    <li><strong>Telegram review link</strong> — secure 5-minute link lets admin approve renewals directly from Telegram without logging in</li>
+    <li><strong>Automatic expiry reminders</strong> — system can be configured to auto-send SMS reminders at 9 AM daily</li>
+    <li><strong>SMS from member list</strong> — send individual reminder SMS from any member's card in the members list</li>
+    <li><strong>API key management</strong> — Semaphore API key and Telegram bot token stored securely in gym settings</li>
+  </ul>
+</div>
+
+
+<!-- ══════════════════ REPORTS & LOGS ══════════════════ -->
+<div class="page">
+  <div class="section-label">Section 09</div>
+  <h2 class="section-title">Reports, Logs & Data Export</h2>
+  <p class="section-desc">Full activity audit trail, data export to Excel, and backup/restore tools to keep your gym's data safe and accessible.</p>
+
+  <div class="feature-grid">
+    <div class="feature-card" style="--accent:#22c55e;--icon-bg:rgba(34,197,94,0.1)">
+      <div class="fc-icon">📊</div>
+      <h4>Admin Dashboard Stats</h4>
+      <p>Live counts for Total, Active, Expiring, and Expired members with active rate percentage at a glance.</p>
+    </div>
+    <div class="feature-card" style="--accent:#0ea5e9;--icon-bg:rgba(14,165,233,0.1)">
+      <div class="fc-icon">📋</div>
+      <h4>Activity Audit Log</h4>
+      <p>Complete history of every action: member added, edited, deleted, renewed, SMS sent — with who did it and when.</p>
+    </div>
+    <div class="feature-card" style="--accent:#f97316;--icon-bg:rgba(249,115,22,0.1)">
+      <div class="fc-icon">📥</div>
+      <h4>Excel Export</h4>
+      <p>Export your full member list to Excel with all fields: name, contact, plan, dates, status, BMI, and more.</p>
+    </div>
+    <div class="feature-card" style="--accent:#a855f7;--icon-bg:rgba(168,85,247,0.1)">
+      <div class="fc-icon">💾</div>
+      <h4>JSON Backup & Restore</h4>
+      <p>Download a full data backup as JSON. Restore it at any time from the dashboard — no data is ever permanently lost.</p>
+    </div>
+  </div>
+
+  <ul class="feature-list">
+    <li><strong>Activity log filters</strong> — filter the audit trail by action type, member name, or keyword search</li>
+    <li><strong>Member transaction history</strong> — view all renewals, payments, and plan changes for a specific member</li>
+    <li><strong>Backup reminder</strong> — dashboard warns when no backup has been taken in 7+ days</li>
+    <li><strong>Renewal request history</strong> — full log of all GCash renewal requests with status (pending, approved, rejected)</li>
+    <li><strong>Pagination for logs</strong> — large log histories load efficiently with page-by-page browsing</li>
+    <li><strong>Logged actions include</strong> — registration, edits, deletion, renewal, SMS sent, coach assignment, and more</li>
+  </ul>
+</div>
+
+
+<!-- ══════════════════ SETTINGS & SECURITY ══════════════════ -->
+<div class="page">
+  <div class="section-label">Section 10</div>
+  <h2 class="section-title">System Settings & Security</h2>
+  <p class="section-desc">Full control over your gym's branding, pricing, payment info, notification setup, and staff accounts — all from the Settings panel.</p>
+
+  <div class="feature-grid">
+    <div class="feature-card" style="--accent:#22c55e;--icon-bg:rgba(34,197,94,0.1)">
+      <div class="fc-icon">🏢</div>
+      <h4>Gym Branding</h4>
+      <p>Set gym name, logo, address, and contact number. Logo appears on the portal and member-facing pages.</p>
+    </div>
+    <div class="feature-card" style="--accent:#0ea5e9;--icon-bg:rgba(14,165,233,0.1)">
+      <div class="fc-icon">💰</div>
+      <h4>Pricing Configuration</h4>
+      <p>Set prices for all standard plans and student rate. Create unlimited custom promos with any duration and price.</p>
+    </div>
+    <div class="feature-card" style="--accent:#f97316;--icon-bg:rgba(249,115,22,0.1)">
+      <div class="fc-icon">📲</div>
+      <h4>GCash Details</h4>
+      <p>Store your GCash number, account name, and QR code image. Shown to members when they submit a renewal.</p>
+    </div>
+    <div class="feature-card" style="--accent:#a855f7;--icon-bg:rgba(168,85,247,0.1)">
+      <div class="fc-icon">👥</div>
+      <h4>Staff Accounts</h4>
+      <p>Add staff members who can register members and clock in attendance — with limited permissions vs. admin.</p>
+    </div>
+  </div>
+
+  <ul class="feature-list">
+    <li><strong>Login security</strong> — admin login locks after 5 failed attempts for 5 minutes to prevent brute-force access</li>
+    <li><strong>Username or email login</strong> — admin can log in with either their email or a custom username</li>
+    <li><strong>Password change</strong> — admin can update their password from the account settings tab</li>
+    <li><strong>Staff management</strong> — add and remove staff accounts with email-based access from the settings panel</li>
+    <li><strong>Semaphore SMS settings</strong> — configure API key and custom sender name for outgoing SMS</li>
+    <li><strong>Telegram bot settings</strong> — connect a Telegram bot for real-time admin payment notifications</li>
+    <li><strong>Coaching packages</strong> — create, edit, and delete coaching subscription packages from settings</li>
+    <li><strong>Special promos</strong> — add time-limited promotional plans with toggle to activate/deactivate</li>
+  </ul>
+</div>
+
+
+<!-- ══════════════════ USER ROLES ══════════════════ -->
+<div class="page">
+  <div class="section-label">Section 11</div>
+  <h2 class="section-title">User Roles & Permissions</h2>
+  <p class="section-desc">MadeForGyms has three distinct user types — each with the right level of access for their role.</p>
+
+  <div class="info-box green">
+    <h5>Three User Roles</h5>
+    <ul>
+      <li><strong>Admin</strong> — full system access. Manages members, settings, payments, staff, and all data.</li>
+      <li><strong>Staff</strong> — limited admin access. Can register members and record attendance, requires admin approval for changes.</li>
+      <li><strong>Coach</strong> — portal-only access via access code. Sees only their assigned members and coaching details.</li>
+    </ul>
+  </div>
+
+  <table class="role-table">
+    <thead>
+      <tr>
+        <th>Feature / Action</th>
+        <th>Admin</th>
+        <th>Staff</th>
+        <th>Coach</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>View all members</td><td><span class="badge yes">✓ Full</span></td><td><span class="badge yes">✓ Full</span></td><td><span class="badge lim">⊘ Own only</span></td></tr>
+      <tr><td>Register new member</td><td><span class="badge yes">✓ Direct</span></td><td><span class="badge lim">⊘ Needs approval</span></td><td><span class="badge no">— No</span></td></tr>
+      <tr><td>Edit member profile</td><td><span class="badge yes">✓ Yes</span></td><td><span class="badge no">— No</span></td><td><span class="badge no">— No</span></td></tr>
+      <tr><td>Renew membership</td><td><span class="badge yes">✓ Yes</span></td><td><span class="badge lim">⊘ Needs approval</span></td><td><span class="badge no">— No</span></td></tr>
+      <tr><td>Delete member</td><td><span class="badge yes">✓ Yes</span></td><td><span class="badge no">— No</span></td><td><span class="badge no">— No</span></td></tr>
+      <tr><td>Clock in member</td><td><span class="badge yes">✓ Yes</span></td><td><span class="badge yes">✓ Yes</span></td><td><span class="badge no">— No</span></td></tr>
+      <tr><td>Edit workout plans</td><td><span class="badge yes">✓ Yes</span></td><td><span class="badge no">— No</span></td><td><span class="badge no">— No</span></td></tr>
+      <tr><td>Send SMS</td><td><span class="badge yes">✓ Yes</span></td><td><span class="badge no">— No</span></td><td><span class="badge no">— No</span></td></tr>
+      <tr><td>Approve payments</td><td><span class="badge yes">✓ Yes</span></td><td><span class="badge no">— No</span></td><td><span class="badge no">— No</span></td></tr>
+      <tr><td>Manage coaches</td><td><span class="badge yes">✓ Yes</span></td><td><span class="badge no">— No</span></td><td><span class="badge no">— No</span></td></tr>
+      <tr><td>System settings</td><td><span class="badge yes">✓ Full</span></td><td><span class="badge no">— No</span></td><td><span class="badge no">— No</span></td></tr>
+      <tr><td>View activity logs</td><td><span class="badge yes">✓ Yes</span></td><td><span class="badge no">— No</span></td><td><span class="badge no">— No</span></td></tr>
+      <tr><td>Export / backup data</td><td><span class="badge yes">✓ Yes</span></td><td><span class="badge no">— No</span></td><td><span class="badge no">— No</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="info-box blue">
+    <h5>Member Portal (No Login Required)</h5>
+    <p>Members access their own portal using their name or phone number — no account or password needed. They can view their membership status, submit GCash renewals, see their workout plan, and clock themselves in.</p>
+  </div>
+
+  <div style="margin-top:32px;padding:24px;border-radius:16px;background:linear-gradient(135deg,#0f172a,#1e293b);text-align:center;">
+    <p style="color:#94a3b8;font-size:13px;margin-bottom:6px;">Ready to get started?</p>
+    <p style="color:#fff;font-size:18px;font-weight:800;">MadeForGyms — Built for Philippine Gyms</p>
+    <p style="color:#22c55e;font-size:13px;margin-top:4px;">madeforgyms.com</p>
+  </div>
+</div>
+
+</body>
+</html>
