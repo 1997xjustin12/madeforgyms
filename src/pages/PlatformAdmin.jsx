@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { CheckCircle, XCircle, Clock, Dumbbell, LogOut, Eye, EyeOff, Shield, RefreshCw, Phone, Mail, User, Pencil, X, Trash2, PauseCircle, PlayCircle } from 'lucide-react';
-import { sendApprovalEmail } from '../lib/email';
+import { CheckCircle, XCircle, Clock, Dumbbell, LogOut, Eye, EyeOff, Shield, RefreshCw, Phone, Mail, User, Pencil, X, Trash2, PauseCircle, PlayCircle, Bell, BellRing } from 'lucide-react';
+import { sendApprovalEmail, sendPaymentReminder } from '../lib/email';
 import toast from 'react-hot-toast';
 
 /* ── Platform-level password (set as VITE_PLATFORM_PASSWORD in .env) ── */
@@ -36,6 +36,9 @@ export default function PlatformAdmin() {
   const [deleting, setDeleting]   = useState(null);
   const [emailLogs, setEmailLogs] = useState([]);
   const [emailsLoading, setEmailsLoading] = useState(false);
+  const [reminding, setReminding]     = useState(null);
+  const [remindingAll, setRemindingAll] = useState(false);
+  const [reminded, setReminded]       = useState({});
 
   const login = (e) => {
     e.preventDefault();
@@ -154,6 +157,38 @@ export default function PlatformAdmin() {
     } finally {
       setDeleting(null);
     }
+  };
+
+  const sendReminder = async (gym) => {
+    if (!gym.owner_email) return toast.error('No email on file for this gym');
+    setReminding(gym.id);
+    try {
+      await sendPaymentReminder({ ownerName: gym.owner_name, ownerEmail: gym.owner_email, gymName: gym.name, slug: gym.slug });
+      setReminded((prev) => ({ ...prev, [gym.id]: true }));
+      toast.success(`Reminder sent to ${gym.owner_email}`);
+    } catch {
+      toast.error('Failed to send reminder');
+    } finally {
+      setReminding(null);
+    }
+  };
+
+  const sendAllReminders = async () => {
+    const targets = allGyms.filter((g) => g.status === 'pending' && g.owner_email);
+    if (!targets.length) return toast.error('No pending gyms with email addresses');
+    setRemindingAll(true);
+    let sent = 0;
+    for (const gym of targets) {
+      try {
+        await sendPaymentReminder({ ownerName: gym.owner_name, ownerEmail: gym.owner_email, gymName: gym.name, slug: gym.slug });
+        setReminded((prev) => ({ ...prev, [gym.id]: true }));
+        sent++;
+      } catch {
+        // continue with others
+      }
+    }
+    toast.success(`Sent ${sent} reminder${sent !== 1 ? 's' : ''}`);
+    setRemindingAll(false);
   };
 
   /* ── Login screen ───────────────────────────────────────────── */
@@ -313,7 +348,7 @@ export default function PlatformAdmin() {
         </div>
 
         {/* Filter tabs */}
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           {['pending', 'active', 'suspended', 'rejected', 'all'].map((f) => (
             <button
               key={f}
@@ -328,6 +363,20 @@ export default function PlatformAdmin() {
             </button>
           ))}
         </div>
+
+        {/* Remind All Pending */}
+        {pending > 0 && (
+          <button
+            onClick={sendAllReminders}
+            disabled={remindingAll}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-yellow-400 border border-yellow-500/30 bg-yellow-500/10 hover:bg-yellow-500/15 transition-colors disabled:opacity-50"
+          >
+            {remindingAll
+              ? <RefreshCw size={14} className="animate-spin" />
+              : <BellRing size={14} />}
+            Remind All Pending ({pending})
+          </button>
+        )}
 
         {/* Gym list */}
         {loading ? (
@@ -353,125 +402,158 @@ export default function PlatformAdmin() {
                   className="rounded-2xl border overflow-hidden"
                   style={{ background: 'rgba(255,255,255,0.02)', borderColor: isEditing ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.07)' }}
                 >
-                  <div className="flex items-start gap-4 p-4">
-                    {/* Icon */}
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                  {/* ── Info row ── */}
+                  <div className="flex items-start gap-3 px-4 pt-4 pb-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
                       style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.15)' }}>
-                      <Dumbbell size={20} className="text-green-400" />
+                      <Dumbbell size={18} className="text-green-400" />
                     </div>
-
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-white font-bold">{gym.name}</p>
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${s.bg} ${s.text} ${s.border}`}>
+                        <p className="text-white font-bold text-sm leading-tight">{gym.name}</p>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${s.bg} ${s.text} ${s.border}`}>
                           {s.label}
                         </span>
                       </div>
-                      <p className="text-slate-500 text-xs mt-0.5 font-mono">madeforgyms.com/{gym.slug}</p>
-                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1.5">
+                      <p className="text-slate-500 text-[11px] mt-0.5 font-mono truncate">madeforgyms.com/{gym.slug}</p>
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
                         {gym.owner_name && (
-                          <span className="inline-flex items-center gap-1 text-slate-400 text-xs">
-                            <User size={10} /> {gym.owner_name}
+                          <span className="inline-flex items-center gap-1 text-slate-400 text-[11px]">
+                            <User size={9} /> {gym.owner_name}
                           </span>
                         )}
                         {gym.owner_email && (
-                          <span className="inline-flex items-center gap-1 text-slate-400 text-xs">
-                            <Mail size={10} /> {gym.owner_email}
+                          <span className="inline-flex items-center gap-1 text-slate-400 text-[11px]">
+                            <Mail size={9} /> {gym.owner_email}
                           </span>
                         )}
                         {gym.owner_contact && (
-                          <span className="inline-flex items-center gap-1 text-slate-400 text-xs">
-                            <Phone size={10} /> {gym.owner_contact}
+                          <span className="inline-flex items-center gap-1 text-slate-400 text-[11px]">
+                            <Phone size={9} /> {gym.owner_contact}
                           </span>
                         )}
                         {!gym.owner_name && !gym.owner_email && !gym.owner_contact && (
-                          <span className="text-slate-600 text-xs italic">No owner info — click Edit</span>
+                          <span className="text-slate-600 text-[11px] italic">No owner info — click Edit</span>
                         )}
                       </div>
-                      <p className="text-slate-600 text-xs mt-1">Registered {fmtDate(gym.created_at)}</p>
+                      <p className="text-slate-700 text-[10px] mt-1">Registered {fmtDate(gym.created_at)}</p>
                     </div>
+                  </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                  {/* ── Action buttons row ── */}
+                  <div className="flex items-center gap-2 px-4 pb-4 flex-wrap border-t border-white/5 pt-3"
+                    style={{ background: 'rgba(0,0,0,0.15)' }}>
+                    {/* Edit / Cancel */}
+                    <button
+                      onClick={() => isEditing ? setEditingId(null) : openEdit(gym)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${
+                        isEditing
+                          ? 'text-slate-400 border-slate-700 hover:bg-white/5'
+                          : 'text-slate-300 border-white/10 hover:bg-white/5'
+                      }`}
+                    >
+                      {isEditing ? <X size={12} /> : <Pencil size={12} />}
+                      {isEditing ? 'Cancel' : 'Edit'}
+                    </button>
+
+                    {/* Send Reminder */}
+                    {(gym.status === 'pending' || gym.status === 'suspended') && (
                       <button
-                        onClick={() => isEditing ? setEditingId(null) : openEdit(gym)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors border ${
-                          isEditing
-                            ? 'text-slate-400 border-slate-700 hover:bg-white/5'
-                            : 'text-slate-300 border-white/10 hover:bg-white/5'
+                        onClick={() => sendReminder(gym)}
+                        disabled={reminding === gym.id || reminded[gym.id]}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border disabled:opacity-50 ${
+                          reminded[gym.id]
+                            ? 'text-green-400 border-green-500/30 bg-green-500/10'
+                            : 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10 hover:bg-yellow-500/20'
                         }`}
                       >
-                        {isEditing ? <X size={13} /> : <Pencil size={13} />}
-                        {isEditing ? 'Cancel' : 'Edit'}
+                        {reminding === gym.id
+                          ? <RefreshCw size={11} className="animate-spin" />
+                          : reminded[gym.id]
+                          ? <CheckCircle size={12} />
+                          : <Bell size={12} />}
+                        {reminded[gym.id] ? 'Reminded' : 'Remind'}
                       </button>
-                      {gym.status !== 'active' && gym.status !== 'suspended' && (
-                        <button
-                          onClick={() => setStatus(gym, 'active')}
-                          disabled={isActing}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-green-400 border border-green-500/30 bg-green-500/10 hover:bg-green-500/20 transition-colors disabled:opacity-50"
-                        >
-                          {isActing ? <RefreshCw size={12} className="animate-spin" /> : <CheckCircle size={13} />}
-                          Approve
-                        </button>
-                      )}
-                      {gym.status === 'suspended' && (
-                        <button
-                          onClick={() => setStatus(gym, 'active')}
-                          disabled={isActing}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-green-400 border border-green-500/30 bg-green-500/10 hover:bg-green-500/20 transition-colors disabled:opacity-50"
-                        >
-                          {isActing ? <RefreshCw size={12} className="animate-spin" /> : <PlayCircle size={13} />}
-                          Unsuspend
-                        </button>
-                      )}
-                      {gym.status === 'active' && (
-                        <button
-                          onClick={() => setStatus(gym, 'suspended')}
-                          disabled={isActing}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-orange-400 border border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20 transition-colors disabled:opacity-50"
-                        >
-                          {isActing ? <RefreshCw size={12} className="animate-spin" /> : <PauseCircle size={13} />}
-                          Suspend
-                        </button>
-                      )}
-                      {gym.status !== 'rejected' && gym.status !== 'suspended' && gym.status !== 'active' && (
-                        <button
-                          onClick={() => setStatus(gym, 'rejected')}
-                          disabled={isActing}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-red-400 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 transition-colors disabled:opacity-50"
-                        >
-                          {isActing ? <RefreshCw size={12} className="animate-spin" /> : <XCircle size={13} />}
-                          Reject
-                        </button>
-                      )}
+                    )}
+
+                    {/* Approve */}
+                    {gym.status !== 'active' && gym.status !== 'suspended' && (
+                      <button
+                        onClick={() => setStatus(gym, 'active')}
+                        disabled={isActing}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-green-400 border border-green-500/30 bg-green-500/10 hover:bg-green-500/20 transition-colors disabled:opacity-50"
+                      >
+                        {isActing ? <RefreshCw size={11} className="animate-spin" /> : <CheckCircle size={12} />}
+                        Approve
+                      </button>
+                    )}
+
+                    {/* Unsuspend */}
+                    {gym.status === 'suspended' && (
+                      <button
+                        onClick={() => setStatus(gym, 'active')}
+                        disabled={isActing}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-green-400 border border-green-500/30 bg-green-500/10 hover:bg-green-500/20 transition-colors disabled:opacity-50"
+                      >
+                        {isActing ? <RefreshCw size={11} className="animate-spin" /> : <PlayCircle size={12} />}
+                        Unsuspend
+                      </button>
+                    )}
+
+                    {/* Suspend */}
+                    {gym.status === 'active' && (
+                      <button
+                        onClick={() => setStatus(gym, 'suspended')}
+                        disabled={isActing}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-orange-400 border border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20 transition-colors disabled:opacity-50"
+                      >
+                        {isActing ? <RefreshCw size={11} className="animate-spin" /> : <PauseCircle size={12} />}
+                        Suspend
+                      </button>
+                    )}
+
+                    {/* Reject */}
+                    {gym.status !== 'rejected' && gym.status !== 'suspended' && gym.status !== 'active' && (
+                      <button
+                        onClick={() => setStatus(gym, 'rejected')}
+                        disabled={isActing}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-400 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                      >
+                        {isActing ? <RefreshCw size={11} className="animate-spin" /> : <XCircle size={12} />}
+                        Reject
+                      </button>
+                    )}
+
+                    {/* Delete */}
+                    <div className="ml-auto">
                       {confirmDeleteId === gym.id ? (
                         <div className="flex items-center gap-1.5">
-                          <span className="text-red-400 text-xs font-medium">Delete?</span>
+                          <span className="text-red-400 text-xs font-medium">Sure?</span>
                           <button
                             onClick={() => deleteGym(gym)}
                             disabled={deleting === gym.id}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-white bg-red-500 hover:bg-red-600 transition-colors disabled:opacity-50"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-white bg-red-500 hover:bg-red-600 transition-colors disabled:opacity-50"
                           >
-                            {deleting === gym.id ? <RefreshCw size={11} className="animate-spin" /> : 'Yes, delete'}
+                            {deleting === gym.id ? <RefreshCw size={11} className="animate-spin" /> : 'Delete'}
                           </button>
                           <button
                             onClick={() => setConfirmDeleteId(null)}
-                            className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-400 border border-white/10 hover:bg-white/5 transition-colors"
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 border border-white/10 hover:bg-white/5 transition-colors"
                           >
-                            Cancel
+                            No
                           </button>
                         </div>
                       ) : (
                         <button
                           onClick={() => setConfirmDeleteId(gym.id)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors"
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-colors"
                         >
-                          <Trash2 size={13} /> Delete
+                          <Trash2 size={12} />
                         </button>
                       )}
                     </div>
                   </div>
+
 
                   {/* ── Inline edit form ── */}
                   {isEditing && (

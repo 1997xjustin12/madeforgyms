@@ -165,6 +165,39 @@ export async function sendStaffDecisionEmail({ staffEmail, gymName, gymLogoUrl, 
   });
 }
 
+/* ── Payment reminder to pending gym owner ───────────────────── */
+export async function sendPaymentReminder({ ownerName, ownerEmail, gymName, slug }) {
+  await sendEmail({
+    to: ownerEmail,
+    type: 'payment_reminder',
+    subject: `⚠️ Action required — Payment pending for ${gymName}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#0a0f1a;color:#f1f5f9;border-radius:16px;">
+        <div style="margin-bottom:24px;">
+          <span style="background:linear-gradient(135deg,#16a34a,#4ade80);padding:8px 16px;border-radius:8px;font-weight:900;font-size:18px;color:#fff;">MadeForGyms</span>
+        </div>
+        <h1 style="font-size:22px;font-weight:900;margin-bottom:8px;color:#fff;">Payment required ⚠️</h1>
+        <p style="color:#94a3b8;margin-bottom:20px;">
+          Hi ${ownerName || 'there'}, your gym <strong style="color:#fff;">${gymName}</strong> is registered on MadeForGyms but we haven't received your subscription payment yet.
+        </p>
+
+        <div style="background:rgba(250,204,21,0.08);border:1px solid rgba(250,204,21,0.2);border-radius:12px;padding:16px;margin-bottom:24px;">
+          <p style="color:#fbbf24;font-weight:700;font-size:13px;margin:0 0 8px;">Your portal is on hold until payment is confirmed:</p>
+          <p style="color:#94a3b8;font-size:13px;margin:0;">madeforgyms.com/<strong style="color:#fff;">${slug}</strong></p>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:24px;">
+          <p style="color:#64748b;font-size:12px;margin:0 0 8px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">How to pay</p>
+          <p style="color:#94a3b8;font-size:13px;margin:0 0 6px;">Send your payment via GCash or bank transfer, then reply to this email with your proof of payment. We'll activate your portal within 24 hours.</p>
+          <p style="color:#94a3b8;font-size:13px;margin:0;">Questions? Reply to this email or contact us at <strong style="color:#fff;">${PLATFORM_EMAIL}</strong></p>
+        </div>
+
+        <p style="color:#475569;font-size:11px;margin-top:32px;">MadeForGyms · madeforgyms.com</p>
+      </div>
+    `,
+  });
+}
+
 /* ── Sent to gym owner on approval (used in PlatformAdmin) ──── */
 export async function sendApprovalEmail({ ownerName, ownerEmail, gymName, slug }) {
   await sendEmail({
