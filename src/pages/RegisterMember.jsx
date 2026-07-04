@@ -41,7 +41,7 @@ export default function RegisterMember() {
   const { id } = useParams();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
-  const { addMember, updateMember, deleteMember, getMemberById, settings, instructors, gymSlug, isStaff, isAdmin, submitPendingMembership } = useGym();
+  const { addMember, updateMember, deleteMember, getMemberById, settings, instructors, gymSlug, isStaff, isAdmin, submitPendingMembership, generateMemberCode, gymId } = useGym();
   const activeInstructors = instructors.filter((i) => i.is_active);
   const activePromos = settings.promos?.filter((p) => p.active) || [];
 
@@ -56,6 +56,13 @@ export default function RegisterMember() {
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [previewCode, setPreviewCode] = useState(null);
+
+  useEffect(() => {
+    if (!isEdit && gymId && generateMemberCode) {
+      generateMemberCode(gymId, settings.gymName).then(setPreviewCode).catch(() => {});
+    }
+  }, [gymId, isEdit]); // eslint-disable-line
 
   useEffect(() => {
     if (isEdit && isStaff) {
@@ -158,6 +165,17 @@ export default function RegisterMember() {
               </div>
             </button>
           </div>
+
+          {/* Member Code Preview */}
+          {!isEdit && previewCode && (
+            <div className="flex items-center justify-between bg-slate-800/60 rounded-2xl border border-slate-700/50 px-4 py-3.5">
+              <div>
+                <p className="text-slate-500 text-[10px] font-semibold uppercase tracking-wider mb-1">Member Code</p>
+                <p className="text-orange-400 font-mono font-bold text-lg tracking-widest">{previewCode}</p>
+              </div>
+              <p className="text-slate-600 text-xs">Auto-generated</p>
+            </div>
+          )}
 
           {/* Member Info */}
           <div className="bg-slate-800/60 rounded-2xl border border-slate-700/50 divide-y divide-slate-700/50">

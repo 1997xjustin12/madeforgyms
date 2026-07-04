@@ -280,6 +280,11 @@ export default function MembersList() {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-0.5">
+                        {member.memberCode && (
+                          <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-700/80 px-1.5 py-0.5 rounded shrink-0">
+                            {member.memberCode}
+                          </span>
+                        )}
                         <p className="text-white font-bold text-sm truncate leading-tight">{member.name}</p>
                         <StatusBadge status={statusInfo.status} label={statusInfo.label} />
                       </div>

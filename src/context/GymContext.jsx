@@ -38,6 +38,7 @@ const toMember = (row) => ({
   coachingStartDate: row.coaching_start_date || null,
   coachingEndDate: row.coaching_end_date || null,
   qrToken: row.qr_token || null,
+  memberCode: row.member_code || null,
   birthdate: row.birthdate || null,
   height: row.height ? Number(row.height) : null,
   weight: row.weight ? Number(row.weight) : null,
@@ -695,11 +696,29 @@ export function GymProvider({ children }) {
   };
 
   // ── CRUD ─────────────────────────────────────────────────────
+  const generateMemberCode = async (gymId, gymName) => {
+    const prefix = (gymName || 'G').trim().toUpperCase().charAt(0);
+    const { data } = await supabase
+      .from('members')
+      .select('member_code')
+      .eq('gym_id', gymId)
+      .like('member_code', `${prefix}%`)
+      .order('member_code', { ascending: false })
+      .limit(1);
+    let nextNum = 1;
+    if (data?.length && data[0].member_code) {
+      const parsed = parseInt(data[0].member_code.slice(1), 10);
+      if (!isNaN(parsed)) nextNum = parsed + 1;
+    }
+    return `${prefix}${String(nextNum).padStart(4, '0')}`;
+  };
+
   const addMember = async (formData) => {
     if (!gymId) throw new Error('No gym loaded');
     const normalizedName = toTitleCase(formData.name);
     if (isNameTaken(normalizedName)) throw new Error(`A member named "${normalizedName}" already exists.`);
     const endDate = calculateEndDate(formData.membershipStartDate, formData.membershipType);
+    const memberCode = await generateMemberCode(gymId, settings.gymName);
     const { data: inserted, error: insertError } = await supabase
       .from('members')
       .insert([{
@@ -718,6 +737,7 @@ export function GymProvider({ children }) {
         birthdate: formData.birthdate || null,
         height: formData.height ? Number(formData.height) : null,
         weight: formData.weight ? Number(formData.weight) : null,
+        member_code: memberCode,
       }])
       .select()
       .single();
@@ -1064,7 +1084,7 @@ export function GymProvider({ children }) {
       // Members
       members, loading,
       addMember, updateMember, deleteMember, getMemberById, findMembers,
-      getMemberStatus, getExpiringMembers,
+      getMemberStatus, getExpiringMembers, generateMemberCode,
       refreshMembers: loadMembers,
       // Auth
       authLoading, isAdminLoggedIn, adminLogin, adminLogout, logAction,
