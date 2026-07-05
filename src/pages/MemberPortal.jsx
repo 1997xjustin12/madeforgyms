@@ -156,13 +156,22 @@ export default function MemberPortal() {
 
   const handleLookup = (e) => {
     e.preventDefault();
-    const digits = phone.replace(/\D/g, '');
-    if (!digits) return;
+    const trimmed = phone.trim();
+    if (!trimmed) return;
 
-    const found = members.filter((m) =>
-      m.contactNumber.replace(/\D/g, '').endsWith(digits) ||
-      digits.endsWith(m.contactNumber.replace(/\D/g, ''))
-    );
+    // Member code lookup: letter followed by digits (e.g. P0001)
+    const isMemberCode = /^[A-Za-z]\d+$/.test(trimmed);
+    let found;
+    if (isMemberCode) {
+      found = members.filter((m) => m.memberCode?.toLowerCase() === trimmed.toLowerCase());
+    } else {
+      const digits = trimmed.replace(/\D/g, '');
+      if (!digits) return;
+      found = members.filter((m) =>
+        m.contactNumber.replace(/\D/g, '').endsWith(digits) ||
+        digits.endsWith(m.contactNumber.replace(/\D/g, ''))
+      );
+    }
 
     if (found.length === 0) {
       setNotFound(true);
@@ -228,15 +237,16 @@ export default function MemberPortal() {
                 </div>
               </div>
               <h2 className="text-3xl font-black text-white mb-2 tracking-tight">Member Portal</h2>
-              <p className="text-slate-500 text-sm leading-relaxed">Enter your registered phone number<br />to access your membership</p>
+              <p className="text-slate-500 text-sm leading-relaxed">Enter your phone number or member code<br />to access your membership</p>
             </div>
 
             <form onSubmit={handleLookup} className="space-y-3">
               <input
-                type="tel"
+                type="text"
+                inputMode="text"
                 value={phone}
                 onChange={(e) => { setPhone(e.target.value); setNotFound(false); }}
-                placeholder="09123456789"
+                placeholder="09123456789 or P0001"
                 className="w-full text-white rounded-2xl px-5 py-4 outline-none placeholder:text-slate-700 text-xl text-center font-mono tracking-widest border transition-all"
                 style={{ background: 'rgba(255,255,255,0.04)', borderColor: notFound ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.08)' }}
                 onFocus={(e) => { if (!notFound) e.target.style.borderColor = 'rgba(74,222,128,0.45)'; }}

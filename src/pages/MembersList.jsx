@@ -51,7 +51,8 @@ export default function MembersList() {
         (filter !== 'active' && status === filter);
       const q = query.toLowerCase().trim();
       const matchesQuery =
-        !q || m.name.toLowerCase().includes(q) || m.contactNumber.includes(q);
+        !q || m.name.toLowerCase().includes(q) || m.contactNumber.includes(q) ||
+        (m.memberCode && m.memberCode.toLowerCase().includes(q));
       return matchesFilter && matchesQuery;
     });
   }, [members, filter, query, getMemberStatus]);
@@ -116,7 +117,7 @@ export default function MembersList() {
     <div className="h-screen bg-[#030712] flex flex-col overflow-hidden">
       <Navbar title="Members" />
 
-      <div className="max-w-4xl mx-auto w-full px-4 pt-4 pb-3 space-y-3 shrink-0">
+      <div className="max-w-4xl lg:max-w-5xl mx-auto w-full px-4 pt-4 pb-3 space-y-3 shrink-0">
         {/* Header Row */}
         <div className="flex items-end justify-between">
           <div>
@@ -169,7 +170,7 @@ export default function MembersList() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name or number..."
+            placeholder="Search by name, number, or code..."
             className="w-full border focus:border-orange-500/40 text-white rounded-2xl pl-10 pr-10 py-3 outline-none transition-all placeholder:text-slate-700 text-sm"
             style={{ background: 'rgba(30,41,59,0.6)', borderColor: 'rgba(255,255,255,0.07)' }}
             onFocus={(e) => { e.target.style.borderColor = 'rgba(249,115,22,0.4)'; }}
@@ -218,8 +219,8 @@ export default function MembersList() {
       </div>
 
       {/* Scrollable member list */}
-      <div className="flex-1 overflow-y-auto min-h-0">
-        <div className="max-w-4xl mx-auto px-4 pt-1 pb-24 sm:pb-8">
+      <div className="flex-1 overflow-y-auto min-h-0" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(71,85,105,0.4) transparent' }}>
+        <div className="max-w-4xl lg:max-w-5xl mx-auto px-4 pt-1 pb-24 sm:pb-8">
 
         {/* Members List */}
         {filtered.length === 0 ? (
@@ -259,12 +260,13 @@ export default function MembersList() {
                   }`} />
 
                   {/* Collapsed row */}
-                  <button
-                    className="w-full flex items-center gap-3 pl-4 pr-3 py-3.5 text-left"
-                    onClick={() => setExpandedId(isExpanded ? null : member.id)}
-                  >
-                    {/* Avatar */}
-                    <div className="w-11 h-11 rounded-xl overflow-hidden shrink-0" style={{ background: 'rgba(51,65,85,0.9)' }}>
+                  <div className="flex items-center gap-3 pl-4 pr-3 py-3 sm:py-2.5">
+                    {/* Avatar — clickable to expand */}
+                    <button
+                      className="w-11 h-11 rounded-xl overflow-hidden shrink-0 focus:outline-none"
+                      style={{ background: 'rgba(51,65,85,0.9)' }}
+                      onClick={() => setExpandedId(isExpanded ? null : member.id)}
+                    >
                       {member.photo ? (
                         <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
                       ) : (
@@ -275,10 +277,13 @@ export default function MembersList() {
                           {member.name.charAt(0).toUpperCase()}
                         </div>
                       )}
-                    </div>
+                    </button>
 
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
+                    {/* Info — clickable to expand */}
+                    <button
+                      className="flex-1 min-w-0 text-left focus:outline-none"
+                      onClick={() => setExpandedId(isExpanded ? null : member.id)}
+                    >
                       <div className="flex items-center gap-1.5 mb-0.5">
                         {member.memberCode && (
                           <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-700/80 px-1.5 py-0.5 rounded shrink-0">
@@ -292,15 +297,46 @@ export default function MembersList() {
                         <p className="text-slate-500 text-xs truncate">{formatPhoneDisplay(member.contactNumber)}</p>
                         <span className="text-slate-700 text-xs">·</span>
                         <p className="text-slate-500 text-xs capitalize shrink-0">{member.membershipType}</p>
-                        <span className="text-slate-700 text-xs">·</span>
-                        <p className={`text-xs font-medium shrink-0 ${statusInfo.status === 'expired' ? 'text-red-400/70' : statusInfo.status === 'expiring' ? 'text-orange-400' : 'text-slate-600'}`}>
+                        <span className="hidden sm:inline text-slate-700 text-xs">·</span>
+                        <p className={`hidden sm:inline text-xs font-medium shrink-0 ${statusInfo.status === 'expired' ? 'text-red-400/70' : statusInfo.status === 'expiring' ? 'text-orange-400' : 'text-slate-600'}`}>
                           {statusInfo.status === 'expired' ? 'Expired' : 'Ends'} {formatDate(member.membershipEndDate)}
                         </p>
                       </div>
+                    </button>
+
+                    {/* Desktop quick actions */}
+                    <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+                      <button
+                        onClick={() => setSmsTarget({ member, daysLeft: statusInfo.daysLeft })}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 text-xs font-semibold transition-colors"
+                        title="Send SMS"
+                      >
+                        <MessageSquare size={12} /> SMS
+                      </button>
+                      <button
+                        onClick={() => { setRenewTarget(member); setExpandedId(null); }}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-400 text-xs font-semibold transition-colors"
+                        title="Renew"
+                      >
+                        <RefreshCw size={12} /> Renew
+                      </button>
+                      {/* Days left */}
+                      <div className="w-10 text-center">
+                        {statusInfo.status !== 'expired' ? (
+                          <span className={`text-sm font-black tabular-nums leading-none block ${statusInfo.status === 'expiring' ? 'text-orange-400' : 'text-slate-400'}`}>
+                            {statusInfo.daysLeft}<span className="text-[9px] font-semibold opacity-50">d</span>
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-bold text-red-400/50 leading-none uppercase tracking-wide block">End</span>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Days remaining + chevron */}
-                    <div className="shrink-0 flex flex-col items-center gap-0.5 ml-1">
+                    {/* Mobile days + chevron */}
+                    <button
+                      className="sm:hidden shrink-0 flex flex-col items-center gap-0.5 ml-1 focus:outline-none"
+                      onClick={() => setExpandedId(isExpanded ? null : member.id)}
+                    >
                       {statusInfo.status !== 'expired' ? (
                         <span className={`text-sm font-black tabular-nums leading-none ${statusInfo.status === 'expiring' ? 'text-orange-400' : 'text-slate-300'}`}>
                           {statusInfo.daysLeft}<span className="text-[9px] font-semibold opacity-40">d</span>
@@ -309,8 +345,16 @@ export default function MembersList() {
                         <span className="text-[9px] font-bold text-red-400/50 leading-none uppercase tracking-wide">End</span>
                       )}
                       <ChevronDown size={13} className={`text-slate-600 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
-                    </div>
-                  </button>
+                    </button>
+
+                    {/* Desktop expand chevron */}
+                    <button
+                      className="hidden sm:flex shrink-0 w-7 h-7 items-center justify-center rounded-lg hover:bg-slate-700/60 transition-colors focus:outline-none"
+                      onClick={() => setExpandedId(isExpanded ? null : member.id)}
+                    >
+                      <ChevronDown size={13} className={`text-slate-500 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                    </button>
+                  </div>
 
                   {/* Expanded section */}
                   {isExpanded && (
