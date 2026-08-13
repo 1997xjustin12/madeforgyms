@@ -1,5 +1,6 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { LogOut, Users, LayoutDashboard, UserPlus, ArrowLeft, ClipboardList, CreditCard, Settings, CalendarCheck, Dumbbell, MoreHorizontal, X, ClipboardCheck, ChevronDown, TrendingUp } from 'lucide-react';
+
 import { useGym } from '../context/GymContext';
 import toast from 'react-hot-toast';
 import GymLogo from './GymLogo';
@@ -35,7 +36,6 @@ export default function Navbar({ title, showBack }) {
 
   // Desktop "More" dropdown items
   const moreItems = isAdmin ? [
-    { to: p('admin/revenue'),    icon: <TrendingUp size={16} />,     label: 'Revenue' },
     { to: p('admin/attendance'), icon: <CalendarCheck size={16} />, label: 'Attendance' },
     { to: p('admin/logs'),       icon: <ClipboardList size={16} />,  label: 'Activity Logs' },
     { to: p('admin/instructors'),icon: <Dumbbell size={16} />,       label: 'Coaches' },
@@ -81,6 +81,10 @@ export default function Navbar({ title, showBack }) {
               {isAdmin && (
                 <NavLink to={p('admin/renewals')} icon={<CreditCard size={16} />} label="Payments"
                   active={location.pathname === `/${gymSlug}/admin/renewals`} badge={pendingRenewals?.length} />
+              )}
+              {isAdmin && (
+                <NavLink to={p('admin/revenue')} icon={<TrendingUp size={16} />} label="Revenue"
+                  active={location.pathname === `/${gymSlug}/admin/revenue`} />
               )}
               {isAdmin && (
                 <NavLink to={p('admin/approvals')} icon={<ClipboardCheck size={16} />} label="Approvals"
@@ -162,8 +166,10 @@ export default function Navbar({ title, showBack }) {
               <div className="flex-1 flex items-center justify-around">
                 <MobileNavLink to={p('admin/renewals')} icon={<CreditCard size={21} />} label="Payments"
                   active={location.pathname === `/${gymSlug}/admin/renewals`} badge={pendingRenewals?.length} />
-                <MobileNavLink to={p('admin/instructors')} icon={<Dumbbell size={21} />} label="Coaches"
-                  active={location.pathname === `/${gymSlug}/admin/instructors`} />
+                {isAdmin && (
+                  <MobileNavLink to={p('admin/revenue')} icon={<TrendingUp size={21} />} label="Revenue"
+                    active={location.pathname === `/${gymSlug}/admin/revenue`} />
+                )}
                 <button
                   onClick={() => setMoreOpen(true)}
                   className={`relative flex flex-col items-center gap-0.5 flex-1 py-1.5 rounded-xl transition-colors ${
@@ -203,6 +209,7 @@ export default function Navbar({ title, showBack }) {
               <div className="px-4 pb-3 space-y-1">
                 {[
                   ...(isAdmin ? [
+                    { to: p('admin/revenue'),    icon: <TrendingUp size={20} />,     label: 'Revenue' },
                     { to: p('admin/attendance'), icon: <CalendarCheck size={20} />, label: 'Attendance' },
                     { to: p('admin/logs'),       icon: <ClipboardList size={20} />,  label: 'Activity Logs' },
                     { to: p('admin/approvals'),  icon: <ClipboardCheck size={20} />, label: 'Approvals', badge: pendingCount },
