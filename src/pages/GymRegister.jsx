@@ -214,10 +214,22 @@ export default function GymRegister() {
           <p className="text-slate-400 text-sm mb-4">
             Your gym registration is under review. You'll receive access once the platform admin approves your application.
           </p>
-          <div className="rounded-2xl border border-white/8 px-4 py-3 mb-6"
+          <div className="rounded-2xl border border-white/8 px-4 py-3 mb-4"
             style={{ background: 'rgba(255,255,255,0.03)' }}>
             <p className="text-slate-500 text-xs mb-1">Your portal URL (available after approval)</p>
             <p className="text-white font-mono text-sm font-bold">madeforgyms.com/{form.slug}</p>
+          </div>
+          <div className="rounded-2xl border border-yellow-500/30 px-4 py-4 mb-6 text-left" style={{ background: 'rgba(234,179,8,0.06)' }}>
+            <p className="text-yellow-400 font-bold text-sm mb-1">⚡ Speed up your approval</p>
+            <p className="text-slate-400 text-xs mb-3">Contact our staff directly so we can prioritize your application:</p>
+            <div className="space-y-2">
+              <a href="tel:09760471118" className="flex items-center gap-2 text-white text-sm font-semibold hover:text-yellow-400 transition-colors">
+                <span>📱</span> 0976 047 1118
+              </a>
+              <a href="mailto:1997justin12@gmail.com" className="flex items-center gap-2 text-white text-sm font-semibold hover:text-yellow-400 transition-colors">
+                <span>✉️</span> 1997justin12@gmail.com
+              </a>
+            </div>
           </div>
           <a href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-white text-sm transition-colors">
             <ArrowLeft size={14} /> Back to MadeForGyms
@@ -351,7 +363,7 @@ export default function GymRegister() {
         </Link>
 
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
             style={{ background: 'linear-gradient(135deg, #16a34a, #4ade80)', boxShadow: '0 0 24px rgba(34,197,94,0.3)' }}>
             <Dumbbell size={24} className="text-white" />
@@ -359,6 +371,34 @@ export default function GymRegister() {
           <div>
             <h1 className="text-white font-black text-xl tracking-tight">Register Your Gym</h1>
             <p className="text-slate-400 text-xs mt-0.5">Get your gym portal live in minutes</p>
+          </div>
+        </div>
+
+        {/* Contact notice */}
+        <div className="mb-6 rounded-2xl border border-yellow-500/30 px-4 py-4" style={{ background: 'rgba(234,179,8,0.06)' }}>
+          <p className="text-yellow-400 font-bold text-sm mb-1">📞 Contact us before registering</p>
+          <p className="text-slate-400 text-xs leading-relaxed mb-3">
+            Please reach out to our staff first so we can assist you with onboarding and answer any questions before you submit your application.
+          </p>
+          <div className="space-y-2">
+            <a href="tel:09760471118"
+              className="flex items-center gap-2.5 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/50 rounded-xl px-3 py-2.5 transition-colors group">
+              <span className="text-base">📱</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Call / Text / Viber</p>
+                <p className="text-white font-bold text-sm">0976 047 1118</p>
+              </div>
+              <ChevronRight size={14} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
+            </a>
+            <a href="mailto:1997justin12@gmail.com"
+              className="flex items-center gap-2.5 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/50 rounded-xl px-3 py-2.5 transition-colors group">
+              <span className="text-base">✉️</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Email</p>
+                <p className="text-white font-bold text-sm">1997justin12@gmail.com</p>
+              </div>
+              <ChevronRight size={14} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
+            </a>
           </div>
         </div>
 
