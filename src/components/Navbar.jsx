@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, Users, LayoutDashboard, UserPlus, ArrowLeft, ClipboardList, CreditCard, Settings, CalendarCheck, Dumbbell, MoreHorizontal, X, ClipboardCheck, ChevronDown } from 'lucide-react';
+import { LogOut, Users, LayoutDashboard, UserPlus, ArrowLeft, ClipboardList, CreditCard, Settings, CalendarCheck, Dumbbell, MoreHorizontal, X, ClipboardCheck, ChevronDown, TrendingUp } from 'lucide-react';
 import { useGym } from '../context/GymContext';
 import toast from 'react-hot-toast';
 import GymLogo from './GymLogo';
@@ -35,6 +35,7 @@ export default function Navbar({ title, showBack }) {
 
   // Desktop "More" dropdown items
   const moreItems = isAdmin ? [
+    { to: p('admin/revenue'),    icon: <TrendingUp size={16} />,     label: 'Revenue' },
     { to: p('admin/attendance'), icon: <CalendarCheck size={16} />, label: 'Attendance' },
     { to: p('admin/logs'),       icon: <ClipboardList size={16} />,  label: 'Activity Logs' },
     { to: p('admin/instructors'),icon: <Dumbbell size={16} />,       label: 'Coaches' },

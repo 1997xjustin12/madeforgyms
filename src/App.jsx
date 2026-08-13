@@ -30,6 +30,7 @@ import GymNotFound from './pages/GymNotFound';
 import GymRegister from './pages/GymRegister';
 import PlatformAdmin from './pages/PlatformAdmin';
 import AuthCallback from './pages/AuthCallback';
+import Revenue from './pages/Revenue';
 
 function PrivateRoute({ children }) {
   const { isAdminLoggedIn, gymSlug } = useGym();
@@ -117,6 +118,7 @@ function GymRoutes() {
       <Route path="admin/attendance" element={<PrivateRoute><AdminAttendance /></PrivateRoute>} />
       <Route path="admin/instructors" element={<PrivateRoute><AdminInstructors /></PrivateRoute>} />
       <Route path="admin/approvals" element={<PrivateRoute><StaffApprovals /></PrivateRoute>} />
+      <Route path="admin/revenue" element={<PrivateRoute><Revenue /></PrivateRoute>} />
       <Route path="member" element={<MemberPortal />} />
       <Route path="m/:token" element={<MemberScan />} />
       <Route path="coach" element={<CoachLogin />} />

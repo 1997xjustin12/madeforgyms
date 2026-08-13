@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, UserPlus, Pencil, MessageSquare, Trash2, X, Download, RefreshCw, CheckCircle, Banknote, CreditCard, History, ChevronDown, QrCode, UserCheck, CalendarPlus, Copy, Dumbbell } from 'lucide-react';
+import { Search, UserPlus, Pencil, MessageSquare, Trash2, X, Download, RefreshCw, CheckCircle, Banknote, CreditCard, Building2, MoreHorizontal, History, ChevronDown, QrCode, UserCheck, CalendarPlus, Copy, Dumbbell } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import AdvancePaymentModal from '../components/AdvancePaymentModal';
 import { useGym } from '../context/GymContext';
@@ -569,6 +569,9 @@ function QuickRenewModal({ member, settings, promos, renewMember, submitPendingM
   const firstAvailable = MEMBERSHIP_OPTIONS.find((opt) => (settings[PLAN_PRICE_KEY[opt.value]] || 0) > 0)?.value || 'monthly';
   const [plan, setPlan]               = useState(firstAvailable);
   const [paymentMethod, setPayment]   = useState('cash');
+  const [referenceNumber, setRef]     = useState('');
+  const [isPartial, setIsPartial]     = useState(false);
+  const [amountPaid, setAmountPaid]   = useState('');
   const [saving, setSaving]           = useState(false);
 
   const selectedPromo = promos.find((p) => p.name === plan);
@@ -582,15 +585,27 @@ function QuickRenewModal({ member, settings, promos, renewMember, submitPendingM
     ? 30
     : selectedPromo?.duration_days || null;
 
+  const needsRef = paymentMethod === 'gcash' || paymentMethod === 'bank';
+  const paidAmount = isPartial ? (Number(amountPaid) || 0) : price;
+  const balanceRemaining = isPartial ? Math.max(0, price - paidAmount) : 0;
+
   const handleRenew = async () => {
+    if (isPartial && (!amountPaid || Number(amountPaid) <= 0)) {
+      toast.error('Enter the amount paid.');
+      return;
+    }
     setSaving(true);
     try {
       if (isStaff) {
         await submitPendingMembership('renewal', { membershipType: plan, paymentMethod, durationDays: customDays }, member.name, member.id);
         toast.success(`Renewal submitted for approval!`);
       } else {
-        await renewMember(member.id, plan, paymentMethod, customDays);
-        toast.success(`✅ Membership renewed for ${member.name}!`);
+        await renewMember(member.id, plan, paymentMethod, customDays, paidAmount, referenceNumber.trim() || null, price, balanceRemaining);
+        if (balanceRemaining > 0) {
+          toast.success(`✅ Partial payment recorded. ₱${balanceRemaining.toLocaleString()} remaining.`);
+        } else {
+          toast.success(`✅ Membership renewed for ${member.name}!`);
+        }
       }
       onClose();
     } catch (err) {
@@ -744,34 +759,91 @@ function QuickRenewModal({ member, settings, promos, renewMember, submitPendingM
           <div>
             <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-2">Payment Method</p>
             <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setPayment('cash')}
-                className={`flex items-center justify-center gap-2 py-3 rounded-xl border font-semibold text-sm transition-all ${
-                  paymentMethod === 'cash'
-                    ? 'border-orange-500 bg-orange-500/10 text-orange-400'
-                    : 'border-slate-600 bg-slate-700/40 text-slate-400 hover:border-slate-500'
-                }`}
-              >
-                <Banknote size={16} /> Cash
-              </button>
-              <button
-                onClick={() => setPayment('gcash')}
-                className={`flex items-center justify-center gap-2 py-3 rounded-xl border font-semibold text-sm transition-all ${
-                  paymentMethod === 'gcash'
-                    ? 'border-blue-500 bg-blue-500/10 text-blue-400'
-                    : 'border-slate-600 bg-slate-700/40 text-slate-400 hover:border-slate-500'
-                }`}
-              >
-                <CreditCard size={16} /> GCash
-              </button>
+              {[
+                { value: 'cash',  label: 'Cash',         icon: <Banknote size={15} />,  active: 'border-orange-500 bg-orange-500/10 text-orange-400' },
+                { value: 'gcash', label: 'GCash',        icon: <CreditCard size={15} />, active: 'border-blue-500 bg-blue-500/10 text-blue-400' },
+                { value: 'bank',  label: 'Bank Transfer', icon: <Building2 size={15} />,  active: 'border-emerald-500 bg-emerald-500/10 text-emerald-400' },
+                { value: 'other', label: 'Other',         icon: <MoreHorizontal size={15} />, active: 'border-slate-400 bg-slate-500/10 text-slate-300' },
+              ].map(({ value, label, icon, active }) => (
+                <button
+                  key={value}
+                  onClick={() => setPayment(value)}
+                  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border font-semibold text-sm transition-all ${
+                    paymentMethod === value
+                      ? active
+                      : 'border-slate-600 bg-slate-700/40 text-slate-400 hover:border-slate-500'
+                  }`}
+                >
+                  {icon} {label}
+                </button>
+              ))}
             </div>
           </div>
 
+          {/* Reference number (GCash / Bank) */}
+          {needsRef && (
+            <div>
+              <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-2">Reference Number <span className="text-slate-600 normal-case">(optional)</span></p>
+              <input
+                type="text"
+                value={referenceNumber}
+                onChange={(e) => setRef(e.target.value)}
+                placeholder={paymentMethod === 'gcash' ? 'e.g. 091234567890' : 'e.g. 202507051234'}
+                className="w-full bg-slate-700/60 border border-slate-600 text-white placeholder-slate-500 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500"
+              />
+            </div>
+          )}
+
+          {/* Partial payment toggle */}
+          {!isStaff && price > 0 && (
+            <div>
+              <label className="flex items-center justify-between cursor-pointer select-none">
+                <div>
+                  <p className="text-slate-300 text-sm font-medium">Partial Payment</p>
+                  <p className="text-slate-500 text-xs">Member pays part of the fee now</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setIsPartial((v) => !v); setAmountPaid(''); }}
+                  className={`relative w-10 h-5 rounded-full transition-colors ${isPartial ? 'bg-yellow-500' : 'bg-slate-600'}`}
+                >
+                  <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${isPartial ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                </button>
+              </label>
+              {isPartial && (
+                <div className="mt-3 space-y-2">
+                  <input
+                    type="number"
+                    min="1"
+                    max={price}
+                    value={amountPaid}
+                    onChange={(e) => setAmountPaid(e.target.value)}
+                    placeholder={`Amount paid (max ₱${price.toLocaleString()})`}
+                    className="w-full bg-slate-700/60 border border-yellow-500/40 text-white placeholder-slate-500 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-yellow-500"
+                  />
+                  {paidAmount > 0 && balanceRemaining > 0 && (
+                    <div className="flex justify-between text-xs px-1">
+                      <span className="text-yellow-400">Paid now: ₱{paidAmount.toLocaleString()}</span>
+                      <span className="text-red-400">Still owes: ₱{balanceRemaining.toLocaleString()}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Summary */}
           {price > 0 && (
-            <div className="bg-slate-700/50 rounded-xl p-3 flex items-center justify-between">
-              <p className="text-slate-400 text-sm">Total Amount</p>
-              <p className="text-green-400 font-black text-lg">₱{price.toLocaleString()}</p>
+            <div className={`rounded-xl p-3 flex items-center justify-between ${isPartial && balanceRemaining > 0 ? 'bg-yellow-500/10 border border-yellow-500/30' : 'bg-slate-700/50'}`}>
+              <div>
+                <p className="text-slate-400 text-sm">{isPartial ? 'Paying Now' : 'Total Amount'}</p>
+                {isPartial && balanceRemaining > 0 && (
+                  <p className="text-yellow-500 text-xs">of ₱{price.toLocaleString()} total</p>
+                )}
+              </div>
+              <p className={`font-black text-lg ${isPartial && balanceRemaining > 0 ? 'text-yellow-400' : 'text-green-400'}`}>
+                ₱{(isPartial ? paidAmount : price).toLocaleString()}
+              </p>
             </div>
           )}
 

@@ -100,6 +100,8 @@ export function GymProvider({ children }) {
   const [instructors, setInstructors]   = useState([]);
   const [pendingMemberships, setPendingMemberships] = useState([]);
   const [advancePayments, setAdvancePayments] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [expenses, setExpenses] = useState([]);
 
   // ── Current gym (set when a gym slug is resolved) ────────────
   const [currentGym, setCurrentGym]     = useState(null);
@@ -342,6 +344,103 @@ export function GymProvider({ children }) {
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, [gymId, loadRenewalRequests]);
+
+  // ── Payment ledger ────────────────────────────────────────────
+  const loadPayments = useCallback(async () => {
+    if (!gymId) return;
+    try {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('gym_id', gymId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setPayments(data || []);
+    } catch (err) {
+      console.error('Failed to load payments:', err);
+    }
+  }, [gymId]);
+
+  useEffect(() => { loadPayments(); }, [loadPayments]);
+
+  useEffect(() => {
+    if (!gymId) return;
+    const channel = supabase
+      .channel(`payments_${gymId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments', filter: `gym_id=eq.${gymId}` },
+        () => loadPayments())
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [gymId, loadPayments]);
+
+  const recordPayment = async ({ memberId, memberName, amount, paymentMethod, referenceNumber, plan, notes, totalDue, balanceRemaining, transactionType }) => {
+    if (!gymId) throw new Error('No gym loaded');
+    const { error } = await supabase.from('payments').insert([{
+      gym_id: gymId,
+      member_id: memberId || null,
+      member_name: memberName || null,
+      amount: Number(amount) || 0,
+      payment_method: paymentMethod || 'cash',
+      reference_number: referenceNumber || null,
+      plan: plan || null,
+      notes: notes || null,
+      performed_by: adminName || null,
+      total_due: totalDue != null ? Number(totalDue) : null,
+      balance_remaining: Number(balanceRemaining) || 0,
+      transaction_type: transactionType || 'membership',
+    }]);
+    if (error) throw error;
+    await loadPayments();
+  };
+
+  // ── Expenses ──────────────────────────────────────────────────
+  const loadExpenses = useCallback(async () => {
+    if (!gymId) return;
+    try {
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('gym_id', gymId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setExpenses(data || []);
+    } catch (err) {
+      console.error('Failed to load expenses:', err);
+    }
+  }, [gymId]);
+
+  useEffect(() => { loadExpenses(); }, [loadExpenses]);
+
+  useEffect(() => {
+    if (!gymId) return;
+    const channel = supabase
+      .channel(`expenses_${gymId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses', filter: `gym_id=eq.${gymId}` },
+        () => loadExpenses())
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [gymId, loadExpenses]);
+
+  const addExpense = async ({ amount, category, description, paymentMethod }) => {
+    if (!gymId) throw new Error('No gym loaded');
+    const { error } = await supabase.from('expenses').insert([{
+      gym_id: gymId,
+      amount: Number(amount) || 0,
+      category: category || 'other',
+      description: description || null,
+      payment_method: paymentMethod || 'cash',
+      recorded_by: adminName || null,
+    }]);
+    if (error) throw error;
+    await loadExpenses();
+  };
+
+  const deleteExpense = async (id) => {
+    if (!gymId) throw new Error('No gym loaded');
+    const { error } = await supabase.from('expenses').delete().eq('id', id);
+    if (error) throw error;
+    await loadExpenses();
+  };
 
   // ── Advance payments ─────────────────────────────────────────
   const loadAdvancePayments = useCallback(async () => {
@@ -648,6 +747,7 @@ export function GymProvider({ children }) {
       .update({ status: 'approved', updated_at: new Date().toISOString() })
       .eq('id', request.id);
     if (reqErr) throw reqErr;
+    await recordPayment({ memberId: request.member_id, memberName: request.member_name, amount: request.amount, paymentMethod: 'gcash', referenceNumber: request.gcash_reference, plan: request.membership_type });
     await logAction('PAYMENT_APPROVED', `Approved GCash payment ₱${request.amount} — renewed ${request.membership_type} for: ${request.member_name}`, request.member_name, request.member_id);
     await loadRenewalRequests();
   };
@@ -834,7 +934,7 @@ export function GymProvider({ children }) {
     return updated;
   };
 
-  const renewMember = async (id, membershipType, paymentMethod, durationDays) => {
+  const renewMember = async (id, membershipType, paymentMethod, durationDays, amount, referenceNumber, totalDue, balanceRemaining) => {
     const today = new Date().toISOString().split('T')[0];
     const endDate = calculateEndDate(today, membershipType, durationDays);
     const { data, error } = await supabase
@@ -846,7 +946,9 @@ export function GymProvider({ children }) {
     if (error) throw error;
     const updated = toMember(data);
     setMembers((prev) => prev.map((m) => (m.id === id ? updated : m)));
-    await logAction('MEMBERSHIP_RENEWED', `Admin accepted ${paymentMethod} payment — renewed ${membershipType} for: ${updated.name}`, updated.name, id);
+    await recordPayment({ memberId: id, memberName: updated.name, amount, paymentMethod, referenceNumber, plan: membershipType, totalDue, balanceRemaining: balanceRemaining || 0, transactionType: 'membership' });
+    const partialNote = balanceRemaining > 0 ? ` (partial — ₱${balanceRemaining} remaining)` : '';
+    await logAction('MEMBERSHIP_RENEWED', `Admin accepted ${paymentMethod} payment ₱${amount}${partialNote} — renewed ${membershipType} for: ${updated.name}`, updated.name, id);
     return updated;
   };
 
@@ -1099,6 +1201,10 @@ export function GymProvider({ children }) {
       // Renewal requests
       renewalRequests, pendingRenewals, loadRenewalRequests,
       submitRenewalRequest, approveRenewalRequest, rejectRenewalRequest,
+      // Payment ledger
+      payments, loadPayments, recordPayment,
+      // Expenses
+      expenses, loadExpenses, addExpense, deleteExpense,
       // Advance payments
       advancePayments, addAdvancePayment, submitAdvancePayment,
       approveAdvancePayment, cancelAdvancePayment, applyAdvancePayment,
