@@ -224,10 +224,10 @@ export default function GymRegister() {
             <p className="text-slate-400 text-xs mb-3">Contact our staff directly so we can prioritize your application:</p>
             <div className="space-y-2">
               <a href="tel:09760471118" className="flex items-center gap-2 text-white text-sm font-semibold hover:text-yellow-400 transition-colors">
-                <span>📱</span> 0976 047 1118
+                <span>📱</span> 0976 *** ****
               </a>
-              <a href="mailto:1997justin12@gmail.com" className="flex items-center gap-2 text-white text-sm font-semibold hover:text-yellow-400 transition-colors">
-                <span>✉️</span> 1997justin12@gmail.com
+              <a href="mailto:support@madeforgyms.com" className="flex items-center gap-2 text-white text-sm font-semibold hover:text-yellow-400 transition-colors">
+                <span>✉️</span> support@madeforgyms.com
               </a>
             </div>
           </div>
@@ -385,17 +385,17 @@ export default function GymRegister() {
               className="flex items-center gap-2.5 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/50 rounded-xl px-3 py-2.5 transition-colors group">
               <span className="text-base">📱</span>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Call / Text / Viber</p>
-                <p className="text-white font-bold text-sm">0976 047 1118</p>
+                <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Call / Text</p>
+                <p className="text-white font-bold text-sm">0976 *** ****</p>
               </div>
               <ChevronRight size={14} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
             </a>
-            <a href="mailto:1997justin12@gmail.com"
+            <a href="mailto:support@madeforgyms.com"
               className="flex items-center gap-2.5 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/50 rounded-xl px-3 py-2.5 transition-colors group">
               <span className="text-base">✉️</span>
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Email</p>
-                <p className="text-white font-bold text-sm">1997justin12@gmail.com</p>
+                <p className="text-white font-bold text-sm">support@madeforgyms.com</p>
               </div>
               <ChevronRight size={14} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
             </a>
