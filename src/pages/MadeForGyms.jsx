@@ -94,16 +94,6 @@ const FEATURES = [
     desc: 'Register, track, and manage every member — their plans, status, photos, and history in one clean dashboard.',
   },
   {
-    icon: CreditCard, color: '#4ade80', glow: 'rgba(74,222,128,0.15)',
-    title: 'GCash Payments',
-    desc: 'Members pay directly from their phone. You get a notification and approve with one tap — zero friction.',
-  },
-  {
-    icon: Bell, color: '#4ade80', glow: 'rgba(251,146,60,0.15)',
-    title: 'Telegram Alerts',
-    desc: 'Instant Telegram notifications for every new payment. Review receipts and approve without opening the app.',
-  },
-  {
     icon: Dumbbell, color: '#facc15', glow: 'rgba(250,204,21,0.15)',
     title: 'Coach Portal',
     desc: 'Assign coaches to members. Trainers log workout programs, meal plans, and session notes from their own portal.',
@@ -117,6 +107,16 @@ const FEATURES = [
     icon: BarChart3, color: '#f472b6', glow: 'rgba(244,114,182,0.15)',
     title: 'Attendance & Logs',
     desc: 'Kiosk check-in, attendance history, and a full audit trail of every action taken in your gym.',
+  },
+  {
+    icon: TrendingUp, color: '#4ade80', glow: 'rgba(74,222,128,0.15)',
+    title: 'Revenue Tracking',
+    desc: 'See exactly how much your gym earns — broken down by cash, GCash, or bank. Track expenses and net profit in one view.',
+  },
+  {
+    icon: Zap, color: '#fb923c', glow: 'rgba(251,146,60,0.15)',
+    title: 'Auto Reminders',
+    desc: 'Automatic SMS alerts go out before memberships expire — so members renew on time without you chasing them.',
   },
 ];
 
@@ -194,7 +194,7 @@ export default function MadeForGyms() {
 
           <div className="hidden md:flex items-center gap-8">
             {['Features', 'How it Works', 'Pricing'].map((l) => (
-              <a key={l} href={`#${l.toLowerCase().replace(' ', '-')}`}
+              <a key={l} href={`#${l.toLowerCase().replace(/\s+/g, '-')}`}
                 className="text-sm text-slate-400 hover:text-white transition-colors font-medium">
                 {l}
               </a>
@@ -221,7 +221,7 @@ export default function MadeForGyms() {
         {menuOpen && (
           <div className="md:hidden bg-black/95 backdrop-blur-xl border-t border-white/5 px-5 py-5 space-y-4">
             {['Features', 'How it Works', 'Pricing'].map((l) => (
-              <a key={l} href={`#${l.toLowerCase().replace(' ', '-')}`}
+              <a key={l} href={`#${l.toLowerCase().replace(/\s+/g, '-')}`}
                 onClick={() => setMenuOpen(false)}
                 className="block text-slate-300 hover:text-white font-medium py-1 transition-colors">
                 {l}
@@ -295,10 +295,10 @@ export default function MadeForGyms() {
             {/* Mini trust chips */}
             <div className="mt-8 flex flex-wrap justify-center lg:justify-start gap-2 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
               {[
-                { icon: CreditCard, label: 'GCash Payments' },
-                { icon: Bell, label: 'Telegram Alerts' },
                 { icon: Dumbbell, label: 'Coach Portal' },
                 { icon: Clock, label: '24/7 Member Portal' },
+                { icon: Smartphone, label: 'Member Self-Service' },
+                { icon: BarChart3, label: 'Attendance & Logs' },
               ].map(({ icon: Icon, label }) => (
                 <span key={label} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-white/8 bg-white/3 text-slate-300">
                   <Icon size={11} className="text-green-400" /> {label}
@@ -714,7 +714,7 @@ export default function MadeForGyms() {
                     style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)' }}>
                     <p className="text-green-400 text-xs font-semibold uppercase tracking-widest mb-3">Monthly Maintenance</p>
                     <div className="flex items-end justify-center gap-1 mb-1">
-                      <p className="text-5xl font-black text-green-400">₱499</p>
+                      <p className="text-5xl font-black text-green-400">₱399</p>
                       <p className="text-slate-500 text-sm mb-2">/month</p>
                     </div>
                     <p className="text-slate-500 text-sm">Keep everything running</p>

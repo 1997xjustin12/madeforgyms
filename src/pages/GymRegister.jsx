@@ -279,7 +279,7 @@ export default function GymRegister() {
                 <h3 className="text-white font-semibold mb-1.5">3. Subscription & Fees</h3>
                 <ul className="space-y-1.5 list-none">
                   <li className="flex gap-2"><span className="text-green-400 shrink-0">•</span>A one-time setup fee of <strong className="text-white">₱1,999</strong> is due upon approval of your application.</li>
-                  <li className="flex gap-2"><span className="text-green-400 shrink-0">•</span>A monthly subscription of <strong className="text-white">₱499/month</strong> is billed each month thereafter.</li>
+                  <li className="flex gap-2"><span className="text-green-400 shrink-0">•</span>A monthly subscription of <strong className="text-white">₱399/month</strong> is billed each month thereafter.</li>
                   <li className="flex gap-2"><span className="text-green-400 shrink-0">•</span>Failure to pay within 7 days of the billing date may result in temporary suspension of your portal.</li>
                   <li className="flex gap-2"><span className="text-green-400 shrink-0">•</span>Fees are non-refundable once a billing cycle has started.</li>
                 </ul>
